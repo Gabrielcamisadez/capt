@@ -1,0 +1,51 @@
+#+title: Network Fundamentals
+#+author: gabriel
+
+* OSI Model
+The OSI (Open Systems Interconnection) model, developed by the International Organization for Standardization (ISO), ensures that different systems can communicate with each other seamlessly. The OSI model consists of seven layers:
+
+*Physical Layer* ->
+- Handles hardware-level communication, enabling data transfer through cabling, cards, and other physical components.
+- Cables, connector standards are part of this layer (UTP, RJ45, RS-232C, V.35, and other port standards).
+- Defines whether the transmission mode between two devices will be simplex, half-duplex, or full-duplex.
+
+*Data Link Layer* ->
+- Manages data flow within the network, ensuring data reaches the correct addresses using MAC (Media Access Control) addresses.
+- This layer ensures reliable data transfer between computers or network devices over the network. It is responsible for framing the data, addressing (using MAC addresses)
+
+*Network Layer* ->
+- Oversees data transmission across different networks, involving IP addresses and routing processes.
+- Manages data transmission between different networks. It handles logical addressing (IP addresses), routing, and packet forwarding.
+
+*Transport Layer* -> Manages end-to-end communication, ensuring data transfer reliability. Protocols like TCP (Transmission Control Protocol) and UDP (User Datagram Protocol) operate at this layer.
+
+*Session Layer* -> Manages communication sessions, controlling the initiation and termination of connections.
+
+*Presentation Layer* -> Determines how data is represented over the network, handling encryption and compression.
+
+*Application Layer* -> Enables users to interact with network applications, including email, web browsers, and other end-user software.
+
+[[./imgs/osi.png]]
+
+
+
+* TCP/IP Model
+Developed before the OSI model, it has a simpler structure consisting of four layers: Application, Transport, Internet, and Network Access layers.
+
+The TCP/IP model forms the foundation of the internet and is the most widely used network model today. It has a simpler structure compared to the OSI model and consists of four layers
+
+*Network Interface Layer* -> Combines the functions of the physical and data link layers, handling data transmission over hardware.
+
+*Internet Layer* -> Corresponds to the network layer, managing data routing using IP addresses.
+
+*Transport Layer* -> Similar to the OSI model, it manages end-to-end communication and includes TCP and UDP protocols.
+
+*Application Layer* -> Combines the functions of the session, presentation, and application layers of the OSI model, enabling user interaction with network applications.
+- http/https
+- snmp
+- smtp
+- dns
+- ssh
+
+
+[[./imgs/tcp.png]]
