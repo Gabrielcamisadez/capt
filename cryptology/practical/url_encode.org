@@ -1,0 +1,18 @@
+#+title: Url Encode
+#+author: gabriel
+
+* challenge
+
+URL Encoding converts reserved, unsafe, and non-ASCII characters in URLs to a format that is universally accepted and understood by all web browsers and servers.
+
+It first converts the character to one or more bytes. Then each byte is represented by two hexadecimal digits preceded by a percent sign (%) - (e.g. %xy).
+
+* url encode
+
+*decode with python urllib* ->
+#+begin_src sh
+[15:45][]~/capt/cryptology:main ✗ ✮ python3 -c "import urllib.parse; print(urllib.parse.unquote('%54%6
+8%65%53%63%72%65%61%6D%4D%75%6E%63%68'))"
+
+TheScreamMunch
+#+end_src

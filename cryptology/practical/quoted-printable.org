@@ -1,0 +1,16 @@
+#+title: Quoted Printable
+#+author: gabriel
+
+* challenge
+Quoted-printable is an encoding method defined in the MIME standard. It is used primarily to encode 8-bit text (such as text that includes foreign characters) into 7-bit US ASCII, creating a document that is mostly readable by humans
+
+All MIME-compliant applications can decode quoted-printable text, though they may not necessarily be able to properly display the document as it was originally intended.
+
+* quoted-printable
+*decode with python* ->
+#+begin_src sh
+[16:05][]~/capt/cryptology:main ✗ ✮ python3 -c "import quopri; print(quopri.decodestring('=54=68=65=4E
+=69=67=68=74=57=61=74=63=68=52=65=6D=62=72=61=6E=64=74').decode())"
+
+TheNightWatchRembrandt
+#+end_src

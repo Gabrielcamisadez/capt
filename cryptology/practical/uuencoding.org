@@ -1,0 +1,22 @@
+#+title: Uuencoding
+#+author: gabriel
+
+* challenge
+Uuencode (also called Uuencode/Uudecode) is a utility for encoding and decoding files. Originally this term stood for "UNIX-to-UNIX encoding" however this encoding and decoding utility is now commonly available on multiple platforms and in many clients.
+
+Uuencode translates or converts a file or e-mail attachment from its binary or bit-stream representation into the 7-bit ASCII set of text characters
+
+This format is more easily handled by older systems which may not handle binary files well plus larger files can more easily be divided into several separate transmissions.
+
+* uuencoding
+*decode with perl* ->
+#+begin_src sh
+[16:09][]~/capt/cryptology:main ✗ ✮ perl -ne 'print unpack("u",$_)' file.uu > output.dat
+
+[16:10][]~/capt/cryptology:main ✗ ✮ cat output.dat
+───────┬──────────────────────────────────────────────────────────────────────────────────────────────
+       │ File: output.dat
+───────┼──────────────────────────────────────────────────────────────────────────────────────────────
+   1   │ TheKissKlimt
+───────┴──────────────────────────────────────────────────────────────────────────────────────────────
+#+end_src

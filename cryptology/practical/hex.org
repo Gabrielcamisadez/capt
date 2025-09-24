@@ -1,0 +1,22 @@
+#+title: hex encoding
+#+author: gabriel
+
+* challenge
+Hex encoding is a transfer encoding in which each byte is converted to the 2-digit base-16 encoding of that byte (preserving leading zeroes), which is then usually encoded in ASCII.
+
+It is inefficient, but it is a simple, commonly-used way to represent binary data in plain text.
+
+What is the decoded message of the text that has been encoded using Hex Encoding inside the file?
+
+* hex encode
+
+*hash* ->
+#+begin_src sh
+54686542697274684F6656656E7573426F74746963656C6C69
+#+end_src
+
+*decode with xxd* ->
+#+begin_src sh
+[15:36][]~ ✮ xxd -r -p hash.txt
+TheBirthOfVenusBotticelli
+#+end_src

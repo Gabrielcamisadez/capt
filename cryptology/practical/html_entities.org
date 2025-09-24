@@ -1,0 +1,15 @@
+#+title: Html Entities
+#+author:gabriel
+
+* challenge
+HTML character entities are basically a set of characters (entity) used to represent few characters reserved by the HTML, especially invisible characters or characters difficult to type out using a regular keyboard
+
+
+* html
+*decode with python* ->
+#+begin_src sh
+[16:06][]~/capt/cryptology:main ✗ ✮ python3 -c "import html; print(html.unescape('&#70;&#105;&#115;&#1
+04;&#101;&#114;&#109;&#101;&#110;&#65;&#116;&#83;&#101;&#97;&#84;&#117;&#114;&#110;&#101;&#114;'))"
+
+FishermenAtSeaTurner
+#+end_src
