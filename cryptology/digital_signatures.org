@@ -1,0 +1,44 @@
+#+title: Digital Signatures
+#+author: gabriel
+
+
+A digital signature is a cryptographic technique used to verify the identity of the sender of a document or message and to ensure that the content has not been altered.
+
+Digital signatures use asymmetric encryption algorithms to provide security for electronic documents and communication.
+
+* purpose of digital signatures
+*Authentication* -> To verify the identity of the person signing the document.
+
+*Integrity* -> To ensure that the document has not been altered after being signed.
+
+*Non-repudiation* -> To prevent the person who signed the document from denying that they signed it.
+
+* creating a digital signature
+*Hashing the document* -> The hash value of the document to be signed is calculated using a secure hash function.
+
+*Encrypting the hash* -> The calculated hash value is encrypted using the sender's private key. This encrypted hash value becomes the digital signature.
+
+*Appending the Digital signature* -> The digital signature is appended to the document or sent along with it.
+
+* verifying a digital signature
+*Hashing the document* -> The recipient recalculates the hash value of the document using the same hash function.
+
+*Decrypting the Digital Signature* -> The recipient decrypts the digital signature using the sender's public key and compares the obtained hash value
+
+*Comparison* -> If the two hash values match, the document's integrity is confirmed, and the sender's identity is verified.
+
+* algorithms
+
+1. *RSA (Rivest-Shamir-Adleman)*
+- Used for both encryption and digital signature processes.
+- A reliable algorithm for creating and verifying signatures.
+
+2. *DSA (Digital Signature Algorithm)*
+- Standardized by NIST in 1991 for digital signatures.
+- Used only for creating and verifying digital signatures.
+- Faster signature creation but slower verification compared to RSA.
+
+3. *ECDSA (Elliptic Curve Digital Signature Algorithm)*
+- Based on elliptic curve cryptography.
+- Provides high security with shorter key lengths.
+- Widely use

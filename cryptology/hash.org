@@ -1,0 +1,58 @@
+#+title: Hash Functions and Hash Algorithms
+#+author: gabriel
+
+* intro
+A hash function is a mathematical function that takes an input of any length and produces a fixed-length output, known as a hash value or digest.
+
+Hash functions are used for various purposes such as checking data integrity, verifying data, creating digital signatures, and storing passwords
+
+ * *Deterministic* -> Produces the same output for the same input every time.
+ * *Efficient* -> Generates the hash value quickly regardless of the input size.
+ * *Unpredictable* -> A small change in the input produces a completely different hash value.
+ * *Collision-Resistant* -> The likelihood of two different inputs producing the same hash value is very low.
+
+* uses
+*data integrity verification* Used to check the integrity of files and data. For example, hash values are compared to ensure that the downloaded file matches the original.
+
+*digital signatures* Hash functions are used in creating and verifying digital signatures.
+
+*password storage* Hash functions are used to securely store passwords. Passwords are converted into hash values and stored.
+
+*database indexing* Used for indexing data in databases and facilitating quick searches.
+
+* hash algorithms
+Hash algorithms are specific mathematical methods used to produce the hash value of an input.
+
+*MD5* -> (Message Digest Algorithm 5)
+- Produces a 128 bit hash value
+
+*SHA-1* -> (Secure Hash Algorithm 1)
+- Produces a 160 bit hash value
+
+*SHA-2* -> (Secure Hash Algorithm 2)
+- The SHA-2 family includes algorithms producing hash values of different lengths
+
+*SHA-3* -> (Secure Hash Algorithm 3)
+- The SHA-3 family also produces hash values of different lengths
+- Different mathematical structure (Keccak Algorithm)
+
+*RIPEMD-160* -> (RACE Integrity Primitives Evaluation Message Digest)
+- Produces a 160 bit hash value
+
+* attack techniques
+*Collision Attacks* -> Aim to find two different inputs that produce the same hash value. Secure hash functions are designed to make finding collisions difficult.
+
+*Preimage Attacks* -> Aim to find an input that matches a given hash value.
+
+*Second Preimage Attacks* -> Aim to find a different input that produces the same hash value as a given input.
+
+*Rainbow Table Attacks* -> Use precomputed hash values to crack passwords.
+
+* applications of hash functions
+*password security* -> used to securely store user passwords
+
+*digital signatures and certificates* -> used in creating and verifying digital signatures
+
+*data integrity* -> used to check data integrity in file and data transfers
+
+*cryptographic protocols* -> used in secure communication protocols like SSL/TLS
