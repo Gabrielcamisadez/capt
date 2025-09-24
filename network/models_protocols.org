@@ -1,0 +1,55 @@
+#+title: Models and Protocols
+#+author: gabriel
+
+
+* Transmission Control Protocol (TCP)
+*Header* ->
+Located at the beginning of the TCP packet, the header is at least 20 bytes long and contains control information necessary for managing and controlling data transmission.
+
+TCP establishes a reliable connection between two devices on a network, ensuring accurate and reliable data transmission. It detects and retransmits lost or corrupted data packets.
+
+[[./imgs/tcp_header.png]]
+
+*SOurce port* -> Port number used by the client to initiate communication.
+
+*Destination port* -> Port number used by the target computer.
+
+*Sequence number* -> Ensures data is reassembled in the correct order.
+
+*Acknowledgment Number* -> Confirms the receipt of data.
+
+*Header length* -> Indicates the length of the header.
+
+*Flags* -> Contains control signals for managing and terminating connections (e.g., SYN, ACK, FIN)
+
+*Window Size* -> Indicates the amount of data that can be received without acknowledgment.
+
+*checksum* -> Ensures data integrity.
+
+*Urgent pointer* -> Indicates the presence of urgent data.
+
+** Three-Way Handshake
+The Three-Way Handshake establishes a reliable connection between two devices over a network using the TCP/IP protocol.
+
+[[./imgs/3-way.png]]
+
+* User Datagram Protocol (UDP)
+ * One of the protocols used for data transfer by applications.
+ * Unlike TCP, UDP does not establish a connection before sending data.
+ * It does not guarantee the delivery of data.
+ * Lacks flow control and retransmission of lost data.
+ * Commonly used for audio and video transmission.
+
+[[./imgs/udp_seg.png]]
+
+| Header | Description
+| Source Port | Port number used by the client to initiate communication.
+| Destination Port | Port number used by the target computer.
+| Length | Defines the total number of bytes in the header and data.
+| Checksum | Provides optional error-checking.
+
+* Internet Protocol (IP):
+- Identifies each device on the network by a unique IP address.
+- The "ifconfig" command in a Linux system displays the assigned IP addresses.
+
+[[./imgs/ip.png]]
