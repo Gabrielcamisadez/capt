@@ -14,9 +14,7 @@ This format is more easily handled by older systems which may not handle binary 
 [16:09][]~/capt/cryptology:main ✗ ✮ perl -ne 'print unpack("u",$_)' file.uu > output.dat
 
 [16:10][]~/capt/cryptology:main ✗ ✮ cat output.dat
-───────┬──────────────────────────────────────────────────────────────────────────────────────────────
+
        │ File: output.dat
-───────┼──────────────────────────────────────────────────────────────────────────────────────────────
    1   │ TheKissKlimt
-───────┴──────────────────────────────────────────────────────────────────────────────────────────────
 #+end_src

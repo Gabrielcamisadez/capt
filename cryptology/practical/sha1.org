@@ -1,0 +1,45 @@
+#+title: Sha1
+#+author: gabriel
+
+* challenge
+
+SHA-1(Secure Hash Algorithm 1) cryptographic algorithm which takes an input and produces a 160-bit (20-byte) hash value. This hash value is known as a message digest.
+
+This message digest is usually then rendered as a hexadecimal number which is 40 digits long.
+
+* decrypt with hashcat
+
+*with this command* ->
+#+begin_src sh
+[16:14][]~/capt/cryptology/practical:main ✗ ✮ hashcat -m 100 -a 0 hash.txt /usr/share/kali-wordlists/j
+ohn.lst
+#+end_src
+
+*cracked* ->
+#+begin_src sh
+Approaching final keyspace - workload adjusted.
+
+7610bae85f2b530654cc716772f1fe653373e892:leonardo
+
+Session..........: hashcat
+Status...........: Cracked
+Hash.Mode........: 100 (SHA1)
+Hash.Target......: 7610bae85f2b530654cc716772f1fe653373e892
+Time.Started.....: Wed Sep 24 16:15:13 2025 (0 secs)
+Time.Estimated...: Wed Sep 24 16:15:13 2025 (0 secs)
+Kernel.Feature...: Pure Kernel
+Guess.Base.......: File (/usr/share/kali-wordlists/john.lst)
+Guess.Queue......: 1/1 (100.00%)
+Speed.#1.........:  3181.6 kH/s (0.23ms) @ Accel:1024 Loops:1 Thr:1 Vec:8
+Recovered........: 1/1 (100.00%) Digests (total), 1/1 (100.00%) Digests (new)
+Progress.........: 3559/3559 (100.00%)
+Rejected.........: 0/3559 (0.00%)
+Restore.Point....: 0/3559 (0.00%)
+Restore.Sub.#1...: Salt:0 Amplifier:0-1 Iteration:0-1
+Candidate.Engine.: Device Generator
+Candidates.#1....: #!comment: This list has been compiled by Solar Designer of Openwall Project -> sss
+Hardware.Mon.#1..: Temp: 75c Util: 17%
+
+Started: Wed Sep 24 16:14:57 2025
+Stopped: Wed Sep 24 16:15:15 2025
+#+end_src
