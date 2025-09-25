@@ -1,0 +1,42 @@
+#+title-> Cryptography and Cryptanalysis
+#+author-> gabriel
+#+description-> Cryptography and Cryptanalysis
+
+* Cryptography
+
+Cryptography is the science of using mathematical methods and algorithms to transmit and store information securely. The primary goals of cryptography are ->
+
+ * *Confidentiality*-> Ensuring that information is readable only by authorized individuals.
+ * *Integrity*-> Protecting information against unauthorized alterations.
+ * *Authentication*-> Verifying the origin of the information.
+ * *Non-repudiation*-> Ensuring that the sender cannot deny having sent the information.
+
+* types
+
+*symmetric cryptography* -> The same key is used for both encryption and decryption processes.
+
+*asymmetric cryptography* -> Different but mathematically related keys (public key and private key) are used for encryption and decryption processes.
+
+* Cryptanalysis
+
+Cryptanalysis comprises methods used to uncover weaknesses in cryptographic systems and break them.
+
+Cryptanalysis techniques are used to evaluate the security of cryptographic systems and identify vulnerabilities.
+
+*breaking attacks* -> Attacks aimed at obtaining the ciphertext or the key to decrypt the information.
+
+*analysis attack* -> Attacks that investigate the weaknesses of the encryption algorithm or protocol.
+
+* some famous principles
+
+*kerckhoffs's principle* -> The security of a cryptosystem should depend on the secrecy of the key, not the algorithm.
+
+*shannon's theory* -> The ciphertext should not contain meaningful statistical structures and should appear random.
+
+* cryptanalysis techniques
+
+*brute force attacks* -> these attacks aim to find the correct key by trying commonly used words and passwords
+
+*side channel attacks* -> these attacks use auxiliary information, such as the time taken or the energy consumed by the encryption device to decrypt information
+
+*statistical Attacks* -> These attacks aim to decrypt information by exploiting statistical properties of the ciphertext
