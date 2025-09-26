@@ -1,0 +1,31 @@
+#+title: Ffuf
+#+author: gabriel
+#+description: general usage
+
+* ffuf subdomain fuzzin
+We will learn how to actively scan for subdomains of a website using ffuf.
+
+With the scan we'll perform, we will check whether different subdomains exist, whether they have a public DNS record, and whether this record directs us to a working server IP.
+
+In the SecLists repository, there is a dedicated section for sub-domain wordlists composed of commonly used words for subdomains.
+
+*example* ->
+: ffuf -w /root/Desktop/misc/SecLists/Discovery/DNS/subdomains-top1million-5000.txt -u https://FUZZ.google.com/
+
+* ffuf vhost fuzzing
+In the previous section, we saw how we could fuzz public subdomains using public DNS records. However, the same method doesn't work when we're trying to fuzz subdomains that don't have a public DNS record.
+
+To scan VHosts, instead of manually adding the wordlist to our local DNS file /etc/hosts, we will use the Host: header from HTTP headers to fuzz.
+
+*example* ->
+: ffuf -w /root/Desktop/misc/SecLists/Discovery/DNS/subdomains-top1million-5000.txt -u https://youtube.com -H 'Host: FUZZ.youtube.com'
+
+Filtering HTTP response size is a common method. The parameter used in ffuf to filter HTTP response size is -fs.
+
+The following command fetches results where the HTTP response size is different from 4242 bytes. ->
+: ffuf -w /path/to/vhost/wordlist -u http://example.com -H 'Host: FUZZ.example.com' -fs 4242
+
+This method is particularly useful when you want to discover multiple virtual hosts hosted by a single web server.
+- Vhost fuzzing allows security researchers and penetration testers to uncover hidden services and applications that might not be found using traditional methods.
+
+  This technique is critical for identifying vulnerabilities and understanding the attack surface of the target system, especially in large and complex web infrastructures.

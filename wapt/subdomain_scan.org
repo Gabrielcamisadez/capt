@@ -43,7 +43,7 @@ In the example below, example.com and the subdomain api.example.com are served a
 </VirtualHost>
 #+end_src
 
-nginx ->
+*nginx* ->
 #+begin_src sh
 server {
     listen 80;
