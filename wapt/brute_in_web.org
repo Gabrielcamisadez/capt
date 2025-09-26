@@ -1,0 +1,35 @@
+#+title: Brute In Web applications
+#+author:gabriel
+
+* intro
+Brute Force attacks are a common and straightforward yet effective type of attack encountered in cybersecurity. It involves systematically trying many different combinations to find the correct credentials or configuration settings on a target system.
+
+[[./imgs/brute.png]]
+
+* common types
+ *Dictionary Attack* ->
+  In this type of attack, attackers use commonly used password lists (dictionaries) systematically to find the correct password. For example, common passwords like "123456", "password", or "admin" are tried from the list.
+
+   The attacker uses the list or database sequentially to guess the target's password. For example, a password attack for the username "admin" can be attempted via a URL like this.
+: https://example.com/login?username=admin&password=123456
+
+
+*Exhaustive Search* ->
+ The attacker tries to find the correct username and password by using all possible character combinations. This method is a time-consuming type of attack.
+
+The attacker generates and attempts different combinations of each character set. For example, starting with "a" and trying all letters, numbers, and special characters through "z".
+
+
+*Credential stuffing* ->
+Trying to log into different websites using credentials leaked from previous data breaches.
+
+The attacker uses username-password combinations obtained from data breaches on other websites.
+
+* Directory Fuzzing
+Directory fuzzing, also known as directory brute-forcing, is a type of attack aimed at identifying hidden or unsecured directories in web applications.
+
+Attackers attempt to find weaknesses in the target system by trying out guessed directory names or commonly used directory structures.
+
+The directories found can provide insights into the content of the application or sensitive files, potentially opening opportunities for further attacks.
+
+Attackers use dictionary files or tools containing common directory names for directory fuzzing. During the scanning process, they consecutively attempt different paths and filenames to access existing directories or files in the target application.
