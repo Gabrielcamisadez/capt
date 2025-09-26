@@ -1,0 +1,96 @@
+#+title: Subdomain Scan
+#+author:gabriel
+#+description: significant role in assessing the security of a website.
+
+* intro
+Subdomain scanning is an important part of the penetration testing process for a website. This method aims to discover subdomains under a main domain that often serve different sections, services, or applications of the main website
+
+With subdomain scanning, penetration testers can identify potential security vulnerabilities, information leaks, and sensitive points such as administrative panels.
+
+=Some methods ->=
+
+*brute force scanning* ->
+One of the most commonly used methods is attempting possible subdomain names for the target domain using wordlists.
+
+*DNS Querying* ->
+By querying DNS records or performing DNS zone transfer attempts, a list of existing subdomains can be obtained.
+
+*Search Engines* ->
+Using search engines like Google and Bing to find subdomains related to the target domain.
+
+*Third-Party Tools and Services:* ->
+Third-party tools and services such as Shodan, Censys, or VirusTotal can provide useful information for subdomain discovery.
+
+A subdomain is a domain that is part of a main domain and typically serves a different section or a sub-project of the main site.
+
+It is generally expressed in the format subdomain.domain.com. For example, blog.example.com is a subdomain and usually offers different content or services than the main site, example.com.
+
+* vhost
+Vhost or Virtual Host is a technique that allows hosting multiple websites on a single physical server. Virtual hosting can host different domain names (websites) using the same server resources, making it a cost-effective solution especially for web hosting providers.
+
+Subdomain and Vhost are different techniques used to manage websites and applications, each offering unique advantages.
+
+In the example below, example.com and the subdomain api.example.com are served as vhosts on the same server.
+#+begin_src sh
+<VirtualHost *:80>
+    ServerName example.com
+    DocumentRoot "/www/example"
+</VirtualHost>
+
+<VirtualHost *:80>
+    ServerName api.example.com
+    DocumentRoot "/www/api_example"
+</VirtualHost>
+#+end_src
+
+nginx ->
+#+begin_src sh
+server {
+    listen 80;
+    server_name example.com;
+
+    location / {
+        root /www/example;
+        index index.html index.htm;
+    }
+}
+
+server {
+    listen 80;
+    server_name api.example.com;
+
+    location / {
+        root /www/api_example;
+        index index.html index.htm;
+    }
+}
+#+end_src
+
+* active subdomain enumeration
+Active Subdomain Enumeration works by performing direct queries to discover subdomains under a target domain. This method includes more aggressive techniques such as sending queries to DNS servers and performing brute-force attempts on the target domain.
+
+*dns brute-force* ->
+Possible subdomain names for the target domain can be attempted using wordlists.
+
+*dns recursive querying* ->
+Pulling all DNS records from a DNS server that has a DNS Zone Transfer vulnerability.
+
+*dns recursive querying* ->
+Sending recursive queries to the authoritative DNS servers of the target domain to discover subdomains.
+
+* enum with ffuf
+FFUF performs scanning operations by sending large amounts of requests containing various payloads. It then analyzes the responses and reports which methods worked and which didn't.
+
+FFUF is also fast and flexible, allowing us to specify the inputs for fuzzing and the parameters of requests sent to the target web application.
+
+*Application areas:* ->
+
+- Directory discovery,
+- Vhost discovery,
+- Fuzzing GET parameters,
+- Fuzzing POST data,
+
+: ffuf -u http://FUZZ.target.com/ -w <wordlist>
+
+*vhost fuzzing* ->
+: ffuf -u http://target.com/ -w <wordlist> -H 'Host: FUZZ.target.com'

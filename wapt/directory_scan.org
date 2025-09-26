@@ -1,0 +1,153 @@
+#+title: Directory Scan
+#+author: gabriel
+
+* dirb
+Dirb is a popular security tool designed to discover hidden or forgotten files and directories on web servers. This command-line tool uses brute-force and wordlist methods.
+
+*features* ->
+- Brute-force and Wordlist Methods: Dirb uses predefined wordlists to send HTTP GET requests to potential directories and files on the target web server.
+- Flexibility: Different wordlists can be used; users can create their own wordlists or use existing ones.
+- Multi-purpose Use: It can discover static files and directories as well as dynamic content like CGI scripts.
+
+*help* ->
+#+begin_src sh
+-----------------
+DIRB v2.22
+By The Dark Raver
+-----------------
+
+dirb <url_base> [<wordlist_file(s)>] [options]
+
+========================= NOTES =========================
+ <url_base> : Base URL to scan. (Use -resume for session resuming)
+ <wordlist_file(s)> : List of wordfiles. (wordfile1,wordfile2,wordfile3...)
+
+======================== HOTKEYS ========================
+ 'n' -> Go to next directory.
+ 'q' -> Stop scan. (Saving state for resume)
+ 'r' -> Remaining scan stats.
+
+======================== OPTIONS ========================
+ -a <agent_string> : Specify your custom USER_AGENT.
+ -b : Use path as is.
+ -c <cookie_string> : Set a cookie for the HTTP request.
+ -E <certificate> : path to the client certificate.
+ -f : Fine tunning of NOT_FOUND (404) detection.
+ -H <header_string> : Add a custom header to the HTTP request.
+ -i : Use case-insensitive search.
+ -l : Print "Location" header when found.
+ -N <nf_code>: Ignore responses with this HTTP code.
+ -o <output_file> : Save output to disk.
+ -p <proxy[:port]> : Use this proxy. (Default port is 1080)
+ -P <proxy_username:proxy_password> : Proxy Authentication.
+ -r : Don't search recursively.
+ -R : Interactive recursion. (Asks for each directory)
+ -S : Silent Mode. Don't show tested words. (For dumb terminals)
+ -t : Don't force an ending '/' on URLs.
+ -u <username:password> : HTTP Authentication.
+ -v : Show also NOT_FOUND pages.
+ -w : Don't stop on WARNING messages.
+ -X <extensions> / -x <exts_file> : Append each word with this extensions.
+ -z <millisecs> : Add a milliseconds delay to not cause excessive Flood.
+
+======================== EXAMPLES =======================
+ dirb http://url/directory/ (Simple Test)
+ dirb http://url/ -X .html (Test files with '.html' extension)
+ dirb http://url/ /usr/share/dirb/wordlists/vulns/apache.txt (Test with apache.txt wordlist)
+ dirb https://secure_url/ (Simple Test with SSL)
+#+end_src
+
+*dir scanning* ->
+You can run the following command to perform a directory scan with Dirb. If no wordlist is specified, Dirb uses its default wordlist.
+: dirb http://172.20.8.56/
+
+*file/page scanning* ->
+You can run the following command to perform a file/page scan with Dirb. If no wordlist is specified, Dirb uses its default wordlist. The -X parameter specifies that we are looking for files with the .html extension
+: dirb http://172.20.8.56/ -X .html
+
+
+* gobuster
+Subdomain enumeration is crucial for identifying security vulnerabilities, understanding network configurations, and expanding the scope of web application assessments.
+
+*Gobuster* ->
+Gobuster is a scanning tool that allows you to discover hidden directories, files, subdomains, and much more on web servers.
+
+: gobuster dns -d google.com /usr/share/wordlists/common.txt
+
+*gobuster vhost mode* ->
+The VHOST mode of gobuster is designed to discover these virtual hosts and uncover potentially hidden or forgotten websites.
+
+Using the VHOST mode requires a target and a wordlist. This mode fuzzes the HTTP Host header to test for the existence of different sites hosted on the same IP address.
+
+: gobuster vhost -u https://google.com -w /usr/share/wordlists/common.txt
+
+*gobuster dir mode* ->
+ The goal is to uncover hidden files, administrative panels, backup files, and directories potentially containing sensitive information.
+
+: gobuster dir -u https://google.com -w /usr/share/wordlists/common.txt
+
+Let's perform a file/page scan on a target system with the command below. We specify the wordlist with the -w parameter, the target with the -u parameter, and the extensions with the --extensions parameter. The -v parameter is used for verbose output.
+
+: gobuster dir -u 172.20.8.56 -w /root/Desktop/misc/SecLists/Discovery/Web-Content/common.txt --extensions php -v
+
+* fuzz faster u fool
+FFUF (Fuzz Faster U Fool) is a powerful and fast fuzzing tool used during web application penetration testing. Developed in the Go language.
+
+This tool can be used to rapidly test web directories, files, and parameter values for different types of fuzzing tests, revealing potential vulnerabilities.
+
+*Features* ->
+- *speed* : Thanks to the advantages provided by the Go language, FFUF is very fast compared to similar tools.
+- *flexibility* :  It can work with various HTTP methods (GET, POST, etc.) and allows customization of user-agent, cookies, and HTTP headers.
+- *multi-purpose* : Besides directory and file fuzzing, it can also be used to fuzz form data entries in web applications.
+
+*help menu* ->
+#+begin_src sh
+Fuzz Faster U Fool - v1.1.0
+
+HTTP OPTIONS:
+  -H               Header `"Name: Value"`, separated by colon. Multiple -H flags are accepted.
+  -X               HTTP method to use (default: GET)
+  -b               Cookie data `"NAME1=VALUE1; NAME2=VALUE2"` for copy as curl functionality.
+  -d               POST data
+  -ignore-body     Do not fetch the response content. (default: false)
+  -r               Follow redirects (default: false)
+  -recursion       Scan recursively. Only FUZZ keyword is supported, and URL (-u) has to end in it. (default: false)
+  -recursion-depth Maximum recursion depth. (default: 0)
+  -replay-proxy    Replay matched requests using this proxy.
+  -timeout         HTTP request timeout in seconds. (default: 10)
+  -u               Target URL
+  -x               HTTP Proxy URL
+
+GENERAL OPTIONS:
+  -V               Show version information. (default: false)
+  -ac              Automatically calibrate filtering options (default: false)
+  -acc             Custom auto-calibration string. Can be used multiple times. Implies -ac
+  -c               Colorize output. (default: false)
+  -maxtime         Maximum running time in seconds for entire process. (default: 0)
+  -maxtime-job     Maximum running time in seconds per job. (default: 0)
+  -p               Seconds of `delay` between requests, or a range of random delay. For example "0.1" or "0.1-2.0"
+  -s               Do not print additional information (silent mode) (default: false)
+  -sa              Stop on all error cases. Implies -sf and -se. (default: false)
+  -se              Stop on spurious errors (default: false)
+  -sf              Stop when > 95% of responses return 403 Forbidden (default: false)
+  -t               Number of concurrent threads. (default: 40)
+  -v               Verbose output, printing full URL and redirect location (if any) with the results. (default: false)
+#+end_src
+
+*Directory scanning* ->
+Let's perform a directory scan on a target system with the command below. We specify the wordlist with the -w parameter and the target with the -u parameter.
+: ffuf -u http://example.com/FUZZ -w /usr/share/wordlists/common.txt
+
+Note: When using the ffuf tool, the keyword FUZZ should be placed where fuzzing will occur.
+
+*File extension scanning* ->
+With the ~ffuf~ tool, we can scan for various file extensions such as .php, .html, .aspx on a website.
+
+To identify the file extensions used by a web site, there are several methods. One common method is to learn the server type from HTTP responses and speculate on the extension.
+: ffuf -u http://172.20.3.144/indexFUZZ -w /root/Desktop/misc/SecLists/Discovery/Web-Content/web-extensions.txt
+
+ In this scan, we used the web-extensions.txt list as the wordlist and used indexFUZZ as the keyword to systematically test each extension such as "index.html", "index.php".
+
+*File/page scanning* ->
+Assuming that when we performed an extension scan on a website, we discovered that the site's pages have the .html extension. Using this information, let's detect .html files on a web site.
+: ffuf -u http://172.20.3.144/FUZZ.html -w /root/Desktop/misc/SecLists/Discovery/Web-Content/common.txt -v
