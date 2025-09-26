@@ -28,7 +28,6 @@ The OSI (Open Systems Interconnection) model, developed by the International Org
 [[./imgs/osi.png]]
 
 
-
 * TCP/IP Model
 Developed before the OSI model, it has a simpler structure consisting of four layers: Application, Transport, Internet, and Network Access layers.
 

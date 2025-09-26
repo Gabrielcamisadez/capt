@@ -1,0 +1,88 @@
+#+title: more nmap scans
+#+date:    2025-09-26
+#+contact: gabriel
+
+* TCP ACK Scan -sA
+Unlike the other scan types we have discussed previously, a TCP ACK scan does not identify open ports (or even open|filtered ports)
+
+Instead, it is used to map firewall rulesets in a network, determine whether they are stateful, and identify which ports are filtered.
+
+The sent packet only has its ACK flag set. When scanning unfiltered systems, both open and closed ports will return an RST packet.
+ Ports that do not respond or send ICMP error messages are labeled as filtered.
+
+Both open and closed ports will return an RST packet.
+
+* TCP Idle Scan -sI
+Idle Scanning is an ingenious technique developed by Antirez in 1998, which allows a completely blind port scan to be performed.
+-  It allows you to scan ports on a target without sending a single packet from your own IP address.
+
+ This is done using an intermediary machine called a "zombie," through which the scan results are relayed.With this method, intrusion detection systems will see the zombie machine as the attacker.
+
+  This type of scan is particularly used to discover IP-based trust relationships between the target and the zombie.
+
+  Using a suitable zombie computer is crucial for performing an Idle Scan. An ideal zombie is a system that assigns IP ID values sequentially at a global level and generates as little traffic as possible
+
+: nmap -sI zombie-ip target-ip
+
+This scan can fool IDS systems, making it appear as though the zombie machine is the attacker, so careful consideration is necessary.
+- Idle Scanning can also be used to bypass firewalls and IP address-based filtering.
+
+* Timing Templates -T
+Nmap offers six different timing templates to optimize your network scans and adapt to various network conditions.
+
+Nmap offers six different timing templates to optimize your network scans and adapt to various network conditions.
+
+The templates are numbered from 0 to 5 or can be used by their names: paranoid (0), sneaky (1), polite (2), normal (3), aggressive (4), and insane (5).
+
+*Paranoid (-T0) and Sneaky (-T1)* ->
+ These modes are designed to evade IDS (Intrusion Detection Systems) detection. They operate with a very low profile on the network, adding long delays between scans.
+
+*Polite (-T2)* ->
+This mode slows down the scan speed to conserve bandwidth and target machine resources.
+
+*Normal (-T3)* ->
+ This is Nmap's default mode and is used for scans performed without any extra options specified.
+
+*Aggressive (-T4)* ->
+This mode speeds up the scans assuming your network is fast and reliable. It might compromise some accuracy to achieve faster results.
+
+*Insane (-T5)* ->
+This assumes you have an extraordinarily fast network or are willing to risk lower accuracy for the sake of speed.
+
+* Service Version Detection -sV
+*Importance of Service Version Detection* ->
+ Knowing the services and their versions on a network is vital for identifying potential vulnerabilities.
+
+Knowing which services are running on devices within a network and their versions is essential for effective network management and planning.
+
+* Operating System Detection -O
+In this section, we'll focus on Nmap's operating system detection feature, specifically how to use the -O parameter.
+
+OS detection may not always be 100% accurate. Due to various network conditions or specific configurations on the target system
+
+Performing multiple attempts can improve accuracy.
+
+* Nmap Scripting Engine (NSE) -sC --script --script-args
+ It allows users to write and share simple scripts to automate various network tasks.
+
+-  Advanced Version Detection: Some services require two independent queries to be recognized, which is not possible with traditional Nmap version detection. However, such tasks can be easily accomplished with NSE.
+- Vulnerability Detection: When a new vulnerability is discovered, you want to quickly scan your networks for exposed systems before attackers exploit them. NSE scripts can be used to check for vulnerabilities.
+- Backdoor Detection: Some attackers or automated worms leave backdoors for later re-entry. NSE offers advanced capabilities to reliably detect more complex worms and backdoors.
+- Exploiting Vulnerabilities: As a general scripting language, NSE can be used not only to find vulnerabilities but also to exploit them.
+
+  *Script Categories* ->
+
+-  auth
+- fuzzer
+- brute
+- dos
+- external
+- exploit
+- vuln
+- malware
+
+*scanning with vuln category* ->
+: nmap --script=vuln scanme.nmap.org
+
+*http-brute with params* ->
+: nmap --script=http-brute --script-args 'http-brute.path=/admin' scanme.nmap.org

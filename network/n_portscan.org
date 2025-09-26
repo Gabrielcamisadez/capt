@@ -1,0 +1,103 @@
+#+title:  Portscan
+#+author: gabriel
+#+description: Port scanning is fundamental in network security
+
+* states
+
+*Filtered* ->
+This filtering might come from dedicated firewall devices, router rules, or host-based firewall software.
+
+*Unfiltered* ->
+An unfiltered state means that a port is accessible but Nmap cannot determine whether it is open or closed. Only the ACK scan classifies ports into this state.
+
+*Open|Filtered* ->
+Nmap places a port in this state when it cannot determine whether the port is open or filtered. This occurs for scan types where open ports do not respond
+
+*Closed|Filtered* ->
+Nmap uses this state when it cannot determine if a port is closed or filtered.
+
+* fast scan -F
+ A fast scan is a good way to quickly check network security and get a quick overview of devices on the network.
+
+To optimize this process, Nmap offers parameters like ~-F~ and ~--top-ports.~
+
+The ~-F~ parameter enables Nmap's fast scan mode. This includes only the most common ports in the scan process.
+
+* Aggressive scanning -A
+Aggressive scanning is a method used to gather comprehensive information about devices on a network.
+
+This scan mode is enabled with the ~-A~ parameter in Nmap. The ~-A~ parameter conducts a comprehensive scan that allows security experts to perform in-depth analysis on target systems.
+
+This command performs OS detection, service version identification, Nmap script scanning, and traceroute
+
+* TCP SYN (Stealth scan) -sS
+The TCP SYN (Stealth) scan is a frequently used method in network security and port scanning operations.
+
+This method uses the initiation phase of TCP connections but does not complete the connection, hence it is also known as a "half-open scan".
+
+-sS -> This parameter is used by default by Nmap when executed with root or Administrator privileges.  It is preferred due to its speed, stealth, and effectiveness.
+
+SYN Scans can be detected by IDS (Intrusion Detection Systems) and firewalls in high-security networks.
+
+* TCP Connect Scan
+It is especially preferred when SYN Scan is not possible, such as when the user does not have raw packet privileges or when scanning IPv6 networks.
+
+TCP Connect Scan establishes a full TCP connection with the target machine and port using a connection system call provided at the operating system level (connect system call).
+
+ This method is part of the *Berkeley Sockets API*, used by web browsers, P2P clients, and many other networked applications.
+
+ Nmap obtains the status of each connection attempt through this API.
+
+*Establish Connection* Nmap sends a SYN packet to the target ports and receives a SYN/ACK in response.
+
+*Complete Connection*: Unlike SYN Scan, instead of terminating the connection with an RST packet, Nmap completes the connection with an ACK packet.
+
+*Terminate Connection*: After receiving confirmation of the successful connection from the operating system, Nmap immediately terminates the connection. (Typically, TCP connections end with a FIN flag, but Nmap cuts the connection immediately with an RST packet.)
+
+[[./imgs/open_closed_ports.png]]
+
+Does not require user privileges to run; therefore, it can be easily used in any environment. Provides IPv6 support.
+
+ Sends more packets compared to SYN Scan and can be more easily logged by target systems.
+
+* UDP Scan
+UDP scanning is enabled with the -sU option and can be combined with a TCP scan type like SYN scan to check both TCP and UDP protocols in the same scan.
+
+ UDP scanning works by sending a UDP packet to each targeted port.
+
+ *udp states* ->
+- Open: When any UDP response is received from the target port.
+- Open|Filtered: When no response is received from the target port.
+- Closed: When an ICMP port unreachable error is received (type 3, çcode 3).
+- Filtered: When other ICMP unreachable errors are received (type 3, codes 1, 2, 9, 10, or 13).
+
+* TCP FIN Scan
+This scanning method sends TCP FIN packets to the target systems.
+
+Open ports ignore these packets, while closed ports respond with an ICMP port unreachable message.
+
+[[./imgs/fin.png]]
+
+* TCP Null Scan
+NULL scanning sends packets with no flags set in the TCP header.
+Open ports do not respond, while closed ones send back an ICMP port unreachable message.
+
+[[./imgs/null.png]]
+
+* TCP Xmas Scan
+Xmas scanning works by sending packets with the PSH, FIN, and URG flags set.
+Closed ports respond with an ICMP port unreachable message, while responses from open ports are generally not received.
+
+[[./imgs/xmas.png]]
+
+-----
+
+ These scans are designed to bypass certain stateless firewalls and routers. They are also considered sneakier than SYN scans.
+
+ Not all systems adhere strictly to RFC 793. Some systems might send RST responses to these scans even if the port is open, leading to all ports being marked as closed. This method primarily works well on Unix-based systems.
+
+ TCP FIN, NULL, and Xmas scans are powerful techniques used by network security professionals to identify open and closed ports subtly.
+
+These methods are essential tools in a penetration tester's toolkit, especially when bypassing certain firewall protections.
+
+However, caution should be taken as they might not work consistently across all systems.
