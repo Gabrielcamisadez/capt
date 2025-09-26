@@ -57,6 +57,4 @@ The Three-Way Handshake establishes a reliable connection between two devices ov
 *logica addressing* -> Defines unique addresses (IP addresses) for devices on the network.
 
 
-
-
 [[./imgs/ip.png]]

@@ -1,0 +1,5 @@
+#+title: Ports and Protocols
+#+author:gabriel
+
+
+Computers communicate with each other using network protocols, protocols are sets of rules that define how data is exchanged between machines and ensure effective communication
