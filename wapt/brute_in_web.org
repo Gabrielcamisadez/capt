@@ -32,4 +32,17 @@ Attackers attempt to find weaknesses in the target system by trying out guessed 
 
 The directories found can provide insights into the content of the application or sensitive files, potentially opening opportunities for further attacks.
 
-Attackers use dictionary files or tools containing common directory names for directory fuzzing. During the scanning process, they consecutively attempt different paths and filenames to access existing directories or files in the target application.
+Attackers use dictionary files or tools containing common directory names for directory fuzzing. During the scanning process, they consecutively attempt different paths and filenames to access existing directories or files in the target application
+
+* subdomain fuzzing
+Sub-domain fuzzing is a brute-force attack technique aimed at identifying the sub-domains of a primary domain.
+
+Attackers try different sub-domain names for the target domain and verify their existence based on the responses from DNS servers.
+
+[[./imgs/subdomain.png]]
+
+*ffuf* ->
+: ffuf -u https://FUZZ.example.com -w /path/to/wordlist.txt -H "Host: FUZZ.example.com"
+
+*sublist3r*  ->
+: sublist3r -d example.com -o subdomains.txt
