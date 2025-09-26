@@ -54,3 +54,97 @@ In this section, we will examine the security.txt file, which defines the securi
 
 *humans.txt* ->
 While technical configurations and security vulnerabilities are often the focus during the deep analysis and identification of potential weak points in target systems
+
+* DNS enum
+DNS Enumeration is a reconnaissance technique aimed at understanding the surface area of a target system. This technique seeks to obtain various significant pieces of information, such as DNS record types, host names, IP addresses,
+
+*Record Types* ->
+| Record Type	| Description
+| A	| Stands for "Address" and translates a domain name to an IPv4 address.
+| AAAA	| Translates a domain name to an IPv6 address, also known as "quad-A."
+| CNAME	| Short for "Canonical Name," it allows one domain name to redirect to another domain name.
+| MX	| Short for "Mail Exchange," it specifies which server should handle email messages for the domain.
+| NS	| Stands for "Name Server" and indicates which DNS server holds the domain's DNS records.
+| PTR	| Reverse DNS record that maps an IP address to a domain name, often used for email server spam control.
+| SOA	| Short for "Start of Authority," it includes basic information about the DNS zone, such as which server manages the zone.
+| SRV	| A "Service" record indicating which port and IP address a particular service or protocol can be accessed.
+| TXT	| Used for text-based information like SPF (Sender Policy Framework) and DKIM (DomainKeys Identified Mail) for email verification.
+
+*host* ->
+The host command is a simple yet powerful command-line tool for performing DNS queries.
+#+begin_src sh
+[15:55][]~/capt/wapt:main ✗ ✮ host google.com
+google.com has address 172.217.29.110
+google.com has IPv6 address 2800:3f0:4001:835::200e
+google.com mail is handled by 10 smtp.google.com.
+#+end_src
+
+*dig* ->
+dig (Domain Information Groper) is a more advanced tool for querying DNS. It offers advanced query options and output formatting features, making it a preferred choice for system administrators and network professionals.
+#+begin_src sh
+[15:56][]~/capt/wapt:main ✗ ✮ dig google.com
+
+; <<>> DiG 9.18.39-0ubuntu0.24.04.1-Ubuntu <<>> google.com
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 60820
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 65494
+;; QUESTION SECTION:
+;google.com.                    IN      A
+
+;; ANSWER SECTION:
+google.com.             2       IN      A       172.217.29.110
+#+end_src
+
+*Querying A records*
+: dig A google.com
+
+*Querying AAAA records* ->
+: dig AAAA google.com
+
+*Querying MX records* ->
+: dig MX google.com
+
+*Querying NS records* ->
+: dig NS google.com
+
+*Querying SOA records* ->
+: dig SOA google.com
+
+*Querying TXT records* ->
+: dig TXT google.com
+
+*Querying CNAME records* ->
+: dig CNAME google.com
+
+*theHarvester* ->
+theHarvester is an open-source intelligence (OSINT) gathering tool. It collects information such as email addresses, subdomains, IP addresses, and people associated with a target from various sources.
+
+: theharvester --domain kali.org -b all
+
+* subdomain enum
+Subdomain enumeration is crucial for identifying security vulnerabilities, understanding network configurations, and expanding the scope of web application assessments.
+
+*Gobuster* ->
+Gobuster is a scanning tool that allows you to discover hidden directories, files, subdomains, and much more on web servers.
+
+: gobuster dns -d google.com /usr/share/wordlists/common.txt
+
+*gobuster vhost mode* ->
+The VHOST mode of gobuster is designed to discover these virtual hosts and uncover potentially hidden or forgotten websites.
+
+Using the VHOST mode requires a target and a wordlist. This mode fuzzes the HTTP Host header to test for the existence of different sites hosted on the same IP address.
+
+: gobuster vhost -u https://google.com -w /usr/share/wordlists/common.txt
+
+*gobuster dir mode* ->
+ The goal is to uncover hidden files, administrative panels, backup files, and directories potentially containing sensitive information.
+
+: gobuster dir -u https://google.com -w /usr/share/wordlists/common.txt
+
+Let's perform a file/page scan on a target system with the command below. We specify the wordlist with the -w parameter, the target with the -u parameter, and the extensions with the --extensions parameter. The -v parameter is used for verbose output.
+
+: gobuster dir -u 172.20.8.56 -w /root/Desktop/misc/SecLists/Discovery/Web-Content/common.txt --extensions php -v
