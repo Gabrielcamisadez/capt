@@ -1,0 +1,56 @@
+#+title: Info Gathering
+#+author: gabriel
+#+description: Technologies Used in Websites
+
+
+Websites are built using various technologies and tools, including server software, programming languages, frameworks, database systems, and more. Determining the technologies used in a website is crucial for identifying potential security vulnerabilities.
+
+* common cookies indicators
+Web technologies often create specific cookies in browsers. The names of these cookies can include references to the technologies used
+
+| Framework	| Cookie
+| Zope	| zope3
+| CakePHP	| cakephp
+| Kohana	| kohanasession
+| Laravel	| laravel_session
+| phpBB	| phpbb3_
+| WordPress	| wp-settings
+| 1C-Bitrix	| BITRIX_
+| AMPcms	| AMP
+| Django CMS	| django
+| DotNetNuke	| DotNetNukeAnonymous
+| e107	| e107_tz
+
+* html source code
+Technologies used in websites often require the addition of specific HTML tags. These tags may include references to the technologies used.
+
+| Application	| Keyword
+| WordPress	| <meta name="generator" content="WordPress 3.9.2" />
+| phpBB	| <body id="phpbb"
+| Mediawiki	| <meta name="generator" content="MediaWiki 1.21.9" />
+| Joomla	| <meta name="generator" content="Joomla! - Open Source Content Management" />
+| Drupal	| <meta name="Generator" content="Drupal 7 (http://drupal.org)" />
+
+* internet archive
+https://web.archive.org/
+
+- *Research*: Wayback Machine can be used to gather information about old news, articles, and publications.
+- *Security Analysis* : Cybersecurity experts can use this tool to examine the past states of malicious websites or phishing sites.
+- *Lost Content*: When websites are updated or shut down, Wayback Machine can serve as a resource for users who need old content.
+
+* some dorks
+Google Dorks are queries that use Google's advanced search operators to quickly locate specific information.
+
+These operators allow you to search within specific file types, on certain websites, or for pages containing particular text.
+
+https://www.exploit-db.com/google-hacking-database
+
+* meta files
+*robots.txt* ->
+Websites being crawled by bots, search engines, and other automated processes need guidelines on how to access content and which sections to avoid.
+
+*security.txt* ->
+In this section, we will examine the security.txt file, which defines the security policies and contact details of target systems.
+
+*humans.txt* ->
+While technical configurations and security vulnerabilities are often the focus during the deep analysis and identification of potential weak points in target systems
