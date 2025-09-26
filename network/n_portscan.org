@@ -39,7 +39,7 @@ This method uses the initiation phase of TCP connections but does not complete t
 
 SYN Scans can be detected by IDS (Intrusion Detection Systems) and firewalls in high-security networks.
 
-* TCP Connect Scan
+* TCP Connect Scan -sT
 It is especially preferred when SYN Scan is not possible, such as when the user does not have raw packet privileges or when scanning IPv6 networks.
 
 TCP Connect Scan establishes a full TCP connection with the target machine and port using a connection system call provided at the operating system level (connect system call).
@@ -60,7 +60,7 @@ Does not require user privileges to run; therefore, it can be easily used in any
 
  Sends more packets compared to SYN Scan and can be more easily logged by target systems.
 
-* UDP Scan
+* UDP Scan -sU
 UDP scanning is enabled with the -sU option and can be combined with a TCP scan type like SYN scan to check both TCP and UDP protocols in the same scan.
 
  UDP scanning works by sending a UDP packet to each targeted port.
@@ -71,20 +71,20 @@ UDP scanning is enabled with the -sU option and can be combined with a TCP scan 
 - Closed: When an ICMP port unreachable error is received (type 3, çcode 3).
 - Filtered: When other ICMP unreachable errors are received (type 3, codes 1, 2, 9, 10, or 13).
 
-* TCP FIN Scan
+* TCP FIN Scan -sF
 This scanning method sends TCP FIN packets to the target systems.
 
 Open ports ignore these packets, while closed ports respond with an ICMP port unreachable message.
 
 [[./imgs/fin.png]]
 
-* TCP Null Scan
+* TCP Null Scan -sN
 NULL scanning sends packets with no flags set in the TCP header.
 Open ports do not respond, while closed ones send back an ICMP port unreachable message.
 
 [[./imgs/null.png]]
 
-* TCP Xmas Scan
+* TCP Xmas Scan -sX
 Xmas scanning works by sending packets with the PSH, FIN, and URG flags set.
 Closed ports respond with an ICMP port unreachable message, while responses from open ports are generally not received.
 

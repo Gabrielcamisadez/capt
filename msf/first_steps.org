@@ -1,0 +1,120 @@
+#+title: msf start
+#+date:    2025-09-26
+#+contact: gabriel
+
+MSFConsole is a command-line interface that provides access to and the ability to work within the Metasploit Framework.
+
+This interface allows you to perform tasks such as target scanning, exploiting vulnerabilities, and data collection.
+
+* basic commands
+
+*search* ->
+#+begin_src ruby
+-h, --help                      Show help menu
+-I, --ignore                   Ignore if the search has the same name as the single match
+-o, --output <filename>          Save output to a file in csv format
+-S, --filter <filter>            Regex pattern used to filter search results
+-s, --sort-ascending <column>   Sort search results in ascending order by the specified column
+#+end_src
+
+*postgresql example*->
+: search postgresql -s date
+
+*use* ->
+Used to select a module. You can select a module from the list resulting from a search by its number or specify the full path of a module.
+
+*info* ->
+Used to get detailed information about selected module.
+
+*options* ->
+Used to view the configuration of the selected module.
+
+*show* ->
+With the show command, you can view encoders, nops, exploits, payloads, auxiliary modules, post modules, plugins, and options.
+
+*set and get* ->
+Use the set command to change the value of an option.
+
+*unset* ->
+Used to clear the value of an option.
+
+*advanced* ->
+Displays advanced options for the currently active module.
+
+*history* ->
+Shows command history.
+
+*sessions* ->
+Lists active sessions.
+
+*back* ->
+Used to exit the selected module.
+
+* Auxiliary Module
+Auxiliary modules do not exploit the target but perform useful tasks such as:
+
+- Administration: Making changes, operating, or manipulating the target machine.
+- Analysis: Conducting analysis tasks such as password cracking.
+- Data Collection: Collecting, compiling, or organizing data from a single target.
+- Denial of Service: Crashing or slowing down a target machine or service.
+- Scanning: Scanning targets for known vulnerabilities.
+- Server Support: Running servers for common protocols such as SMB, FTP.
+
+*application scraping* ->
+auxiliary */scanner/http/scraper* module in MSFConsole to find what is written between the <title></title> tags on a webpage running on port 80 of the target system.
+
+*set https* ->
+: set SSL true
+
+: set RPORT 443
+
+* Exploits
+The exploit module contains the necessary code to test and exploit vulnerabilities in systems. Exploit modules require a vulnerable target.
+
+: search type:exploit supervisor
+
+Exploit modules usually require the following options to be configured ->
+
+- RHOST -> Remote Target
+- LHOST -> Listening Machine (usually own machine)
+- PAYLOAD -> The code to be executed
+- RPORT
+- TARGETURI
+
+* Exploitation
+We can use the ~check~ command to verify whether the exploit will work without actually running it. When we ran the ~check~ command, we saw that the target is exploitable.
+
+Payload modules are stored in the modules/payloads/{singles,stages,stagers}/<platform> directory.
+
+*sinlges* ->
+Single payloads are self-sufficient and completely independent. A single payload can be something as simple as adding a user to the target system or running calc.exe.
+
+*stagers* ->
+Stagers are intermediate programs that create a network connection between the attacker and the target and are designed to be small and reliable, moving to the next stage
+
+Stagers allow us to start with a small payload to load a larger and more functional payload.
+
+*stages* ->
+Stages are the payload components downloaded by stager modules. Various payload stages offer advanced features that are not limited by size, such as meterpreter and VNC Injection.
+
+: show payloads
+
+* Generating Payloads
+uring exploit development, you need to generate shellcode for use in your exploit. In Metasploit, payloads can be generated from within msfconsole.
+
+ We can use commands like ~generate~, ~pry~, and reload~ once a specific payload is selected.
+
+ *select payload*
+: use payload/linux/x64/shell_bind_tcp
+
+#+begin_src sh
+generate -h
+
+ -b   The list of characters to avoid example: '\x00\xff'
+    -E   Force encoding
+    -e   The encoder to use
+    -f   Output format: base32,base64,bash,c,csharp,dw,
+#+end_src
+
+*example* ->
+: generate -f python LHOST=127.0.0.1
