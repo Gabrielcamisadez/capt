@@ -10,7 +10,7 @@ With the scan we'll perform, we will check whether different subdomains exist, w
 In the SecLists repository, there is a dedicated section for sub-domain wordlists composed of commonly used words for subdomains.
 
 *example* ->
-: ffuf -w /root/Desktop/misc/SecLists/Discovery/DNS/subdomains-top1million-5000.txt -u https://FUZZ.google.com/
+: ffuf -w /root/Desktop/misc/SecLists/Discovery/DNS/subdomains-top1million-5000.txt -u https://FUZZ.google.com/FUZZ
 
 * ffuf vhost fuzzing
 In the previous section, we saw how we could fuzz public subdomains using public DNS records. However, the same method doesn't work when we're trying to fuzz subdomains that don't have a public DNS record.
