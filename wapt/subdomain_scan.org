@@ -7,6 +7,8 @@ Subdomain scanning is an important part of the penetration testing process for a
 
 With subdomain scanning, penetration testers can identify potential security vulnerabilities, information leaks, and sensitive points such as administrative panels.
 
+[[./imgs/domain.png]]
+
 =Some methods ->=
 
 *brute force scanning* ->
