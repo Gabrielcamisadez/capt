@@ -1,0 +1,24 @@
+#+title: Xss Tools
+#+author:gabriel
+
+* XSS Vulnerability Scanning Tools
+Many free and paid tools are available for this purpose, some of which are also open source.
+
+*XSStrike*
+XSStrike is an advanced XSS detection tool developed in Python. It features fuzzing, DOM-based XSS detection, and the ability to evade various filters and barriers.
+
+ https://github.com/s0md3v/XSStrike
+
+*XSSCon*
+XSSCon is a simple and lightweight XSS scanning tool developed in Python. It is run via the command line and is used to test specific URLs for XSS vulnerabilities.
+
+The tool analyzes the input fields on the specified URL and identifies potential security risks by sending requests with different parameters.
+
+ https://github.com/menkrep1337/XSSCon
+
+*BeEF (Browser Exploitation Framework)*
+BeEF is a security tool that operates on web browsers, often used to exploit XSS vulnerabilities. BeEF can control a user's browser through a JavaScript code injected into it.
+
+https://github.com/beefproject/beef
+
+After starting BeEF, access the web interface at http://localhost:3000/ui/panel and log in as an administrator (default password is 'beef'). From there, various modules can be used to perform XSS attacks on browsers.

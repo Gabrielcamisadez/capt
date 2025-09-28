@@ -1,0 +1,176 @@
+
+#+title: XSS types
+#+author: gabriel
+
+
+* reflected xss
+Reflected XSS is a type of attack where a malicious script is sent to a web application and reflected back to the user's browser.
+
+ These attacks usually occur when users are tricked by social engineering tactics into clicking on a link containing the XSS payload.These links trigger an HTTP request containing malicious code, which the server mirrors back in the HTTP response, executing within the user's browser.
+
+ An attacker can craft a URL containing a malicious script that gets reflected by the web application:
+
+ : https://example.com/home?search=<script>alert('XSS')</script>
+
+ A simple XSS payload was entered into the search box to trigger a JavaScript alert displaying the number "1". The payload successfully executed, confirming the vulnerability.
+
+ : ?q=<script>alert(1)</script>
+
+ *html injection* ->
+ : ?q=<h1 style="color:green;">TEST</h1>
+
+*vulnerable php code* ->
+ #+begin_src php
+<?php
+    if (isset($_GET['q'])) {
+        $q = $_GET['q'];
+        echo '<div class="alert alert-danger" role="alert">
+            No Result Found for <b>' . $q . '</b>
+        </div>';
+    }
+?>
+ #+end_src
+
+ This code checks for the presence of a q GET parameter in the URL. If the parameter is present, its value is assigned to the variable $q.
+
+ This variable is then directly echoed into an HTML context within <div> and <b> tags.
+
+* stored xss
+Stored XSS is a type of attack where malicious scripts are stored in a web application's database and then executed in the user's browser whenever the affected page is viewed.
+
+ These attacks usually occur in scenarios where user-provided data is stored, such as messaging apps, forum posts, comments, or user profiles.
+
+The key difference from Reflected XSS is that the payload is stored in the database.
+
+*vulnerable code* ->
+ #+begin_src php
+<?php
+    $messages = $db->query("SELECT * FROM messages");
+    if ($messages) {
+        while ($row = $messages->fetch(PDO::FETCH_ASSOC)) {
+            echo "<div>" . $row['message'] . "</div>";
+        }
+    }
+?>
+ #+end_src
+
+This PHP code snippet fetches messages from the database and directly displays them in an HTML context.This creates an environment susceptible to Stored XSS attacks.
+
+* DOM-basesd XSS
+DOM-based XSS is a type of attack that occurs when a web page's client-side scripts (JavaScript) manipulate the Document Object Model (DOM) in an unsafe way.
+
+The Document Object Model (DOM) is a programming interface that represents the structure, style, and content of a web document
+
+It is a standard for HTML and XML documents and enables dynamic updates to web pages.
+
+The DOM is commonly used with JavaScript. JavaScript uses DOM APIs to dynamically change the structure, style, and content of a web page.
+
+DOM-based XSS involves the manipulation of the DOM by client-side scripts. These vulnerabilities occur not during the initial page load from the server, but during the execution of client-side scripts.
+
+*source code* ->
+#+begin_src javascript
+document.getElementById('output').innerHTML = window.location.hash.substring(1);
+#+end_src
+
+*payload* ->
+#+begin_src text
+https://example.com#<script>alert(1)</script>
+#+end_src
+
+In this example, the fragment part of the URL (#<script>alert(1)</script>) is assigned directly to the innerHTML property of an HTML element, causing the browser to execute the JavaScript.
+
+** eval function to execute XSS
+*source code* ->
+#+begin_src javascript
+window.onload = function() {
+    const productId = new URLSearchParams(window.location.search).get('id');
+    eval('getProduct('+ productId.toString()+')');
+}
+#+end_src
+
+*payload* ->
+: https://example.com/products?id=');alert(1)//
+
+The above code takes the id parameter from the URL and uses the eval() function to call getProduct().
+
+In this payload, the id parameter ends with a closing parenthesis ('), followed by );, ending the current eval() call.
+
+** innerHTML function to execute XSS
+*source code* ->
+#+begin_src javascript
+document.getElementById('content').innerHTML = unescape(location.search.substring(1));
+#+end_src
+
+*payload* ->
+: https://example.com?%3Cscript%3Ealert(1)%3C/script%3E
+
+In this scenario, user input (location.search) is directly assigned to innerHTML, which can execute any hazardous scripts if the input contains malicious code.
+
+* DOM-base XSS Attack
+
+[[./imgs/calc.png]]
+
+It appears to be an application that calculates the area of a triangle based on height and base values. To understand its working principle, values are entered and tested.
+: https://example.com/?height=5&base=12
+
+*Affected COde* ->
+#+begin_src php
+<script>
+  var height = 5;
+  var base = 12;
+  var ans = base * height / 2;
+  document.getElementById("answer").innerHTML = "<b>Area:</b> " + ans;
+</script>
+#+end_src
+
+ it is seen that values assigned to variables height and base are included in the JavaScript within the HTML. This appears to be an exploitable point.
+
+ A payload triggering an alert box displaying the number 1 is entered into the height field.
+ : https://example.com/?height=5; alert(1)&base=12
+
+*Affected Code* ->
+#+begin_src javascript
+<script>
+  var height = 5;alert(1);
+  var base = 12;
+  var ans = base * height / 2;
+  document.getElementById("answer").innerHTML = "<b>Area:</b> " + ans;
+</script>
+#+end_src
+
+
+*vulnerable code* ->
+#+begin_src javascript
+<?php
+    if (isset($_GET['base']) && isset($_GET['height'])) {
+        echo '<div class="alert alert-success" id="answer"></div>';
+        echo '<script>';
+        echo 'var height = ' . $_GET['height'] . ';';
+        echo 'var base = ' . $_GET['base'] . ';';
+        echo 'var ans = base * height / 2;';
+        echo 'document.getElementById("answer").innerHTML = "<b>Area:</b> " + ans;';
+        echo '</script>';
+    }
+?>
+#+end_src
+
+This code snippet directly includes user-provided base and height values into JavaScript code. If these parameters contain malicious content, they can be executed in the browser, causing an XSS attack.
+
+* Blind XSS
+Blind XSS is a type of Cross-Site Scripting (XSS) attack that occurs when a web application processes and stores user input but does not reflect it immediately on the visible/frontend of the application.
+
+In a Blind XSS attack, an attacker provides input containing an XSS payload to the application.
+
+An attacker can utilize the User-Agent header to inject malicious code. If the application logs this header directly and displays it in a web interface, the attack may succeed.
+
+: User-Agent: Mozilla/5.0 <script>alert('XSS')</script>
+
+The Referer HTTP header indicates the URL of the resource from which the request was initiated.
+
+Attackers can inject JavaScript code into this header, which can be executed if viewed by the admin panel without proper sanitization.
+
+: Referer: http://other-site.com<script>alert('XSS')</script>
+
+The X-Forwarded-For header specifies the original IP address from which a request was made.
+
+: X-Forwarded-For: 198.51.100.15 <script>alert('XSS');</script>

