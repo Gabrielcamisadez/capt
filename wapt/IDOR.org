@@ -1,0 +1,67 @@
+#+title: Idor
+#+author:gabriel
+
+* intro
+Insecure Direct Object Reference is a significant security vulnerability that occurs when authorization checks are not properly implemented, allowing malicious users to access data or resources that do not belong to them.
+
+For example, if a transaction number is directly included in a transaction URL and this number can be manipulated to provide a different transaction number, it is possible to access another user's transaction information. A simple example is provided below:
+
+: https://example.com/transaction?id=1234
+
+ This is a classic example of an IDOR vulnerability caused by the developer's failure to implement adequate authorization checks.
+
+ [[./imgs/idor.png]]
+
+ IDOR means that the web application gives a direct reference to an object in the system, such as a transaction number or user ID, but this reference is visible to everyone, directly accessible, and left without any validation or access control.
+
+ Most web applications use simple unique identifiers to mark objects on the server side. For example, a user in a database is typically represented by a unique user ID.
+
+ These IDs are often used in URLs or HTTP requests, making them accessible to attackers. Attackers can change IDs or try random values. If access control is lacking, they can access other users' data.
+
+* common IDOR examples
+** password change forms
+If a URL parameter is used to identify the user in a password change form, attackers can change this ID to reset the password of other accounts.
+: https://example.com/change_password.php?userid=1701
+
+** file access
+URLs containing file names or directory structures can often lead to unauthorized access to filesystem resources.
+: https://example.com/display_file.php?file.txt
+
+An attacker can replace file.txt with directory traversal characters to access a sensitive file, such as /etc/passwd.
+: https://example.com/display_file.php?../../../etc/passwd
+
+** IDOR prevention
+Since IDOR is a logical vulnerability, it cannot always be detected by security scanning tools. Therefore, manual penetration testing and security-focused code reviews are required.
+
+The only way to protect against IDOR is by implementing strict access control checks for all sensitive objects.
+
+Modern frameworks (such as Ruby on Rails, Django) make access control secure by design.  Developing web applications using reliable frameworks and following correct methods is the best practice.
+
+- *access controls* ->
+Validate all object accesses and implement additional authorization requirements for sensitive resources.
+- *authentication* ->
+ Ensure that authenticated users can only access their own data.
+- *remove direct references* ->
+Use secure cryptographic hash values instead of direct use of identifiers.
+
+* Detecting IDOR vulns
+manual review and testing are required for IDORs
+
+** parameter manipulation
+IDOR vulnerabilities often occur through identifier parameters in URLs, POST data, or other client-server communications. Therefore, the following strategies can be applied:
+
+*review and alter url parameters* ->
+Try to access different identities by altering URL parameters on web pages. Test URLs containing identifiable markers such as userId, orderId, fileId.
+: https://example.com/profile?id=1001
+
+: https://example.com/profile?id=1002
+
+If different user profile information can be accessed by changing the id parameter, it indicates an IDOR vulnerability.
+
+*review and manipulate POST parameters* ->
+Test POST parameters sent via forms or APIs. Examine and alter parameter values in data packets sent in JSON, XML, or form-data format.
+#+begin_src python
+{
+  "transaction_id": 4321
+}
+#+end_src
