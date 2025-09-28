@@ -2,7 +2,6 @@
 #+title: XSS types
 #+author: gabriel
 
-
 * reflected xss
 Reflected XSS is a type of attack where a malicious script is sent to a web application and reflected back to the user's browser.
 
@@ -174,3 +173,75 @@ Attackers can inject JavaScript code into this header, which can be executed if 
 The X-Forwarded-For header specifies the original IP address from which a request was made.
 
 : X-Forwarded-For: 198.51.100.15 <script>alert('XSS');</script>
+
+* reflected XSS via html attribute manipulation
+This lab is an example that requires the Reflected XSS vulnerability to be triggered from within an HTML Attribute.
+
+To complete the lab, the parameter "q" in the URL must be given a payload that escapes through the HTML Attribute "value".
+
+Find a way to trigger the XSS vulnerability without disrupting the functioning of the website.
+
+Normal payloads are being reflected at page, but normal payloads which use the <script> tag, has being filtered by something in this web application.
+
+*Filtro da aplicação com a tag script* ->
+#+begin_src sh
+<div class="mb-3"> <input class="form-control" type="text" name="q" placeholder="What is xss?" value=""%3E%3Cscript%3Ealert("oi")%3C/script%3E"> </div>
+#+end_src
+
+Com este outro payload a aplicação acaba executando o XSS ->
+: " autofocus onfocus=alert(1) x="
+
+*response* ->
+#+begin_src sh
+<div class="mb-3"> <input class="form-control" type="text" name="q" placeholder="What is xss?" value="" autofocus onfocus=alert(1) x=""> </div>
+#+end_src
+
+
+* stored XSS in anchor href attribute HTML-Encoded
+This lab is an example that requires the Stored XSS vulnerability to be triggered from within an HTML Attribute.
+
+Find a way to trigger the XSS vulnerability without disrupting the functioning of the website.
+
+Some payloads are tested to no distupt the page, but failed several times with different trys
+
+THis payload works ->
+: javascript:alert(1)
+
+* Manipulating Images with the HTML Href Attribute
+This lab is an example that requires the Reflected XSS vulnerability to be triggered from within an HTML Attribute.
+
+To complete the lab, the "art" parameter in the URL must be given a payload that escapes through the HTML Attribute "href".
+
+Find a way to trigger the XSS vulnerability without disrupting the functioning of the website.
+
+The art? param wait for a filesystem path image, so the onerror can trigger an XSS ->
+: ?art=x" onerror="alert(1)
+
+* Stored XSS via User-Agent (Blind XSS)
+This lab is an example that requires the Stored XSS vulnerability to be triggered using the User Agent value in the HTTP request header and body.
+
+Find a way to trigger the XSS vulnerability without disrupting the functioning of the website.
+
+The User-Agent header contains a string used by a client (usually a web browser) to identify itself to a web server.
+ Attackers can inject JavaScript into this header, and if viewed by the admin panel without filtering, the script is executed upon rendering.
+
+: User-Agent: Mozilla/5.0 <script>alert('XSS')</script>
+
+* Blind XSS via Referer header
+The Referer HTTP header indicates the URL of the resource from which the request was initiated. It is often used for analysis, logging, or security purposes.
+
+Attackers can inject JavaScript code into this header, which can be executed if viewed by the admin panel without proper sanitization.
+
+: Referer: http://other-site.com <script>alert('XSS')</script>
+
+* Bind XSS via X-Forwarded-For header
+The X-Forwarded-For header specifies the original IP address from which a request was made. This header is commonly used by load balancers and proxy servers.
+
+Attackers can inject JavaScript into this header, and if viewed without filtering, for instance, by an admin panel, the script can be executed.
+
+: X-Forwarded-For: 198.51.100.15 <script>alert('XSS');</script>
+
+* Stored XSS Vulnerability via Image Upload-Induced
+This lab is an example that requires the Stored XSS vulnerability to be triggered by the uploaded photo file.
+
+Find a way to trigger the XSS vulnerability without disrupting the functioning of the website.

