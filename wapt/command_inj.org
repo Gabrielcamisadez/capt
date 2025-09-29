@@ -1,0 +1,64 @@
+#+title: Command Injection
+#+author: gabriel
+
+* intro
+Applications can send commands to the operating system using various inputs. These commands are usually used to perform file operations on the server, obtain system information, or communicate with external systems
+
+- An attacker identifies a vulnerable input field.
+- They insert a specially crafted command into this field.
+- The server executes this command as-is, performing the attacker's intended operations.
+
+Command Injection attacks can lead to the following consequences:
+
+*remote code execution (RCE)* ->
+Attackers can execute arbitrary code on the target system remotely. They can install malware or perform any actions they desire on the target system.
+
+*privilege escalation* ->
+Enables attackers to elevate their privileges on the system.
+
+*data breach* ->
+Can result in the leakage of sensitive information. Attackers can access critical data such as database passwords, user credentials, and other sensitive information.
+
+*denial of service* ->
+Can cause service disruptions in the system. Results such as system crashes or service outages can occur, negatively impacting business continuity and user experience.
+
+* commonly used commands in windows
+| Command | Description
+| whoami | Displays the current user account name.
+| hostname | Shows the computer's host name.
+| ipconfig | Provides information about network configuration and status.
+| ping | Sends data to a specific IP address or host name.
+| net user | Provides information about or manages user accounts.
+| systeminfo | Lists general system information about the computer.
+| dir | Lists the contents of a directory.
+| cd | Changes the working directory.
+| type | Displays the content of a file.
+| echo | Displays text or the content of a variable.
+| copy | Copies files or directories.
+| del | Deletes files.
+| findstr | Searches for a specific pattern in text files.
+| powershell | Executes commands in Windows PowerShell.
+| timeout | Waits for a specified time.
+
+* Result-based command injection
+Result-based Command Injection is a vulnerability that occurs when an application executes operating system commands based on user input without proper validation
+
+Result-based Command Injection is a vulnerability that occurs when an application executes operating system commands based on user input without proper validation.
+
+#+begin_src php
+<?php
+
+$user_command = $_GET['cmd'];
+
+system($user_command);
+?>
+#+end_src
+
+This PHP code takes user input from the cmd parameter in a web request and executes it directly on the operating system using the system function, leading to potential security vulnerabilities.
+
+If an attacker adds ?cmd=ls to the URL, they can see the list of files on the server.
+
+* vuln application
+A DNS Lookup application that queries DNS records and displays the result on the screen is being examined.
+
+[[./imgs/dnslook.png]]
