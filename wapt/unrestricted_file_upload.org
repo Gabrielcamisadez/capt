@@ -1,0 +1,55 @@
+#+title: Unrestricted File Upload
+#+author:gabriel
+
+* intro
+Unrestricted File Upload vulnerabilities arise from the insecure development of file upload functionalities in web applications. n modern web applications, file uploading is a crucial function that allows users to attach files or change their profile pictures.
+
+Unrestricted file upload vulnerabilities occur when an application accepts user-uploaded files without adequate security checks. These vulnerabilities typically arise when the file type, size, name, or content is not verified.
+
+- User File Upload: The user uploads a file (e.g., via a profile picture upload form).
+- Insufficient Validation: The uploaded file is not adequately validated in terms of type, size, or content.
+- Acceptance of File: The server accepts the file and saves it to a specific directory.
+- Attacker Control: An attacker can upload a malicious file to execute arbitrary code or access sensitive data on the server.
+
+- Web Applications: Especially forms or functions that allow users to upload files.
+- Content Management Systems (CMS): CMSs that allow users to upload files.
+- File Sharing Platforms: Platforms that allow users to upload and share files.
+- Operating System Scripts: Scripts that allow users to upload and process files.
+
+ *profile picture upload scenario*  ->
+ On a social media platform, users updating their profile pictures can upload a malicious file posing as an image, allowing the attacker to execute commands on the server.
+
+*CV upload scenario* ->
+On a job application portal, users uploading their resumes can upload a malicious file disguised as a PDF, leading to server control being compromised by the attacker.
+
+
+* detecting the vulnerability
+The first step in detecting an Unrestricted File Upload vulnerability is to check if the file upload process is properly restricted. The following indicators can suggest that a file upload function is not secure:
+
+- File type validation is missing or inadequate.
+- Dangerous characters can be found in uploaded file names and paths.
+- File size checks are incomplete or entirely absent.
+- Uploaded files are directly accessible and executable.
+
+** testing methods
+Various testing methods can be used to detect the vulnerability:
+
+*** filetype validation
+- Attempt to upload files of different types (e.g., .jpg, .php, .asp, .exe).
+- Check if the server accepts these files.
+
+*** file content validation
+- Try uploading files with modified contents (e.g., inserting PHP code into a .gif file).
+- Verify how the server processes the content of the uploaded file.
+
+*** MIME type validation
+- Attempt to upload files with altered MIME types (e.g., setting the MIME type of a .php file to image/jpeg).
+- Check if the server accepts these files.
+
+*** File Name and Path Validation
+- Attempt to upload files with dangerous characters in their names and paths (e.g., directory traversal characters like ../../).
+- Verify if the server accepts these files and stores them in the correct directory.
+
+*** file size validation
+- Attempt to upload very large files.
+- Check how the server enforces file size limits and if it accepts large files.

