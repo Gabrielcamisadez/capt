@@ -290,3 +290,96 @@ print(token)
 #+end_src
 
 By following these steps, we can circumvent the JWT verification process and gain unauthorized access.
+
+* jwt header parameter injections
+According to the JWS (JSON Web Signature) specification, only the alg header parameter is mandatory.
+
+However, in practice, JWT headers (also known as JOSE headers) often contain many other parameters. These parameters are particularly appealing to attackers.
+
+- *jwk (JSON Web Key)* ->
+   Provides an embedded JSON object representing the key.
+
+- *jku (JSON Web Key Set URL)* ->
+  Provides a URL pointing to a set of keys.
+
+- *kid (Key ID)* ->
+   Provides an identifier to determine the correct key when multiple keys are used. This parameter may match with the kid depending on the key format.
+
+   The JWS specification states that servers can embed their public keys directly into the token using the jwk header parameter in JWK format.
+
+JWK (JSON Web Key) is a standardized format to represent keys as a JSON object. Here is an example of this format:
+
+#+begin_src javascript
+{
+    "kid": "ed2Nf8sb-sD6ng0-scs5390g-fFD8sfxG",
+    "typ": "JWT",
+    "alg": "RS256",
+    "jwk": {
+        "kty": "RSA",
+        "e": "AQAB",
+        "kid": "ed2Nf8sb-sD6ng0-scs5390g-fFD8sfxG",
+        "n": "yy1wpYmffgXBxhAUJzHHocCuJolwDqql75ZWuCQ_cb33K2vh9m"
+    }
+}
+#+end_src
+
+Ideally, servers should use only a limited list of public keys. However, misconfigured servers might sometimes use any key embedded within the jwk parameter.
+
+** attack steps
+- Install the JWT Editor extension in Burp Suite and navigate to the JWT Editor Keys tab.
+- Generate a new RSA key.
+- Send a request containing a JWT to Burp Repeater.
+- Switch to the JSON Web Token tab and modify the token's payload as desired.
+- Click the Attack button and select Embedded JWK. Choose the RSA key you generated.
+- Send the request to the server and examine how the server responds.
+
+You can also perform this attack manually. However, when adding the jwk header parameter, you need to match the JWT's kid header parameter with the kid parameter of the embedded key.
+
+** injecting self-signed JWTs with the JKU parameter
+ome servers use the jku (JWK Set URL) header parameter instead of the jwk header parameter, allowing a URL reference that contains a set of keys. When verifying the signature, the server retrieves the key from this URL.
+
+A JWK Set is a JSON object containing an array of JWKs representing different keys.
+
+#+begin_src javascript
+{
+    "keys": [
+        {
+            "kty": "RSA",
+            "e": "AQAB",
+            "kid": "75d0ef47-af89-47a9-9061-7c02a610d5ab",
+            "n": "o-yy1wpYmffgXBxhAUJzHHocCuJolwDqql75ZWuCQ_cb33K2vh9mk6GPM9gNN4Y_qTVX67WhsN3JvaFYw-fhvsWQ"
+        },
+        {
+            "kty": "RSA",
+            "e": "AQAB",
+            "kid": "d8fDFo-fS9-faS14a9-ASf99sa-7c1Ad5abA",
+            "n": "fc3f-yy1wpYmffgXBxhAUJzHql79gNNQ_cb33HocCuJolwDqmk6GPM4Y_qTVX67WhsN3JvaFYw-dfg6DH-asAScw"
+        }
+    ]
+}
+#+end_src
+
+These key sets are sometimes publicly served through standard endpoints like /jwks.json or /.well-known/jwks.json.
+
+** injecting self-signed JWTs with the KID parameter
+Servers may use many cryptographic keys to sign various types of data, not just JWTs. Therefore, a JWT header might contain a kid (Key ID) parameter to specify which key should be used for signature verification.
+
+*** attack steps
+If the kid parameter is vulnerable to path traversal, an attacker can trick the server into using an arbitrary file from the file system as the verification key.
+#+begin_src javascript
+{
+    "kid": "../../path/to/file",
+    "typ": "JWT",
+    "alg": "HS256",
+    "k": "asGsADas3421-dfh9DGN-AFDFDbasfd8-anfjkvc"
+}
+#+end_src
+
+This is particularly dangerous if the server also supports JWTs signed with symmetric algorithms. In this case, an attacker can point the kid parameter to a predictable static file and sign the JWT with a secret key matching the content of that file.
+
+If the server stores verification keys in a database, the kid header parameter can also be a vector for SQL injection attacks.
+
+** other interessting JWT header parameters
+*cty (Content Type)*: Indicates the media type of the content in the JWT payload. It's often stripped from the header, but the software library used might still support it. If you find a way to bypass signature verification, try injecting the cty header to change the content type to application/xml or application/x-java-serialized-object.
+
+*x5c (X.509 Certificate Chain)*: Conveys the X.509 public key certificate or certificate chain corresponding to the key used to digitally sign the JWT. This header parameter can be used to inject self-signed certificates
