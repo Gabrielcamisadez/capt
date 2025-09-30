@@ -43,3 +43,22 @@ When a JWT is received, the header and payload are decoded using base64URL encod
 JWTs are widely used in user authentication and authorization processes. When a user logs in, a JWT is created that carries this user's specific authorization information. This token is sent to the server with each request, and the server verifies the token to check the user's permissions.
 
 JWTs are also used to securely share information between different services. For example, in a microservices architecture, one service can securely pass user information to another service via JWT.
+
+* jwt vulns
+While JWTs are a powerful tool for secure information exchange and authentication, they can have various security vulnerabilities if misconfigured or weakened security practices are used.
+
+*signature verification flaws* ->
+
+*weak signature keys* ->
+
+*algorithm confusion* ->
+
+*kid paramater vulnerabilities* ->
+
+*replay attacks* ->
+
+*token lifetime and validity issues* ->
+
+*JWKS spoofing* ->
+
+*attacks using jku and x5u headers* ->
