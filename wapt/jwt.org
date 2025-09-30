@@ -1,2 +1,45 @@
 #+title: Jwt
 #+author: gabriel
+
+JWT (JSON Web Token) is a JSON-encoded piece of information typically used for authentication and information exchange. JWTs are secured by digital signatures, ensuring data integrity and authentication.
+
+The primary purpose of JWTs is to facilitate user authentication and authorization. Additionally, it is possible to securely transfer information between various services.
+
+[[./imgs/jwt.png]]
+
+*header* ->
+The header specifies the type of token and the signing algorithm used. It usually contains a JSON object like this:
+#+begin_src python
+{
+  "alg": "HS256",
+  "typ": "JWT"
+}
+#+end_src
+
+*payload* ->
+ The payload contains the data to be carried inside the token. This data can include information such as user ID and the token's expiration date.
+ #+begin_src python
+{
+  "sub": "1234567890",
+  "name": "John Doe",
+  "iat": 1516239022
+}
+ #+end_src
+
+ *signature* ->
+ The signature is created by combining and signing the header and payload. The signature helps verify that the JWT has not been tampered with and is trustworthy.
+
+** jwt vs other token formats
+JWTs are lighter and easier to use compared to other token formats like SAML (Security Assertion Markup Language) and OAuth. Here are some differences between these formats:
+- JWT: Uses JSON format, making it lighter and more readable. Easily transported within HTTP headers and URLs.
+- SAML: An XML-based format that is more complex. Used in applications with high security and validation requirements.
+- OAuth: An authorization protocol that can be used with JWTs. Commonly used to grant third-party applications access.
+
+  When a JWT is created, the header and payload are defined in JSON format and encoded using base64URL encoding. These two components are then combined and signed using a specified algorithm. The signature is used to verify the integrity and origin of the token.
+
+
+When a JWT is received, the header and payload are decoded using base64URL encoding, and the signature is verified. This validation confirms that the token has not been tampered with and is trustworthy.
+
+JWTs are widely used in user authentication and authorization processes. When a user logs in, a JWT is created that carries this user's specific authorization information. This token is sent to the server with each request, and the server verifies the token to check the user's permissions.
+
+JWTs are also used to securely share information between different services. For example, in a microservices architecture, one service can securely pass user information to another service via JWT.
