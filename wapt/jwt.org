@@ -383,3 +383,6 @@ If the server stores verification keys in a database, the kid header parameter c
 *cty (Content Type)*: Indicates the media type of the content in the JWT payload. It's often stripped from the header, but the software library used might still support it. If you find a way to bypass signature verification, try injecting the cty header to change the content type to application/xml or application/x-java-serialized-object.
 
 *x5c (X.509 Certificate Chain)*: Conveys the X.509 public key certificate or certificate chain corresponding to the key used to digitally sign the JWT. This header parameter can be used to inject self-signed certificates
+
+
+eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJpYXQiOjE3NTkyNDEwMjksImV4cCI6MTc1OTI0NDYyOSwic3ViIjoyfQ.
