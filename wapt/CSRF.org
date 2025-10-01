@@ -261,3 +261,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
 When these three factors come together, an attacker can change the email address of any user logged into vulnerable-site.com with a form hosted on their own site that has an action="https://vulnerable-site.com/change_email.php".
+
+* change password (CSRF) lab
+This lab contains a CSRF vulnerability.
+
+To complete the lab, create a custom URL with the password change endpoint and submit the link via live support at the bottom right. The support staff will run the link you sent and the password will be changed. Login to the admin user's account with the new password.
+
+What is the e-mail address seen when logging into the admin user's account?
+
+*payload at suport channel chat* ->
+: https://kind-heather.europe1.hackviser.space/index.php?new_password=hacked
+
+* money transfer (CSRF)
+This lab contains a CSRF vulnerability.
+
+To complete the lab, create a URL to transfer funds to your account and send the link via live support on the bottom right. The support staff will execute the link you sent and transfer money to your account unintentionally.
+
+What is the transfer ID that appears when money arrives in the user account?
+
+*payload at suport channel chat again* ->
+: https://equal-winter-soldier.europe1.hackviser.space/index.php?transfer_amount=100&receiver=user
