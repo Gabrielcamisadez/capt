@@ -1,0 +1,117 @@
+#+title: Server Side Template Injection
+#+author: gabriel
+
+* intro
+Server-Side Template Injection (SSTI) is a web security vulnerability that occurs when an attacker can inject malicious code into a template engine used on the server side
+
+A Template Engine is a common tool in software development. Its primary purpose is to combine data and a template to generate dynamic content.
+
+Popular template engines include Jinja2 and Mako in the Python world; Twig and Smarty in PHP; and Freemarker and Velocity in Java.
+
+The SSTI vulnerability arises because these engines can perform not only simple variable substitution but also more complex logical operations, such as loops, conditional statements, and even function calls.
+
+*remote code execution* ->
+This is the most dangerous outcome. An attacker can execute arbitrary commands on the server, gaining full control over it.
+
+*sensitive data disclosure* ->
+The attacker can read sensitive files on the server (like /etc/passwd), database connection strings, API keys, or application source code.
+
+*server-side request forgery (SSRF)* ->
+The attacker can use the vulnerable server as a proxy to send requests to other servers or services within the internal network.
+
+*denial of service (DoS)* ->
+The attacker can inject code that forces the template engine into an infinite loop or consumes excessive resources, causing the application or server to become unavailable.
+
+* detecion and identification of the vulnerability
+Detecting a Server-Side Template Injection (SSTI) vulnerability requires a systematic approach.
+
+The process usually begins by injecting a payload containing a simple mathematical operation to check if the server processes the expression.
+
+If the server executes the mathematical expression and returns the result in the response, it is a strong indication of an SSTI vulnerability.
+
+The most reliable way to detect SSTI is to send a payload containing special characters used in template syntax ($, {, }, %, <, >) and observe how the application responds.
+
+*example* ->
+#+begin_src javascript
+GET /profile?name={{7*7}} HTTP/1.1
+Host: vulnerable-site.com
+...
+#+end_src
+
+If response 49, vulnerability are confirmed
+
+* identifying the template engine
+After detecting the vulnerability, the most crucial step is to identify which template engine is being used, as each engine has its own syntax and exploitation techniques.
+
+- Send {{7*7}}. If the response is 49, it's likely Twig or Jinja2. If the response is {{7*7}}, go to Step 2.
+- Send ${7*7}. If the response is 49, it's likely Freemarker. If the response is ${7*7}, go to Step 3.
+- Send <%= 7*7 %>. If the response is 49, it's likely Ruby (ERB) based.
+
+[[./imgs/ssti.png]]
+
+| Payload | Expected Result | Potential Engine(s)
+| {{7*'7'}} | 49 | Twig
+| {{7*'7'}} | 7777777 | Jinja2
+| {{'a'.toUpperCase()}} | A | Jinja2 (Mako, Twig, Nunjucks)
+| ${7*7} | 49 | Freemarker
+| <#assign x="7*7">${x} | 49 | Freemarker
+| @{7*7} | 49 | Razor (.NET)
+| @(7*7) | 49 | Razor (.NET)
+| #{7*7} | 49 | Java (JSF)
+| *{{7*7}}* | *49* | Handlebars
+| {{ this.getClass() }} | Java object name | Java (General)
+| <%= 7 * 7 %> | 49 | Ruby (ERB)
+
+** identifying jinja2
+#+begin_src python
+GET /profile?name={{7*'7'}} HTTP/1.1
+Host: vulnerable-site.com
+...
+#+end_src
+
+*response* ->
+#+begin_src python
+HTTP/1.1 200 OK
+...
+
+<h1>Welcome, 7777777!</h1>
+#+end_src
+
+This response indicates that the engine is most likely Jinja2 (or a similar Python engine). If the engine were Twig, it would have responded with an error to this request because Twig does not allow multiplication between a string and an integer.
+
+In Jinja2, expressions like {{ self }} or in Twig, {{ _self }}, can provide access to the current template object and its associated attributes.
+#+begin_src python
+GET /profile?name={{self}} HTTP/1.1
+Host: vulnerable-site.com
+...
+#+end_src
+
+*response* ->
+#+begin_src python
+HTTP/1.1 200 OK
+...
+
+<h1>Welcome, <TemplateReference {'config': <Config {'SECRET_KEY': 's3cr3t_valu3', 'DATABASE_URI': '...'} >, 'request': <Request 'http://vulnerable-site.com/profile?name=...'>, ...} >!</h1>
+#+end_src
+
+In this response, we see an object named config and sensitive information within it, such as SECRET_KEY.
+
+
+
+* where to look for SSTI vulns
+SSTI vulnerabilities can be found anywhere user input is included in a server-side template. Common places to check include:
+
+*url parameters* ->
+Query strings in GET requests (?param=value).
+
+*POST data* ->
+Data submitted via forms (e.g., username, comment, search fields).
+
+*HTTP Headers* ->
+Headers like User-Agent, Referer, and X-Forwarded-For might be processed for logging or analytics.
+
+*Cookies* ->
+Cookie values used for personalization, such as welcome_message.
+
+*file uploads* ->
+The names of uploaded files might be used in a templated "successfully uploaded" message.
