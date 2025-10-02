@@ -1,0 +1,113 @@
+#+title: Waf Bypass Techniques
+#+author: gabriel
+
+* intro
+WAFs are security tools that protect web applications from various cyber-attacks. Positioned between the application and the internet, WAFs monitor and filter incoming and outgoing HTTP/HTTPS traffic.
+
+- Traffic Inspection: A WAF captures and inspects all incoming requests to the web application. During this inspection, the content, headers, URL, and other parameters of the request are checked.
+- Rule/Policy Application: The WAF applies predefined rules or policies to the incoming request. These rules are designed to protect against common web attacks like SQL injection, XSS, and CSRF.
+- Blocking Malicious Traffic: If the incoming request does not comply with the WAF's rules or is deemed potentially harmful, the WAF blocks the request, preventing it from reaching the web application.
+- Forwarding Legitimate Traffic: If the incoming request complies with the WAF's rules and is considered safe, the WAF forwards the request to the web application.
+
+* detection techniques
+We can trigger WAFs with "fake" attacks to observe their responses. These methods include:
+
+- Creating a Normal GET Request: Send a normal GET request from a browser and record the response headers (especially cookies). This helps identify any custom cookies created by the WAF.
+
+- Sending Requests from the Command Line: Use a tool like cURL to send a request without a user-agent. Observe how the WAF responds to requests without a user-agent.
+
+- Sending GET Requests to Random Open Ports: Send GET requests to random open ports to obtain banners that might reveal the WAF's identity.
+
+- Injecting Malicious Payloads on Login Pages: Inject easily detectable malicious payloads (e.g., " or 1 = 1 --") on login pages and observe the WAF's response.
+
+- Adding Malicious Payloads to Search Bars and Forms: Add noisy malicious payloads like <script>alert()</script> to search bars, contact forms, and other input fields.
+
+- Appending a Fake File to the URL: Add a file path like ../../../etc/passwd as a random parameter to the URL and observe the WAF's response.
+
+- Appending Keywords to the URL: Add keywords like ' OR SLEEP(5) OR ' as a random parameter to the URL and observe the WAF's response.
+
+- Sending Requests with Old Protocols: Send GET requests with old protocols like HTTP/0.9. (HTTP/0.9 does not support POST requests.)
+
+- Monitoring Changes in the Server Header: Some WAFs change the Server header based on different types of interactions. Observe these changes.
+
+* WAFW00F
+WAFW00F is a command-line tool used to detect the presence of a Web Application Firewall (WAF) in front of a web application.
+
+ It is capable of identifying a wide variety of WAFs and is free and open-source.
+
+WAFW00F sends a series of requests to the web server and analyzes the responses to determine the presence and type of WAF.
+
+** operating principle
+*Passive Detection* WAFW00F sends normal requests to the web server and inspects the response headers (especially the server header and cookies). Specific values in these headers can indicate the presence of a WAF.
+
+*Active Detection* WAFW00F sends requests containing known attack patterns to the web server and observes how the WAF responds. Since the WAF tries to block or modify malicious requests, these responses can help identify the presence and type of WAF.
+
+* bypassing techniques
+While there are many techniques, we will focus primarily on the most commonly used ones. When attempting to bypass WAFs, we encounter two main methods:
+
+- Manual bypassing
+- Tool-based bypassing
+
+*manual* ->
+  These techniques generally aim to exploit the weaknesses or misconfigurations of the WAF to deliver malicious traffic to the web application.
+
+   Unlike automated tools, manual bypassing involves the attacker analyzing the WAF and trying specific attack techniques to bypass it.
+
+*regex analysis* ->
+Understanding and bypassing regex rules is considered one of the most effective methods to circumvent WAFs.
+
+WAFs often use regular expressions (regex) to detect malicious traffic while protecting web applications.
+   #+begin_src python
+SecRule ARGS|REQUEST_BODY "@rx (select|union|from|where|having|order\s+by|group\s+by)" \
+  "id:1000, phase:2, deny,status:403, msg:'Potential SQL Injection Attack'"
+
+SecRule ARGS|REQUEST_BODY "@rx \b(information_schema|sysdatabases|pg_sleep|benchmark|sleep\(\d+\)|0x[0-9a-fA-F]+)" \
+  "id:1001, phase:2, deny,status:403, msg:'Potential SQL Injection (Database Metadata/Sleep Functions)'"
+
+SecRule ARGS|REQUEST_BODY "@rx ;|--|\/\*" \
+  "id:1002, phase:2, deny,status:403, msg:'Potential SQL Injection (Multiple Statements/Comments)'"
+
+SecRule ARGS|REQUEST_BODY "@rx \b(and|or|not|\|\||&&|xor)\b" \
+  "id:1003, phase:2, block, msg:'Potential SQL Injection (Boolean Operators)'"
+   #+end_src
+
+** obfuscation and encoding
+Obfuscation and encoding camouflage or alter malicious payloads, making it difficult for WAFs to detect them.
+
+ These techniques complicate WAF's efforts to detect malicious traffic and allow attackers to access the web application. Here are some commonly used obfuscation/encoding techniques:
+
+ *case switching* ->
+ Modify the case of letters in malicious payloads to deceive WAF's string matching algorithms. For example, use "SELECT" as "SeLeCt" or "sElEcT".
+
+ *url encoding* ->
+ Represent characters in malicious payloads using percent (%) signs and hexadecimal codes to make it harder for the WAF to recognize harmful characters. For instance, a space character is encoded as "%20".
+
+ *unicode normalization* ->
+ Use different Unicode representations of the same character. For example, the letter "A" can be coded as both U+0041 and U+FF21. The WAF may not detect all variations.
+
+ *HTML encoding* ->
+ Represent malicious characters as HTML entities. For example, "<" is encoded as "<". This can be used to bypass WAFs in XSS attacks.
+
+ *compound encoding* ->
+Combine different encoding techniques (e.g., URL encoding, HTML encoding) to complicate detection by the WAF. For instance, in a SQL injection attack, some parts of the SQL code can be hidden using URL encoding, and other parts using hexadecimal encoding.
+
+*comments* ->
+Inject comments (/* */ or --) into malicious payloads to prevent the WAF from recognizing them as a single expression
+
+*double encoding* ->
+Encode malicious payloads twice (e.g., first URL encoding, then base64 encoding) to make it harder for the WAF to detect the payload after initial decoding.
+
+*wildcard characters* ->
+Use wildcard characters (*, ?, .) in malicious payloads to bypass pattern matching algorithms of the WAF.
+
+** google dorking
+While creativity is key in manual bypassing, you can also draw inspiration from the ideas of others who have been creative.
+
+Various WAFs have many known bypass methods, which can be easily found with the help of Google dorks.
+: +WAF_NAME waf bypass
+
+To search for specific bypass types
+: "WAF_NAME" +<bypass type> (bypass|exploit)
+
+To search in Exploit DB
+: site:exploit-db.com +WAF_NAME bypass

