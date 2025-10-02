@@ -1,0 +1,329 @@
+#+title: Wordpress
+#+author: gabriel
+
+
+* intro
+WordPress is an open-source software released in 2003 and is one of the world's most popular content management systems (CMS).
+
+The widespread use and popularity of WordPress make it an attractive target for attackers in the digital realm. Therefore, securing WordPress sites is a priority for site owners and administrators.
+
+WordPress security vulnerabilities are commonly found in the following areas:
+
+*themes and plugins* ->
+Third-party developed themes and plugins may contain security vulnerabilities, allowing attackers to infiltrate the site and carry out malicious activities.
+
+*misconfigurations* ->
+ Incorrectly configured file permissions, insecure admin accounts, and weak passwords can make the site vulnerable.
+
+ *outdated software* ->
+ Neglecting updates can leave you vulnerable to newly discovered security issues, providing attackers opportunities to exploit these vulnerabilities.
+
+ *data leaks* ->
+ Poorly configured or insecure database connections can lead to the leakage of sensitive information.
+
+* structure of wordpress
+WordPress is a flexible and powerful content management system that can run on a variety of operating systems.
+
+ This section will specifically discuss the structure of a WordPress installation configured on an Ubuntu Linux web server.
+
+WordPress installation requires a configured LAMP stack. LAMP consists of the following components:
+
+- Linux Operating System
+- Apache HTTP Server
+- MySQL Database
+- PHP Programming Language
+
+  Once these components are installed, WordPress files and directories are downloaded. WordPress files are usually placed in the directory called “webroot,” which is typically located at */var/www/html.*
+
+** wordpress directory structure
+A default WordPress installation has the following directory structure:
+#+begin_src sh
+tree -L 1 /var/www/html
+
+├── index.php
+├── license.txt
+├── readme.html
+├── wp-activate.php
+├── wp-admin
+├── wp-blog-header.php
+├── wp-comments-post.php
+├── wp-config.php
+├── wp-config-sample.php
+├── wp-content
+├── wp-cron.php
+├── wp-includes
+├── wp-links-opml.php
+├── wp-load.php
+├── wp-login.php
+├── wp-mail.php
+├── wp-settings.php
+├── wp-signup.php
+├── wp-trackback.php
+└── xmlrpc.php
+#+end_src
+
+** important wordpress files
+The root directory of WordPress contains important files necessary for the site to function correctly.
+
+- index.php: The main page of WordPress.
+- license.txt: Contains information about the installed WordPress version.
+- wp-activate.php: Used for email activation when setting up a new WordPress site.
+- wp-config.php: Contains the information needed for WordPress to connect to the database. This file includes details such as the database name, username, password, authentication keys, and salts.
+
+  *wp-config.php*
+  This file contains the information necessary for WordPress to connect to the database.
+  #+begin_src php
+<?php
+/** Database name */
+define( 'DB_NAME', 'database_name_here' );
+
+/** MySQL database username */
+define( 'DB_USER', 'username_here' );
+
+/** MySQL database password */
+define( 'DB_PASSWORD', 'password_here' );
+
+/** MySQL server name */
+define( 'DB_HOST', 'localhost' );
+
+/** Authentication keys and salts */
+define( 'AUTH_KEY',         'put your unique phrase here' );
+define( 'SECURE_AUTH_KEY',  'put your unique phrase here' );
+define( 'LOGGED_IN_KEY',    'put your unique phrase here' );
+define( 'NONCE_KEY',        'put your unique phrase here' );
+define( 'AUTH_SALT',        'put your unique phrase here' );
+define( 'SECURE_AUTH_SALT', 'put your unique phrase here' );
+define( 'LOGGED_IN_SALT',   'put your unique phrase here' );
+define( 'NONCE_SALT',       'put your unique phrase here' );
+
+/** WordPress database table prefix */
+$table_prefix = 'wp_';
+
+/** For developers: WordPress debugging mode */
+define( 'WP_DEBUG', false );
+
+/** Absolute path to the WordPress directory */
+if ( ! defined( 'ABSPATH' ) ) {
+    define( 'ABSPATH', __DIR__ . '/' );
+}
+
+/** Sets up WordPress vars and included files */
+require_once ABSPATH . 'wp-settings.php';
+  #+end_src
+
+** important wordpress directories
+*wp-content*: This is the main directory where plugins and themes are stored. It typically contains the uploads subdirectory, where files uploaded to the platform are stored.
+#+begin_src sh
+tree -L 1 /var/www/html/wp-content
+
+├── index.php
+├── plugins
+└── themes
+#+end_src
+
+*wp-includes* ->
+This contains all core files excluding the administrative components and themes. This directory houses foundational files such as certificates, fonts, JavaScript files, and widgets.
+#+begin_src sh
+tree -L 1 /var/www/html/wp-includes
+
+├── theme.php
+├── update.php
+├── user.php
+├── vars.php
+├── version.php
+├── widgets
+├── widgets.php
+├── wlwmanifest.xml
+├── wp-db.php
+└── wp-diff.php
+#+end_src
+
+** wordpress user roles
+A standard WordPress installation has five types of user roles.
+
+| Role | Description
+| Administrator | Has access to all administrative features including adding/deleting users, adding/deleting posts, and editing the source code.
+| Editor | Can publish and manage posts including the posts of other users.
+| Author | Can publish and manage their own posts.
+| Contributor | Can write and manage their own posts but cannot publish them.
+| Subscriber | Can view posts and manage their profiles.
+
+** collecting information on wordpress core version
+Determining the WordPress version is an important first step in understanding a website's security status. The specific version of WordPress being used may have certain vulnerabilities, and knowing this information can provide a significant advantage.
+
+*** meta generator tag
+By default, WordPress adds a meta generator tag in the page's HTML source code. This tag clearly specifies the version of WordPress being used.
+: <meta name="generator" content="WordPress 5.7" />
+
+*** readme.html file
+Typically, the root directory of a WordPress installation contains a file named readme.html. This file provides information about the installed WordPress version.
+: https://<target-website>/readme.html
+
+*** css and javascript files
+Some WordPress themes and plugins may store version information in CSS or JavaScript files.
+: <link rel='stylesheet' href='https://<target-website>/wp-content/themes/twentytwenty/style.css?ver=5.7' />
+
+*** wp-includes/version.php file
+WordPress version information can also be found in the wp-includes/version.php file. By accessing this file, you can determine the version information. For example:
+: $wp_version = '5.7';
+
+*** various tools and commands
+Many security tools can be used to identify the WordPress version. These tools include security scanning tools like WPScan.
+: wpscan --url https://<target-website> --enumerate v
+
+* collecting information on plugins and themes
+WordPress plugins and themes can significantly change the functionality and appearance of a site. However, these components can sometimes contain security vulnerabilities.
+
+** identifying plugins
+WordPress plugins are generally located in the wp-content/plugins directory. Identifying plugins is important for determining security vulnerabilities on a site.
+
+** directory scanning
+You can gather information by brute-force scanning the directories where plugins are located or by visiting the following URL in your browser to list the plugins:
+: https://<target-website>/wp-content/plugin/
+
+** plugin files
+You can identify plugins by checking for the existence of specific plugin files. For instance, you can search for files related to popular plugins:
+#+begin_src php
+https://<target-website>/wp-content/plugins/<PLUGIN-NAME>/readme.txt
+https://<target-website>/wp-content/plugins/<PLUGIN-NAME>/<PLUGIN-NAME>.php
+#+end_src
+
+** automated scanning tools
+Security tools like WPScan can automatically detect plugins. To perform a plugin scan using WPScan, you can use the following command:
+: wpscan --url https://<target-website> --enumerate p
+
+** identifying themes
+WordPress themes are located in the wp-content/themes directory. Identifying themes is important, especially for identifying security vulnerabilities in theme files.
+: https://<target-website>/wp-content/themes/
+
+** theme files
+You can identify themes by checking for the existence of theme files. For instance, you can search for the active theme file or the style file:
+: https://<target-website>/wp-content/themes/<THEME-NAME>/style.css
+
+** page source code examinationi
+You can identify the active theme by examining the HTML source code of the page. Look for references to theme files:
+: <link rel='stylesheet' href='https://<target-website>/wp-content/themes/<THEME-NAME>/style.css' />
+
+** automated scanning tools
+Security tools like WPScan can automatically detect themes. To perform a theme scan using WPScan, you can use the following command:
+: wpscan --url https://<target-website> --enumerate t
+
+* collecting information on users
+Identifying WordPress users is important for an attacker attempting to gain access to a site or planning social engineering attacks.
+
+** user id brute force
+WordPress uses user IDs to identify and manage users and profiles. User IDs are sequential and predictable, so by guessing a user ID, you can reach the associated username.
+
+WordPress uses author archives to list posts by authors. These archives generally have URLs structured as follows:
+#+begin_src php
+https://<target-website>/?author=1
+https://<target-website>/?author=2
+#+end_src
+
+By visiting these URLs, the author's username is usually visible in the URL or the page content. For example:
+: https://<target-website>/author/username/
+
+** xml-rpc API
+WordPress allows various operations using the XML-RPC API. This API can be used to identify usernames.
+
+Once a username is guessed, a POST request can be made to the xmlrpc.php file to verify this information. For example, an XML-RPC request may look like this:
+#+begin_src xml
+<methodCall>
+  <methodName>wp.getUsersBlogs</methodName>
+  <params>
+    <param>
+      <value><string>username</string></value>
+    </param>
+    <param>
+      <value><string>password</string></value>
+    </param>
+  </params>
+</methodCall>
+#+end_src
+
+If the username is correct, WordPress will return a valid response. By capturing the response, you can verify the user's existence.
+
+** wp-json API
+If the username is correct, WordPress will return a valid response. By capturing the response, you can verify the user's existence.
+: https://<target-website>/wp-json/wp/v2/users
+
+This URL can return a list of registered users on the site. The JSON data obtained may include usernames and user IDs.
+
+** login username enum
+The WordPress login page can be used to identify usernames. The error messages provided when entering a correct or incorrect username on the login page can help determine if the username is valid
+
+WordPress's default login page is the wp-login.php file. By examining the error messages given when incorrect usernames or passwords are entered, you can determine if a username is correct. For example:
+
+*when an incorrect username is entered* ->
+: ERROR: Invalid username.
+
+*when a correct username and incorrect password are antered* ->
+: ERROR: The password you entered for the username 'username' is incorrect.
+
+** brute force tools
+Automated tools can be used for username enumeration. Tools like WPScan can perform brute force attacks to identify usernames. To identify usernames using WPScan, the following command can be used:
+: wpscan --url https://<target-website> --enumerate u
+
+* WPScan
+WPScan is a powerful and versatile security tool used to detect vulnerabilities in WordPress sites
+
+Written in the Ruby language, this tool is easily accessible through the command line interface and can also be integrated for automated scans via API services.
+
+- WordPress Version Detection: Automatically determines the version of WordPress being used on the site.
+- Plugin and Theme Enumeration: Identifies installed plugins and themes, determines their versions, and checks for known vulnerabilities.
+- User Enumeration: Can detect usernames on the site.
+- Weak Password Testing: Can test for weak passwords using brute force attacks.
+- Security Vulnerability Scanning: Analyzes basic WordPress security settings and configurations, reporting potential security risks.
+
+*installation* ->
+: gem install wpscan
+
+** usage
+This command performs a standard security scan on the specified WordPress site and reports any potential vulnerabilities.
+: wpscan --url http://example.com
+
+*detection mode* ->
+There are three different detection modes available in WPScan: Passive, Aggressive, and Mixed.
+
+*Passive* ->
+The passive mode performs information-gathering operations with minimal traces and does not make any changes to the target. In this mode, only existing information from the target server is collected.
+: wpscan --url https://example.com --detection-mode passive
+
+*Aggressive* ->
+The aggressive mode performs more extensive and intensive information-gathering operations. In this mode, more requests are sent to the target, potentially yielding more information.
+: wpscan --url https://example.com --detection-mode aggressive
+
+*Mixed* ->
+he mixed mode is a combination of passive and aggressive modes. It collects existing information from the target server and also sends additional requests to gather more information.
+: wpscan --url https://example.com --detection-mode mixed
+
+** collecting information about plugins
+
+*vp - vulnerable plugins*  ->
+Collects information about vulnerable plugins. This parameter scans for known vulnerabilities in the plugins used on the site.
+: wpscan --url https://example.com --enumerate vp
+
+*ap - all plugins* ->
+Collects information about all plugins. This parameter scans for all plugins installed on the site.
+: wpscan --url https://example.com --enumerate ap
+
+*p - popular plugins* ->
+: wpscan --url https://example.com --enumerate p
+
+** collecting information about themes
+The parameters that can be used to gather information about themes with WPScan are as follows.
+
+*vt - vulnerable themes* ->
+Collects information about vulnerable themes. This parameter lists known vulnerabilities in the themes used on the site.
+: wpscan --url https://example.com --enumerate vt
+
+*at - all themes* ->
+Collects information about all themes. This parameter lists all themes installed on the site.
+: wpscan --url https://example.com --enumerate at
+
+*t - popular themes* ->
+: wpscan --url https://example.com --enumerate t
+
+** collecting information about users
+WPScan can also be used to gather information about the users on a site. This operation is performed to identify usernames and provide information for potential brute force attacks.
+: wpscan --url https://example.com --enumerate u
