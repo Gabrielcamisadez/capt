@@ -7,3 +7,7 @@ We have noticed that there are some employees in our company who are not suffici
 The site claims that it does not store the uploaded files. However, we have to make sure that this is the case. If any of our company's files have been compromised in this process, we need to determine what information may be at risk. You are expected to guide us through this critical process. We rely on your expertise.
 
 Good luck!
+
+* exifttool 12.23 exploit at exploit.db
+
+run the Python script to exploit an image.jpg malicious file
