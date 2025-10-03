@@ -1,0 +1,9 @@
+#+title: Secureless
+#+author: gabriel
+
+* intro
+You have a mission regarding the hacker group "Melody Hacker Team", whose activity has increased significantly recently. This group is known for unauthorized server access, DDoS and malware attacks.
+
+Your objective is to gather detailed information about the group's activities and possible new cyber attack plans. You have access to the group's website. We trust you will succeed in this challenging task.
+
+We wish you success!
