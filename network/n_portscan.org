@@ -92,7 +92,9 @@ Closed ports respond with an ICMP port unreachable message, while responses from
 
 -----
 
- These scans are designed to bypass certain stateless firewalls and routers. They are also considered sneakier than SYN scans.
+ These scans are designed to bypass cer
+
+ tain stateless firewalls and routers. They are also considered sneakier than SYN scans.
 
  Not all systems adhere strictly to RFC 793. Some systems might send RST responses to these scans even if the port is open, leading to all ports being marked as closed. This method primarily works well on Unix-based systems.
 

