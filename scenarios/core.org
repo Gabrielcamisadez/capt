@@ -67,6 +67,11 @@ o bypass no filtro é bem sucedido e a vuln command injection foi encontrada ->
 *to get bash* ->
 : python3 -c 'import pty; pty.spawn("/bin/bash")'
 
+*CTRL - Z no reverse shell e*->
+: stty raw -echo; fg
+
+
+
 *xterm para funcionar corretamente* ->
 : export TERM=xterm
 
