@@ -1,0 +1,30 @@
+#+title: Freelancer
+#+author: gabriel
+
+William, as a freelance developer, showcases his completed projects and tasks in his portfolio. Your company is considering working with William; however, before initiating the collaboration, you want to ensure that the developer is reliable and writes secure code.
+
+* initial scan
+#+begin_src sh
+gobuster dir --url http://williamtaylor.hv -w /usr/share/wordlist
+s/SecLists/Discovery/Web-Content/raft-medium-directories.txt
+#+end_src
+
+#+begin_src sh
+[+] Url:                     http://williamtaylor.hv
+[+] Method:                  GET
+[+] Threads:                 10
+[+] Wordlist:                /usr/share/wordlists/SecLists/Discovery/Web-Content/raft-med
+ium-directories.txt
+[+] Negative Status codes:   404
+[+] User Agent:              gobuster/3.6
+[+] Timeout:                 10s
+===============================================================
+Starting gobuster in directory enumeration mode
+===============================================================
+/js                   (Status: 301) [Size: 317] [--> http://williamtaylor.hv/js/]
+/css                  (Status: 301) [Size: 318] [--> http://williamtaylor.hv/css/]
+/img                  (Status: 301) [Size: 318] [--> http://williamtaylor.hv/img/]
+/projects             (Status: 301) [Size: 323] [--> http://williamtaylor.hv/projects/]
+/vendor               (Status: 301) [Size: 321] [--> http://williamtaylor.hv/vendor/]
+/server-status        (Status: 403) [Size: 281]
+#+end_src
