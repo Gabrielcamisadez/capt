@@ -1,0 +1,61 @@
+#+title: Carp
+#+author: gabriel
+
+* intro
+An exciting mission awaits you!
+
+We have received a security notification from one of the companies we provide services for that there has been a phishing attack against the company. We only have the phishing email sent by the attackers. We need to identify who the attackers are and which employees' information was stolen.
+
+We are looking for your help in conducting this investigation. We trust you to complete the task in the best way possible!
+
+Good luck!
+
+---
+
+Email content:
+
+Hello,
+
+We would like to share an important matter regarding your account. The IT department at our company has detected abnormal activity on your account. In order to ensure the security of your account, please complete the verification process by logging into your account via the link below: <TARGET_LINK>
+
+You have 24 hours for this verification process. If you do not complete the verification process within the specified period, your account will be temporarily frozen.
+
+If you have any questions or concerns, you can contact our IT support team.
+
+Best regards,
+
+IT Unit
+
+* init scans
+#+begin_src sh
+[0:15][]~ ✮ ffuf -u "http://officemailcentral.hv/FUZZ" -w /usr/share/wordlists/SecLists/Discovery/
+Web-Content/raft-large-directories.txt
+
+        /'___\  /'___\           /'___\
+       /\ \__/ /\ \__/  __  __  /\ \__/
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/
+         \ \_\   \ \_\  \ \____/  \ \_\
+          \/_/    \/_/   \/___/    \/_/
+
+       v2.1.0-dev
+________________________________________________
+
+ :: Method           : GET
+ :: URL              : http://officemailcentral.hv/FUZZ
+ :: Wordlist         : FUZZ: /usr/share/wordlists/SecLists/Discovery/Web-Content/raft-large-direct
+ories.txt
+ :: Follow redirects : false
+ :: Calibration      : false
+ :: Timeout          : 10
+ :: Threads          : 40
+ :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
+________________________________________________
+
+assets                  [Status: 301, Size: 329, Words: 20, Lines: 10, Duration: 217ms]
+database                [Status: 301, Size: 331, Words: 20, Lines: 10, Duration: 216ms]
+webadmin                [Status: 301, Size: 331, Words: 20, Lines: 10, Duration: 217ms]
+server-status           [Status: 403, Size: 285, Words: 20, Lines: 10, Duration: 224ms]
+#+end_src
+
+: /database/connect.php

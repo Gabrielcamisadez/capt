@@ -28,3 +28,24 @@ Starting gobuster in directory enumeration mode
 /vendor               (Status: 301) [Size: 321] [--> http://williamtaylor.hv/vendor/]
 /server-status        (Status: 403) [Size: 281]
 #+end_src
+
+*at /projects* ->
+#+begin_src sh
+[23:41][]~ ✮ ffuf -u http://williamtaylor.hv/projects/FUZZ -w /usr/share/wordlists/S
+ecLists/Discovery/Web-Content/raft-large-files.txt -s
+.htaccess
+.
+.html
+.php
+.htpasswd
+.htm
+.htpasswds
+.htgroup
+wp-forum.phps
+.htaccess.bak
+.htuser
+.ht
+.htc
+.htaccess.old
+.htacess
+#+end_src
