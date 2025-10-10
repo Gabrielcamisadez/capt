@@ -1,0 +1,7 @@
+#+title: Void
+#+author: gabriel
+
+* intro
+According to our security analysts' reports, our critical systems have been subjected to scans from a suspicious IP address for some time. Your mission is to identify the owner of this IP address and the associated server, and to uncover what the attackers are doing. Good luck!
+
+* initial scan
