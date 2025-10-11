@@ -1,0 +1,9 @@
+#+title: Cyber Vault
+#+author: gabriel
+
+* intro
+In light of the recent increase in cyber-attacks around the world, as a cybersecurity firm, you have been assigned to perform penetration testing on the systems of a company called ValkyrieDigital.
+
+Your task is to perform a vulnerability scan on the password management software used by the company and report your findings.
+
+Good luck!
