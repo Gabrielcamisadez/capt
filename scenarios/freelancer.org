@@ -49,3 +49,18 @@ wp-forum.phps
 .htaccess.old
 .htacess
 #+end_src
+
+*command line php here* ->
+http://williamtaylor.hv/devtools/
+
+
+*database usage after found the credentials in config.php file* ->
+#+begin_src sh
+echo 'USE mysql; SELECT User,Password FROM user;' | mysql -u william -pwt-devx-1
+#+end_src
+
+*ssh login* ->
+: ssh william@williamtaylor.hv
+
+
+: william:wt-devx-1
