@@ -1,0 +1,65 @@
+#+title: Coffe Shop
+#+author: gabriel
+
+* intro
+We are on the trail of a mysterious hacker. This hacker operates anonymously on social media and one particular post caught our attention:
+
+"I can't start my day without the coffee latte I order every morning #LoreCoffee"
+
+This post reveals the hacker's daily habits and his fondness for Lore Coffee. Using this information, we have an opportunity to discover his true identity. Your task is to hack into Lore Coffee's online ordering system and administration page to reveal the hacker's identity. This will require you to identify vulnerabilities in the cafe's digital infrastructure, exploit them in some way, and identify the hacker through the order history.
+
+Good luck!
+
+* initial scan
+#+begin_src sh
+200      GET        5l      351w    19188c http://lorecoffee.hv/static/public/assets/js/
+popper.min.js
+200      GET     2752l     5063w    41439c http://lorecoffee.hv/static/public/assets/css
+/main.css
+200      GET      333l     1628w   138241c http://lorecoffee.hv/static/public/assets/img
+/g5.jpg
+200      GET      264l     1746w   151766c http://lorecoffee.hv/static/public/assets/img
+/b1.jpg
+200      GET        4l     1338w    85577c http://lorecoffee.hv/static/public/assets/js/
+vendor/jquery-2.2.4.min.js
+200      GET      510l     2631w   215521c http://lorecoffee.hv/static/public/assets/img
+/g4.jpg
+200      GET        1l       10w     6160c http://lorecoffee.hv/static/.DS_Store
+200      GET      423l     2008w   167693c http://lorecoffee.hv/static/public/assets/img
+/g1.jpg
+200      GET        5l        8w      109c http://lorecoffee.hv/static/
+301      GET        0l        0w        0c http://lorecoffee.hv/static/private => privat
+e/
+200      GET     8070l    15251w   149340c http://lorecoffee.hv/static/public/assets/css
+/bootstrap.css
+200      GET      918l     4976w   441507c http://lorecoffee.hv/static/public/assets/img
+/g3.jpg
+200      GET      464l     1425w    17595c http://lorecoffee.hv/
+301      GET        0l        0w        0c http://lorecoffee.hv/static/public => public/
+301      GET        0l        0w        0c http://lorecoffee.hv/static/public/assets =>
+assets/
+301      GET        0l        0w        0c http://lorecoffee.hv/static/public/assets/js
+=> js/
+301      GET        0l        0w        0c http://lorecoffee.hv/static/public/assets/css
+ => css/
+301      GET        0l        0w        0c http://lorecoffee.hv/static/public/assets/img
+ => img/
+303      GET        2l        3w       44c http://lorecoffee.hv/adminpanel/ => http://lorecoffee.hv/adminpanel/login
+200      GET       57l      129w     2086c http://lorecoffee.hv/adminpanel/login
+303      GET        2l        3w       44c http://lorecoffee.hv/adminpanel => http://lorecoffee.hv/adminpanel/login
+403      GET        9l       28w      278c http://lorecoffee.hv/server-status
+[################>---] - 2m    126091/150053  21s     found:38      errors:15995
+🚨 Caught ctrl+c 🚨 saving scan state to ferox-http_lorecoffee_hv_-1760230327.state ...
+[################>---] - 2m    126102/150053  21s     found:38      errors:15995
+[#################>--] - 2m     25523/30000   216/s   http://lorecoffee.hv/
+[################>---] - 2m     25371/30000   219/s   http://lorecoffee.hv/static/
+[################>---] - 2m     25116/30000   218/s   http://lorecoffee.hv/static/public/
+[################>---] - 2m     25143/30000   219/s   http://lorecoffee.hv/static/private/
+[################>---] - 2m     24860/30000   218/s   http://lorecoffee.hv/static/public/assets/
+#+end_src
+
+
+*admin page login* ->
+#+begin_src sh
+http://lorecoffee.hv/adminpanel/login
+#+end_src
