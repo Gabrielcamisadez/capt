@@ -1,0 +1,21 @@
+#+title: Chemy
+#+author: gabriel
+
+* intro
+Our Cyber Incident Response team has received information about illegal sales on a pharmaceutical sales site. The site administrator is reportedly selling banned drugs to different countries, and we believe that contracted companies and customers are hosted on the server. Your task is to infiltrate the server and collect information about the contracted companies and the people associated with them.
+
+* initial scan
+
+
+
+#+begin_src sh feroxbuster
+🚨 Caught ctrl+c 🚨 saving scan state to ferox-http_chemystore_hv-1760364589.state ...
+[#######>------------] - 2m     59089/150015  3m      found:8       errors:1175
+[########>-----------] - 2m     12813/30000   96/s    http://chemystore.hv/
+[########>-----------] - 2m     12761/30000   96/s    http://chemystore.hv/images/
+[#########>----------] - 2m     14139/30000   108/s   http://chemystore.hv/uploads/
+[######>-------------] - 2m     10001/30000   91/s    http://chemystore.hv/adminpanel/
+[######>-------------] - 2m      9333/30000   88/s    http://chemystore.hv/connection/
+#+end_src
+
+: http://chemystore.hv/connection/dbconnect.php
