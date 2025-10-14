@@ -18,10 +18,13 @@ A hacker group organises cyber attacks against companies and offers the sensitiv
 
 Is possible to bypass the login page with the /webadmin/ page, when we access /webadmin/ we are redirect to the /webadmin/login
 
-If we ca
+With Burp, if we modify the response status code from 302 to 200, we bypass the login page. Create a match
+
+
 
 *admin email* ->
 : zerotrace@secretmail.hv
+
 
 
 *User agent injection ->*
