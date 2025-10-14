@@ -18,7 +18,14 @@ A hacker group organises cyber attacks against companies and offers the sensitiv
 
 Is possible to bypass the login page with the /webadmin/ page, when we access /webadmin/ we are redirect to the /webadmin/login
 
-With Burp, if we modify the response status code from 302 to 200, we bypass the login page. Create a match
+With Burp, if we modify the response status code from 302 to 200, we bypass the login page. But this is possible with proxy intercet, where we can modify the response before reach the browser.
+
+To modify and continue with the modified response, we need to create a match and replace rule on proxy settings ->
+
+Create an rule where all 302 Response headers go to 200
+
+
+
 
 
 
