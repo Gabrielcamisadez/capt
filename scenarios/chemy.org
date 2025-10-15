@@ -6,8 +6,6 @@ Our Cyber Incident Response team has received information about illegal sales on
 
 * initial scan
 
-
-
 #+begin_src sh feroxbuster
 🚨 Caught ctrl+c 🚨 saving scan state to ferox-http_chemystore_hv-1760364589.state ...
 [#######>------------] - 2m     59089/150015  3m      found:8       errors:1175
