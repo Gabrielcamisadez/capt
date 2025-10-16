@@ -58,7 +58,6 @@ assets/
 [################>---] - 2m     24860/30000   218/s   http://lorecoffee.hv/static/public/assets/
 #+end_src
 
-
 *admin page login* ->
 #+begin_src sh
 http://lorecoffee.hv/adminpanel/login
