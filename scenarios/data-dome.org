@@ -116,7 +116,6 @@ GET / HTTP/1.0
 Host: 10.8.58.60:8888
 #+end_src
 
-
 -----
 
 Com este payload estou recebendo a request em meu python server, preciso evoluir isto para algum tipo de shell, para então conseguir o reverse shell
