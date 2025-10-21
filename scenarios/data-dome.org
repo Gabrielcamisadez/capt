@@ -1,5 +1,5 @@
 #+title: Data Dome
-
+#+author: gabriel
 
 * intro
 According to information from our cyber security team, the computer of the manager of an organization we serve was infected with malware. Our malware analysis team identified a malware known as 'Stealer' malware. In addition, we found an IP address through which the malware was communicating. Your task is to collect information about the malware gang from this IP address.
