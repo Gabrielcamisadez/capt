@@ -7,3 +7,16 @@ In light of the recent increase in cyber-attacks around the world, as a cybersec
 Your task is to perform a vulnerability scan on the password management software used by the company and report your findings.
 
 Good luck!
+
+* initial scans
+Directory fuzzing ->
+#+begin_src sh
+[12:54][]~ ✮ ffuf -u "http://passwise.valkyriedigital.hv/FUZZ" -w SecLists/Discovery/Web-Content/raft-large-
+directories.txt -fc 302 -s
+images
+js
+css
+login
+Login
+font
+#+end_src
