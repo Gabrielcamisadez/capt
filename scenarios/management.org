@@ -241,7 +241,7 @@ rescue Docopt::Exit => e
 end
 #+end_src
 
-#+begin_src sh
+#+begin_src ruby
 [22:45][]~ ✮ ruby l.rb http://172.20.17.17
 Users
 [411] admin (phantomtech) - admin@phantomtechmarket.hv - Super Users
