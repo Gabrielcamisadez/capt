@@ -294,3 +294,86 @@ mysql> show databases;
 
 mysql>
 #+end_src
+
+
+** database tables
+
+#+begin_src sql
+mysql> show tables;
++--------------------------------+
+| Tables_in_joomla               |
++--------------------------------+
+| joomla_action_log_config       |
+| joomla_action_logs             |
+| joomla_action_logs_extensions  |
+| joomla_action_logs_users       |
+| joomla_assets                  |
+| joomla_associations            |
+| joomla_banner_clients          |
+| joomla_banner_tracks           |
+| joomla_banners                 |
+| joomla_categories              |
+| joomla_contact_details         |
+| joomla_content                 |
+| joomla_content_frontpage       |
+| joomla_content_rating          |
+| joomla_content_types           |
+| joomla_contentitem_tag_map     |
+| joomla_extensions              |
+| joomla_fields                  |
+| joomla_fields_categories       |
+| joomla_fields_groups           |
+| joomla_fields_values           |
+| joomla_finder_filters          |
+| joomla_finder_links            |
+| joomla_finder_links_terms      |
+| joomla_finder_logging          |
+| joomla_finder_taxonomy         |
+| joomla_finder_taxonomy_map     |
+| joomla_finder_terms            |
+| joomla_finder_terms_common     |
+| joomla_finder_tokens           |
+| joomla_finder_tokens_aggregate |
+| joomla_finder_types            |
+| joomla_history                 |
+| joomla_languages               |
+| joomla_mail_templates          |
+| joomla_menu                    |
+| joomla_menu_types              |
+| joomla_messages                |
+| joomla_messages_cfg            |
+| joomla_modules                 |
+| joomla_modules_menu            |
+| joomla_newsfeeds               |
+| joomla_overrider               |
+| joomla_postinstall_messages    |
+| joomla_privacy_consents        |
+| joomla_privacy_requests        |
+| joomla_redirect_links          |
+| joomla_scheduler_tasks         |
+| joomla_schemas                 |
+| joomla_session                 |
+| joomla_tags                    |
+| joomla_template_overrides      |
+| joomla_template_styles         |
+| joomla_ucm_base                |
+| joomla_ucm_content             |
+| joomla_update_sites            |
+| joomla_update_sites_extensions |
+| joomla_updates                 |
+| joomla_user_keys               |
+| joomla_user_mfa                |
+| joomla_user_notes              |
+| joomla_user_profiles           |
+| joomla_user_usergroup_map      |
+| joomla_usergroups              |
+| joomla_users                   |
+| joomla_viewlevels              |
+| joomla_webauthn_credentials    |
+| joomla_workflow_associations   |
+| joomla_workflow_stages         |
+| joomla_workflow_transitions    |
+| joomla_workflows               |
++--------------------------------+
+71 rows in set (0,22 sec)
+#+end_src
