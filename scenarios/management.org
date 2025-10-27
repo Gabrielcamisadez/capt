@@ -259,6 +259,7 @@ DB host: localhost
 DB user: joomla
 DB password: bL3zgeLGXk8eYP3mtshtUgtc
 DB name: joomla
+
 DB prefix: joomla_
 DB encryption 0
 #+end_src

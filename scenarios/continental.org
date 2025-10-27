@@ -80,3 +80,5 @@ PORT      STATE SERVICE REASON         VERSION
 
 
 jtippin4y@unknownmail.com
+
+https://hackviser.com/tactics/pentesting/web/xxe
