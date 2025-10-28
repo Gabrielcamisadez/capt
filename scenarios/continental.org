@@ -17,6 +17,32 @@ I am sure you will find this email address very useful.
 Good luck!
 
 * initial scan
+*mongoDB* ->
+#+begin_src sh
+Scanning reservia.hv (172.20.4.36) [65535 ports]
+Discovered open port 80/tcp on 172.20.4.36
+Discovered open port 22/tcp on 172.20.4.36
+Discovered open port 27017/tcp on 172.20.4.36
+#+end_src
+
+#+begin_src sh nmap mongodb-info script
+[22:46][]~ ✮ nmap -p 27017 --script mongodb-info reservia.hv
+Starting Nmap 7.98 ( https://nmap.org ) at 2025-10-27 22:46 -0300
+Nmap scan report for reservia.hv (172.20.4.36)
+Host is up (0.22s latency).
+
+PORT      STATE SERVICE
+27017/tcp open  mongodb
+| mongodb-info:
+|   MongoDB Build info
+|     sysInfo = deprecated
+|     version = 4.4.15
+|     buildEnvironment
+|       ccflags = -fno-omit-frame-pointer -fno-strict-aliasing -fasynchronous-unwind-tables -ggdb -pthread -Wall -Wsi
+#+end_src
+
+
+
 #+begin_src sh links
 http://reservia.hv/js/aos.js
 http://reservia.hv/css/style.css
@@ -78,7 +104,26 @@ PORT      STATE SERVICE REASON         VERSION
 27017/tcp open  mongod? syn-ack ttl 63
 #+end_src
 
-
 jtippin4y@unknownmail.com
+
+*PDF Creation* ->
+#+begin_src sh
+POST /hotels/647f0d73a9108a79b01c63b5 HTTP/1.1
+Host: reservia.hv
+Content-Length: 151
+Cache-Control: max-age=0
+Origin: http://reservia.hv
+Content-Type: application/x-www-form-urlencoded
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Referer: http://reservia.hv/hotels/647f0d73a9108a79b01c63b5
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.9
+Connection: keep-alive
+name=213&email=jtippin4y%40unknownmail.com&dateFrom=10%2F1%2F2025&dateTo=10%2F3%2F2025&guestCount=1&childrenCount=0&createdDate=2025-10-28T01%3A35%3A45
+#+end_src
+
+
 
 https://hackviser.com/tactics/pentesting/web/xxe
