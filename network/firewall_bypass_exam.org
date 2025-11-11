@@ -1,0 +1,6 @@
+#+title: Firewall Bypass Exam
+#+author:gabriel
+
+* initial scan
+
+machine ip -> 172.20.10.38 (windows machine)

