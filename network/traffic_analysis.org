@@ -61,6 +61,11 @@ filter only http responses ->
 filter response status code ->
 : http.response.code == 200
 
+filter speficif method ->
+#+begin_src bash
+http.request.method == POST
+#+end_src
+
 ** dns
 basic filter ->
 : dns
