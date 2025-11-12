@@ -1,0 +1,12 @@
+#+title: Intro to reverse engineering
+#+authuor: gabriel
+
+* What is Reverse Engineering?
+Reverse Engineering is an engineering process carried out to analyze a product, system, or program to understand its working mechanism, how and why it was made.
+
+In the field of cybersecurity, Reverse Engineers work on software and systems. When code is compiled on computers, it is translated into machine code so that it can be understood by the computer.
+
+Through the use of tools called disassemblers, machine code can be converted back into assembly language with a high degree of accuracy. Reverse engineers try to solve the application by analyzing the assembly code of the software.
+
+*Malware Analysis* ->
+This involves detecting the damage caused by malware to systems and gathering detailed information about which APT group created the malware.
