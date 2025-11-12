@@ -1,0 +1,134 @@
+
+# Table of Contents
+
+1.  [Network Analysis Process](#org2668e65)
+    1.  [Workflow ?](#orgfe38390)
+    2.  [basic approach](#org8272659)
+2.  [Some filters with wireshark  ](#orgfa6c558)
+    1.  [http](#org8a09122)
+    2.  [dns](#org311377b)
+    3.  [tcp](#orgeb5a06e)
+
+
+
+<a id="org2668e65"></a>
+
+# Network Analysis Process
+
+Network traffic analysis can range from simple observations to complex data capture and analysis.
+
+**simple** ->
+Monitoring live traffic flow with tools like Wireshark or tcpdump can be a useful starting point to gain a general understanding of activities on the network.
+
+**complex** ->
+For more in-depth analyses, especially in security-focused work, NTA can become quite complex.
+
+In such analyses, taps can be used to capture data from the network, the captured data can be integrated with a SIEM system, and the captured packets (PCAP files) can be meticulously examined to identify attack signatures or suspicious activities.
+
+
+<a id="orgfe38390"></a>
+
+## Workflow ?
+
+**ingest** ->
+Data Capture: In this step, network traffic is captured using tools like tcpdump, Wireshark, or Beats in the Elastic Stack.
+
+Additional data can be collected from existing logs (firewall logs, application logs, web server logs, etc&#x2026;), providing a more comprehensive view of network activity.
+
+Captured traffic can be stored as pcap files in wireshark or sent to a central system like elastic stack or a siem for data storage and indexing
+
+**filter** ->
+Identifying the targets, be clear about what you are looking for: a specific type of attack, an anomaly for troubleshooting, performance issues, etc.
+
+Creating search queries, use your tools to create filters that match the type of traffic  you are looking for
+
+-   Specific protocol (http, dns)
+-   Specific host (Ipv4, dns)
+-   Specific port (80, 443)
+
+**analyze** ->
+Searching for patterns and anomalies, depending on your targets, look for notable patterns in the filtered traffic
+
+-   Significant increases or unexpected decreases in traffic
+-   Traffic related to suspicius ports or target protocols
+-   Signs of unauthorized access attempts (such as failed login attempts, like SSH)
+
+
+<a id="org8272659"></a>
+
+## basic approach
+
+Start with standard protocols, understanding common protocols like HTTP, DNS, DHCP, ICMP and TCP.
+
+Differences between the traffic associated with these protocols and your expectations can reveal signs of issues or attacks
+
+For example, if SSH connections are not commonly used in your internal network, multi SSH requests to several servers should catch our attention!! but of course never let SSH open to internet 
+
+-   look for patterns
+-   examine end-to-end connections
+-   search for diverging events like uncommon ports
+
+
+<a id="orgfa6c558"></a>
+
+# Some filters with wireshark  
+
+
+<a id="org8a09122"></a>
+
+## http
+
+basic filter ->
+
+    http
+
+filter only http requests ->
+
+    http.request
+
+filter only http responses ->
+
+    http.response
+
+filter response status code ->
+
+    http.response.code == 200
+
+
+<a id="org311377b"></a>
+
+## dns
+
+basic filter ->
+
+    dns
+
+filter only dns responses ->
+
+    dns.resp.name
+
+filteer specific domains ->
+
+    dns.qry.name == google.com
+
+
+<a id="orgeb5a06e"></a>
+
+## tcp
+
+basic filter ->
+
+    tcp
+
+filter specific port ->
+
+    tcp.port == 80
+
+filteer speficif source port ->
+
+    tcp.srcport == 80
+
+filter specific destination port ->
+
+    tcp.dstport == 80
+
