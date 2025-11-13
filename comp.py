@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
 
+#!/usr/bin/env python3
 
 malwares = [
 "011b04b3c8e9e7975ca405a57bcf82cdba69a85dec29ec59d523b767ffd9c603",
@@ -33,9 +33,6 @@ encontrados = []
 with open('hashs.txt', 'r') as file:
     for linha in file:
         eset_hash = linha.strip()
-
-        if not eset_hash:
-            continue
 
         if eset_hash in malwares_set:
             print(f"encontrado {eset_hash}")
