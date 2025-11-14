@@ -38,3 +38,6 @@ Registers are structures located in the CPU core that hold data for the calculat
 
 *intel x86 architecture* ->
 In reverse engineering, the most commonly used registers are as follows
+
+*General purpose registers* ->
+EAX: Used for arithmetic and logical operations. It is used for data transport and holds function return values.
