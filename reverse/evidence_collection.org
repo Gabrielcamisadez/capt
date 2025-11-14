@@ -1,0 +1,26 @@
+#+title: Evidence Collection
+#+author: gabriel
+
+* evidence collection
+In digital forensics, the collection, preservation, and analysis of digital evidence that can aid in clarifying crimes or incidents is of great importance.
+
+ This process requires specialized tools and techniques to maintain the integrity, authenticity, and admissibility of the collected evidence.
+ Common techniques include forensic imaging, acquiring host-based evidence, rapid triage, and extracting network evidence.
+
+* forensic imaging
+Forensic imaging involves creating an exact, bit-for-bit copy of a storage medium (like a hard disk or memory). This copy allows analysis to be conducted without altering the original evidence, enabling repeatable tests.
+
+** FTK imager ->
+FTK Imager is a digital forensics tool developed by AccessData, available for free. It is crucial for the preservation and analysis of digital evidence.
+
+ It can create bit-for-bit, sector-by-sector copies (images) from sources such as hard disks, flash drives, memory cards, and folders.
+
+** AFF4 Imager
+AFF4 Imager is an open-source command-line tool for forensic imaging, based on the AFF4 (Advanced Forensics Format version 4) standard.
+
+AFF4 format allows for storing additional information (such as case number, evidence number, location) alongside the image, and supports RDF format metadata. This eases analysis and reporting.
+
+** DD and DCFLDD
+The "dd" command in Linux is a highly powerful and versatile tool for data copying and conversion. It is used in various fields, from computer forensics to system administration, to create exact copies between hard disks, partitions, USB drives, and files
+
+It processes data in blocks of a specific size, allowing low-level access to hardware resources. Control read and write errors through parameters to minimize data corruption or loss.
