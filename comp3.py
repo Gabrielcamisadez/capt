@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+import requests
+import urllib3
+import time
+import json
+from rich import print_json
+
+urllib3.disable_warnings()
+
 malwares = [
 "011b04b3c8e9e7975ca405a57bcf82cdba69a85dec29ec59d523b767ffd9c603",
 "0981a1461a7d823e2259eab4d0ef24bf1074ef10424e504e25b9d1380ed187f1",
@@ -23,20 +31,38 @@ malwares = [
 "ed6875f870585873a57a5752686061182cd0129458f5e50ea87d64fbdde57f7d",
 ]
 
-malwares_set = set(malwares)
+def local():
+        user_hash = input("Insira o hash :").lower()
+
+        print(f"User HAsh -> {user_hash}")
+
+        for malw in malwares:
+            if user_hash == malw:
+                print(f"Find !! -> {user_hash}")
+                return True, user_hash
+        return False, user_hash
 
 
-eset_file = "hashs.txt"
 
-encontrados = []
+def total(user_hash):
+        url = f"https://www.virustotal.com/api/v3/files/{user_hash}"
+        headers = {
+                "x-apikey": "455c1fcb41fd290a3586e24cf81bcd36fee93241446e102986da4d889e09d091",
+                "accept": "application/json"
+        }
+        r = requests.get(url=url, headers=headers)
+        if r.status_code == 200:
+                dados = json.loads(r.text)
+                print_json(data=dados)
+        return dados
 
-with open('hashs.txt', 'r') as file:
-    for linha in file:
-        eset_hash = linha.strip().lower()
 
-        if eset_hash in malwares_set:
-            print(f"encontrado {eset_hash}")
-            encontrados.append(eset_hash)
-
-if encontrados:
-    print(f"tottal encontrado {len(encontrados)}")
+while True:
+    result, hashh = local()
+    if result:
+        break
+    else:
+        print(f"Hash não encontrado na base local, busca via API virustotal inciando...")
+        time.sleep(1)
+        dados = total(hashh)
+        gravar = input("deseja salvar o resultado em arquivo?")

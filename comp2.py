@@ -23,20 +23,10 @@ malwares = [
 "ed6875f870585873a57a5752686061182cd0129458f5e50ea87d64fbdde57f7d",
 ]
 
-malwares_set = set(malwares)
+user_hash = input("Insira o hash :")
 
+print(user_hash.lower())
 
-eset_file = "hashs.txt"
-
-encontrados = []
-
-with open('hashs.txt', 'r') as file:
-    for linha in file:
-        eset_hash = linha.strip().lower()
-
-        if eset_hash in malwares_set:
-            print(f"encontrado {eset_hash}")
-            encontrados.append(eset_hash)
-
-if encontrados:
-    print(f"tottal encontrado {len(encontrados)}")
+for malw in malwares:
+    if user_hash.lower() == malw:
+        print(user_hash)
