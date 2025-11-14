@@ -65,4 +65,10 @@ while True:
         print(f"Hash não encontrado na base local, busca via API virustotal inciando...")
         time.sleep(1)
         dados = total(hashh)
-        gravar = input("deseja salvar o resultado em arquivo?")
+        gravar = input("deseja salvar o resultado em arquivo? y/n")
+        text = json.dumps(dados, indent=3)
+        if gravar == "y":
+                with open('results_api.txt', 'w') as r:
+                        print("Arquivo criado no dir atual !!")
+                        r.write(text)
+                        break
