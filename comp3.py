@@ -50,10 +50,13 @@ def total(user_hash):
                 "x-apikey": "455c1fcb41fd290a3586e24cf81bcd36fee93241446e102986da4d889e09d091",
                 "accept": "application/json"
         }
-        r = requests.get(url=url, headers=headers)
+#     dados = None
+        r = requests.get(url=url, headers=headers, verify=False)
+        print(f"Codigo de resposta -> {r.status_code}")
         if r.status_code == 200:
                 dados = json.loads(r.text)
                 print_json(data=dados)
+
         return dados
 
 
@@ -72,3 +75,5 @@ while True:
                         print("Arquivo criado no dir atual !!")
                         r.write(text)
                         break
+        else:
+                break
