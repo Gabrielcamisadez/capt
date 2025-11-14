@@ -1,0 +1,45 @@
+#+title: Forensic Intro
+#+author: gabriel
+
+* intro
+With the advancement of technology and the increasing role of digitalization in our lives, criminals are also shifting their activities to thir area. This situation has led to the need for new methods and expertise in forensic investigations.
+
+Digital forensics involves the process of identifying, collecting, preserving, examining, and presenting digital data stored in electronic devices in a legally admissible manner within the context of criminal investigations and court cases.
+
+The primary goal of digital forensics is to clarify cybercrimes and uncover digital evidence. This allows reaching criminals, providing justice to victims, and helping to prevent crimes.
+
+*Electronic evidence* ->
+Digital forensics deals with data stored in electronic environments. Emails, internet history, social media data, operating system logs, GPS data, and more can serve as electronic evidence in an investigation.
+
+*Preservation of evidence* ->
+Preserving electronic evidence correctly from the outset is crucial for the success of an investigation. Identifying the scene in its initial state, ensuring that the suspect systems' power connections remain intact
+
+*digital forensics process* ->
+The digital forensics process involves systematically collecting, examining, and presenting electronic evidence in court. The key steps in this process are:
+
+*cases in digital forensics* ->
+Digital forensics is used in a wide range of cases, including but not limited to:
+
+- Cybercrimes: Fraud, cyber-attacks, online harassment, etc., committed in online environments.
+- Corporate Investigations: Suspicious employee behavior, internal fraud investigations.
+- Intellectual Property Rights Violations: Patent and copyright infringements.
+- Data Recovery and Data Theft Cases.
+
+* digital forensics for SOC analysts
+Digital forensic skills are crucial for SOC analysts. With this training, you'll not only investigate crimes but also enhance your organization's security by proactively identifying threats.
+
+- Providing Legally Admissible Evidence: Correctly collecting and examining evidence supporting investigations and presentable in court.
+- Proactive Threat Hunting: Detecting anomalous activities and enabling the preemptive identification of advanced attacks.
+- Fostering a Continuous Learning Culture: Encouraging team members to develop Digital Forensics techniques and keep up with emerging trends in the cybersecurity world.
+- Preventive Digital Forensics: Digital forensics is not just a reactive measure; this training will show analysts how to enhance their skills in identifying potential threats beforehand.
+
+* digital forensics investigations
+These investigations (cases) encompass the process of collecting and analyzing digital evidence according to legal procedures. The fundamental steps of a general process include:
+
+- Creating Forensic Images: Making a complete copy of the disk or device to be examined for evidence preservation and analysis.
+- Documenting System Status: Detailed documentation of the system's current status, running programs, open ports, and more.
+- Identifying and Preserving Evidence: Identifying potential evidence and isolating it to prevent contamination.
+- Analyzing Evidence: Extracting evidence using forensic software from the examined copies, establishing data relationships, and reviewing them.
+- Timeline Analysis: Creating a chronological sequence of events to track system activities over time periods.
+- Identifying Indicators of Compromise (IOCs): Determining system changes, malware traces, abnormal files, and behaviors indicative of an attack.
+- Reporting and Documentation: Preparing comprehensive, understandable, and court-admissible documentation of all findings, processes, and methods used.

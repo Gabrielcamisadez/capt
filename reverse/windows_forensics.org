@@ -1,0 +1,122 @@
+#+title: Windows Forensics
+#+author: gabriel
+
+* intro
+*NTFS* ->
+NTFS (New Technology File System) is a file system developed by Microsoft and used in Windows NT, Windows 2000, Windows XP, Windows Server 2003, and later versions.
+
+Here are some essential forensic artifacts that forensic analysts frequently analyze when working with NTFS file systems:
+
+*File metadata* ->
+- Information about the file such as its name, size, creation/modification/access dates, file permissions.
+- Used to track file activity, identify the source of the file (how it was created, where it was downloaded from), and even get clues about deleted files.
+
+*MFT Records* ->
+- The Master File Table (MFT) is the main file table for NTFS. It acts as a database keeping information for each file and directory.
+- Contains critical details such as file names, locations, sizes, metadata, permission details. Traces of deleted files may remain.
+
+*FIle slack and unallocated space* ->
+- File Slack is the unused space in disk sectors when files written to the sectors don't occupy the entire sector. Unallocated space is parts of the disk not currently allocated to any file or directory.
+- Traces of deleted or overwritten files, temporary data, and sometimes malicious codes may be found here, providing significant evidence.
+
+*File signatures* ->
+- Characteristic data patterns found at the beginning or other parts of the content that identify the file type.
+- Helps identify the actual file type even if its extension is changed, uncover hidden files, and identify corrupted data.
+
+*update sequence number (USN) Journal* ->
+- Change Journal used by NTFS to track changes and modifications to files and directories on the disk.
+- Critical for establishing event timelines, such as when a file was modified.
+
+*shortcut (.lnk) files* ->
+- Shortcuts pointing to other files or programs. Contain information about the target file's location and creation/access dates.
+- Can be used to track user activity and gather clues about deleted original files.
+
+*registry hives* ->
+- Hierarchical databases storing the configuration settings and options for Windows OS and applications.
+- A wide source of evidence including installed software, records of USB device connections, user preferences, and system settings.
+
+*shellbags* ->
+- Registry structure storing information about folders navigated through the Explorer window, such as display settings.
+- Useful for tracking user access to different locations on the system.
+
+*thumbnail cache* ->
+- Database files storing small previews of images, videos, etc., for quick viewing.
+- Provides information about the visual files present, viewed, or even deleted on the system.
+
+* event viewer
+The Event Viewer is a central log system that records significant events happening on Windows systems. These logs are valuable tools for diagnosing system activities, troubleshooting issues, and addressing security concerns.
+
+- Application Logs: Details of specific applications' activities (start, stop, errors, warnings).
+- Security Logs: Security-focused events such as login/logout attempts (successful/failed), privilege use, file access audits, and policy changes.
+- System Logs: Events related to system components, drivers, and services.
+
+Attackers might initially compromise Windows using malware or an exploit. Then, they might escalate privileges within the system by stealing credentials like usernames and passwords and misusing Windows' internal tools.
+
+This lateral movement allows them to access other devices on the network. Many of these attack steps leave traces in Windows event logs.
+
+* program execution artifacts
+Clues about which programs users have run and when might have been left in different areas of the operating system.
+
+- Prefetch Files: Caching files created by the system to allow applications to launch faster. Contain details like the application's execution path and execution times.
+- Shimcache: Maintains records of applications that have run, aimed at resolving compatibility issues. Stores details like the application's execution information and last modification date.
+- Amcache: Registry and file entries that contain details like the file paths and execution times of applications.
+- UserAssist: Tracks program shortcuts run from 'Start Menu' or from the 'Run' command.
+- RunMRU Lists: Stores lists of 'Most Recently Used' programs and commands under various registry keys.
+- Jump Lists: Introduced with Windows 7, they provide quick access to recently opened application files and common tasks.
+
+| Artifact | Location | Data
+| Prefetch Files | C:\Windows\Prefetch | Metadata about applications (file paths, timestamps, execution count)
+| Shimcache | HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\AppCompatCache | Program details (file paths, timestamps, arguments)
+| Amcache | C:\Windows\AppCompat\Programs\Amcache.hve| Application details (file paths, sizes, digital signatures, timestamps)
+| UserAssist | HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist | Executed program details (application names, execution count, timestamps)
+| RunMRU Lists | HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU | Recently run programs and commands
+| Jump Lists | %AppData%\Microsoft\Windows\Recent | Recent files and folders associated with applications
+| Shortcut (LNK) Files | Desktop, Start Menu, etc. | Details like target executable, file paths, timestamps, user interactions
+| Recent Files | %AppData%\Microsoft\Windows\Recent | Recently accessed files
+| Windows Event Logs | C:\Windows\System32\winevt\Logs | Logs of various operational events and activities
+
+* windows persistence artifacts
+Persistence mechanisms help malware or other malicious software maintain access to target systems after the initial entry.
+
+Traces of these persistence efforts can often be found in the following locations:
+
+Registry: Hierarchical database storing Windows settings and configurations. Malicious software can change or create new registry keys for persistence.
+
+*Run*: Keys in the registry that cause programs to run automatically. Programs under 'Run' run each time a user logs in.
+- HKCU\Software\Microsoft\Windows\CurrentVersion\Run
+- HKLM\Software\Microsoft\Windows\CurrentVersion\Run
+
+*RunOnce*: Programs listed under this key run only once and the entry is deleted afterwards.
+- HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce
+- HKLM\Software\Microsoft\Windows\CurrentVersion\RunOnce
+
+*WinLogon*: Registry keys used by the WinLogon process, which manages user logins. Malware can use these keys for persistence by altering the Shell value, for example, to run its malicious program at login.
+- HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon
+- HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\Shell
+
+*Startup*: Used by attackers to set the location of the Startup folder.
+- HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+- HKLM\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders
+
+
+*Task scheduler* ->
+Windows mechanism to perform specific actions on a schedule (at a specific time or intervals). Malware can create scheduled tasks for repeated execution.
+
+: C:\Windows\System32\Tasks
+
+*Services* ->
+Programs that run in the background continuously in Windows. Malicious software can register itself as a Windows service to become persistent and run automatically when the system restarts.
+
+: HKLM\System\CurrentControlSet\Services
+
+* web browser forensic analysis
+This aims to examine the types of data stored in internet browsers that can provide significant evidence in forensic investigations.
+
+- Browser History: A list of sites the user has visited. Includes details such as date, timestamps, and visit frequency.
+- Cookies: Small text files stored by websites on your computer. Hold data like user preferences, session information, login details.
+- Cache: Local copies of images, videos, page structures from websites. Speeds up loading when revisiting the site.
+- Bookmarks/Favorites: Websites saved by the user for later access.
+- Download History: List of all files downloaded via the web browser. Includes file names, paths, download dates.
+
+* system resource usage monitor (srum)
+SRUM is a data collection mechanism present in Windows 8 and later versions, monitoring the resource usage (CPU, network, disk, power) of applications and various system components. This data is stored in an Extensible Storage Engine (ESE) database file sru.db located in C:\Windows\System32\sru.
