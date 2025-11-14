@@ -24,3 +24,114 @@ AFF4 format allows for storing additional information (such as case number, evid
 The "dd" command in Linux is a highly powerful and versatile tool for data copying and conversion. It is used in various fields, from computer forensics to system administration, to create exact copies between hard disks, partitions, USB drives, and files
 
 It processes data in blocks of a specific size, allowing low-level access to hardware resources. Control read and write errors through parameters to minimize data corruption or loss.
+
+* Virtualization technologies
+Virtualization technologies play a significant role in digital forensics. Virtual machines can be easily paused, reverted, and cloned. This capability allows for testing different analysis scenarios, trying out various software, and safely conducting malware analysis.
+
+The state of a virtual machine can be saved with snapshots. This enables easy reversion to the original state after changes are made to the image.
+
+* Host-based evidence
+Operating systems, including Windows, leave behind numerous artifacts. These may result from activities such as program execution, file modifications, and user account creation.
+
+Some artifacts are termed volatile by nature. In digital forensics, the term volatility refers to the degree of persistence of data on a host after the system is shut down or the user session is closed.
+
+Malware can attempt to conceal itself while running. Relying solely on disk evidence might not always provide a complete picture.
+
+* WinPmem
+WinPmem is a free and open-source memory collection tool for Windows. It is a cross-platform memory capture driver that allows for the creation of raw memory dumps from a target system.
+
+#+begin_src bash
+PS C:\users\user\desktop\tools> .\winpmem_mini_x64_rc2.exe memdump.raw
+WinPmem64
+Extracting driver to C:\Users\user\AppData\Local\Temp\pme7337.tmp
+Driver Unloaded.
+Loaded Driver C:\Users\user\AppData\Local\Temp\pme7337.tmp.
+Deleting C:\Users\user\AppData\Local\Temp\pme7337.tmp
+The system time is: 00:27:16
+Will generate a RAW image
+ - buffer_size_: 0x1000
+CR3: 0x00001AA000
+ 4 memory ranges:
+Start 0x00001000 - Length 0x0009E000
+Start 0x00100000 - Length 0x00002000
+Start 0x00103000 - Length 0x7FEDB000
+Start 0x100000000 - Length 0x368000000
+max_physical_memory_ 0x468000000
+Acquisition mode PTE Remapping
+Padding from 0x00000000 to 0x00001000
+pad
+ - length: 0x1000
+
+00% 0x00000000 .
+copy_memory
+ - start: 0x1000
+ - end: 0x9f000
+
+00% 0x00001000 .
+Padding from 0x0009F000 to 0x00100000
+pad
+ - length: 0x61000
+
+00% 0x0009F000 .
+copy_memory
+ - start: 0x100000
+ - end: 0x102000
+
+00% 0x00100000 .
+Padding from 0x00102000 to 0x00103000
+pad
+ - length: 0x1000
+
+00% 0x00102000 .
+copy_memory
+ - start: 0x103000
+ - end: 0x7ffde000
+
+00% 0x00103000 ..................................................
+04% 0x32103000 ..................................................
+08% 0x64103000 ............................
+Padding from 0x7FFDE000 to 0x100000000
+pad
+ - length: 0x80022000
+
+11% 0x7FFDE000 ..................................................
+11% 0x7FFDE000 ..................................................
+11% 0x7FFDE000 .............................
+copy_memory
+ - start: 0x100000000
+ - end: 0x468000000
+
+22% 0x100000000 ..................................................
+27% 0x132000000 ..................................................
+31% 0x164000000 ..................................................
+35% 0x196000000 ..................................................
+40% 0x1C8000000 ..................................................
+44% 0x1FA000000 ..................................................
+49% 0x22C000000 ..................................................
+53% 0x25E000000 ..................................................
+58% 0x290000000 ..................................................
+62% 0x2C2000000 ..................................................
+67% 0x2F4000000 ..................................................
+71% 0x326000000 ..................................................
+75% 0x358000000 ..................................................
+80% 0x38A000000 ..................................................
+84% 0x3BC000000 ..................................................
+89% 0x3EE000000 ..................................................
+93% 0x420000000 ..................................................
+98% 0x452000000 ......................
+The system time is: 00:27:41
+Driver Unloaded.
+#+end_src
+
+** LIME (Linux Memory Extractor) ->
+LiME (Linux Memory Extractor) is a Loadable Kernel Module (LKM) designed to extract data from the volatile memory of Linux-based systems. It is an important open-source tool used by forensic experts for memory analysis.
+
+** Belkasoft RAM capturer ->
+Belkasoft RAM Capturer is a kernel-mode tool designed to capture the content of a computer's volatile memory in a forensic manner.
+
+ It is a free tool that does not require installation and leaves a small footprint on the system.
+
+** Dumplt ->
+DumpIt is a memory collection tool designed for Windows, Linux, and ARM64 platforms.
+
+ It is used to create full memory dumps of machines, making it a crucial tool for incident response, forensics, and memory analysis.
