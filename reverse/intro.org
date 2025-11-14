@@ -10,3 +10,23 @@ Through the use of tools called disassemblers, machine code can be converted bac
 
 *Malware Analysis* ->
 This involves detecting the damage caused by malware to systems and gathering detailed information about which APT group created the malware.
+
+*Vulnerability research* ->
+This involves scanning systems and programs to identify security vulnerabilities and developing appropriate exploits to utilize these vulnerabilities.
+
+*Cracking* ->
+Known as license cracking, attackers manipulate license entries to obtain full versions of legal applications for free.
+
+*Mobile application security* ->
+Reverse engineers are also active in mobile platforms, focusing on malware analysis and application security. Through network and source code analysis, they can patch security vulnerabilities in mobile applications
+
+*Firmware analysis and iot security* ->
+Firmware refers to low-level software running on hardware components of devices. This
+
+* Basic Assembly
+Assembly language is the closest programming language to machine language. The machine code of compiled applications can be converted into assembly code by a disassembler.
+
+The stack and heap are logical sections of memory. The stack operates on a LIFO (Last In First Out)
+principle. We can think of the stack as a place where data is stored in a stacked manner.
+
+[[./imgs/lifo.png]]
