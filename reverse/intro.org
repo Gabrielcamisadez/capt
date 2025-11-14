@@ -30,3 +30,11 @@ The stack and heap are logical sections of memory. The stack operates on a LIFO 
 principle. We can think of the stack as a place where data is stored in a stacked manner.
 
 [[./imgs/lifo.png]]
+
+The Stack stores value types such as int, short, byte, long, decimal, double, float, as well as pointers and addresses, whereas the Heap stores reference types.
+
+*Registers* ->
+Registers are structures located in the CPU core that hold data for the calculations the processor will perform and allow quick access to them when needed.
+
+*intel x86 architecture* ->
+In reverse engineering, the most commonly used registers are as follows
