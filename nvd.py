@@ -16,19 +16,33 @@ def get_result(software):
 
     dados = r.json()
     for item in dados["vulnerabilities"]:
-        print_json(data=item["cve"]["id"])
+        id = item["cve"]["id"]
+        metrics = item["cve"]["metrics"]
+
+        if "cvssMetricV31" in metrics:
+            score = metrics["cvssMetricV31"][0]["cvssData"]["baseScore"]
+            result = f"{id} -- {score}"
+            print_json(data=result)
+        else:
+            print("no CVSSv3.1")
     return dados
 
 
 while True:
-    user_input = input("Buscar por ->").lower()
+    user_input = input("Buscar por -> ").lower()
 
     try:
         dados = get_result(user_input)
 
         second_input = input("another search ? y/n ").lower()
-        if second_input != "y":
+        if second_input == "y":
+            continue
+
+        if second_input == "n":
             break
+
+        print("digite uma das opções apenas!")
+        break
     except:
         print(f"error")
         break
