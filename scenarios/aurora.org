@@ -1,0 +1,25 @@
+#+title: Aurora
+#+author:gabriel
+
+* intro
+According to recent information, a website claiming to sell stars over the internet has been identified. The number of victims who reported being scammed after sending money to this site is increasing.
+
+It is suspected that the site may have been created as a phishing scheme.
+
+Your mission is to investigate this claim and uncover the individuals behind it. Good luck!
+
+* inital scan
+#+begin_src sh
+[19:46][]~ ✮ sudo nmap -sS -p- -vv 172.20.44.18
+
+Not shown: 65533 closed tcp ports (reset)
+PORT   STATE SERVICE REASON
+22/tcp open  ssh     syn-ack ttl 63
+80/tcp open  http    syn-ack ttl 63
+#+end_src
+
+#+begin_src sh
+[19:47][]~ ✮ ffuf -u "http://aurora.hv/FUZZ" -w /usr/share/wordlists/SecLists/Discovery/Web-Content/combined_directories.txt -s
+
+console
+#+end_src

@@ -284,7 +284,7 @@ What is the order number that appears after ticket purchase?
 # Defina a URL e os dados da requisição
 URL="http://onlineticket.hv/"
 DATA="code=CODE50&useDiscountCode="
-COOKIE="PHPSESSID=1eg0vrd3obn6l5tepcs78dt9u0" # Substitua pelo seu próprio cookie de sessão
+COOKIE="PHPSESSID=jsna5v4jj3tco48c2l8h915188" # Substitua pelo seu próprio cookie de sessão
 
 # Laço de repetição para enviar 50 requisições
 for i in {1..50}; do
